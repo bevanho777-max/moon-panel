@@ -23,6 +23,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # backend/web/embed.go uses //go:embed all:dist to bundle the SPA
+      # into the Go binary. On a clean checkout the dist/ directory does
+      # not exist, so even `go vet` fails before analyzing code. We
+      # rebuild the frontend here (matching the production Dockerfile's
+      # single-context build) rather than passing an artifact between
+      # jobs — keeps the backend job self-contained.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      # vue-tsc + vite build. Output goes to ../backend/web/dist, which
+      # is exactly the path go:embed reads from.
+      - name: Build frontend dist (required by go:embed)
+        working-directory: frontend
+        run: npm run build
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
