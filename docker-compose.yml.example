@@ -1,48 +1,119 @@
+# Moon Panel — example Docker Compose deployment.
+#
+# Usage:
+#   1. Copy this file to docker-compose.yml in the same directory.
+#   2. Edit MOON_ADMIN_PASSWORD to something strong (≥ 8 chars enforced;
+#      ≥ 14 with mixed case + digits is recommended for public exposure).
+#   3. Adjust PUID / PGID to match the host user that should own ./data/.
+#   4. PUID=$(id -u) PGID=$(id -g) docker compose up -d --build
+#   5. Open http://localhost:3000 and log in as admin.
+#
+# After first login, comment out MOON_ADMIN_PASSWORD — it's only consulted
+# while the users table is empty.
+
 services:
   moon-panel:
-    # Build locally; or pin to a published image once you push one.
+    # Build from source for now. After the v0.1.0 release ships, replace
+    # the `build:` line with:
+    #     image: ghcr.io/bevanho777-max/moon-panel:latest
+    # and drop `build: .` so you pull the published multi-arch image
+    # instead of compiling locally.
     build: .
     image: moon-panel:latest
     container_name: moon-panel
     restart: unless-stopped
     ports:
+      # host:container — change the host side if 3000 is busy on your box.
       - "3000:3000"
     environment:
-      # User/group mapping — set to whatever owns ./data on the host.
-      # Synology default user is usually PUID=1026 PGID=100 ("users" group).
-      # Most other Linux: PUID=1000 PGID=1000.
+      # ─── Host user mapping ─────────────────────────────────────────
+      # Files written under ./data/ end up owned by this UID/GID.
+      #   - Generic Linux:  PUID=1000  PGID=1000  (default desktop user)
+      #   - Synology DSM:   PUID=1026  PGID=100   ("users" group)
+      #   - Unraid:         PUID=99    PGID=100   ("nobody"/"users")
+      #   - TrueNAS Scale:  match the dataset owner you mounted from
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}
 
-      # Operational
+      # ─── Core operation ────────────────────────────────────────────
+      # Sets gin to release mode and silences SQL query logs. Always
+      # "production" for deployed instances. (Dev uses "development".)
       MOON_ENV: production
+
+      # public_mode=true (default): home page reachable without login,
+      # only /admin requires auth.
+      # public_mode=false: gates the entire site behind login.
       MOON_PUBLIC_MODE: "false"
 
-      # First-run admin password (only used while users table is empty).
-      # Comment this out after first start so the value isn't sitting in your
-      # compose file.
-      # MOON_ADMIN_PASSWORD: 仅"首次启动且 DB 中无 admin"时使用，
-      #   作为 bootstrap 凭据。一旦 admin 用户已创建（users 表非空），
-      #   本变量被 silent 忽略 —— 修改此处后重启容器无任何效果。
+      # ─── First-run admin bootstrap ─────────────────────────────────
+      # Used ONLY while the users table is empty. After the first admin
+      # account exists, this variable is silently ignored — changing it
+      # and restarting will not change the password.
       #
-      # 改密码：admin UI 顶栏 → admin▾ 下拉 → 修改密码
-      # 忘密码恢复：进容器 sqlite3 /data/moon.db 'DELETE FROM users WHERE username="admin";'，
-      # 重启后用本变量重新 bootstrap。
+      # Change password later: log in → admin dropdown (top-right) →
+      #   Change Password.
+      # Recover a lost password:
+      #   docker compose exec moon-panel \
+      #     sqlite3 /data/moon.db 'DELETE FROM users WHERE username="admin";'
+      #   docker compose restart moon-panel
+      #   (the value below is then re-bootstrapped)
       #
-      # 安全：≥8 字符（后端 binding 强制），公网部署建议 ≥14 + 混合字符类。
+      # Safety: ≥ 8 characters enforced by the backend; ≥ 14 with mixed
+      # character classes recommended for public deployments.
       MOON_ADMIN_PASSWORD: changeme
 
-      # MOON_ADMIN_PASSWORD: change-me-on-first-start
+      # ─── Optional knobs (uncomment to use) ─────────────────────────
 
-      # Reverse-proxy origin if the panel is fronted by nginx/traefik on a
-      # different domain. Empty (default) disables CORS for same-origin deploys.
+      # Listen port inside the container. Rarely changed — adjust the
+      # `ports:` mapping above instead if you want a different host port.
+      # Default: 3000.
+      # MOON_PORT: "3000"
+
+      # Where SQLite db, uploads/, and jwt.key live INSIDE the container.
+      # Should match the right side of the volume mount below.
+      # Default: /data.
+      # MOON_DATA_DIR: /data
+
+      # Default session lifetime in days when "remember me" is NOT checked.
+      # Default: 7. Recommended: 7 for shared/public, 30 for personal-only.
+      # MOON_TOKEN_TTL_DAYS: "7"
+
+      # Session lifetime in days when "remember me" IS checked at login.
+      # Default: 30.
+      # MOON_TOKEN_REMEMBER_TTL_DAYS: "30"
+
+      # Set "true" only when the cookie is delivered over HTTPS, otherwise
+      # browsers reject the Secure flag and login silently fails.
+      # Default: false.
+      # MOON_COOKIE_SECURE: "true"
+
+      # Reverse-proxy CORS origin. Leave empty (default) for same-origin
+      # deployments. Set when serving the panel under a different host
+      # than the API (uncommon for personal panels).
       # MOON_CORS_ORIGINS: https://panel.example.com
 
-      # CIDR list of proxies whose X-Forwarded-* headers are trusted.
-      # Default below covers loopback + the entire Docker default network range.
+      # CIDRs whose X-Forwarded-For / X-Forwarded-Proto headers are
+      # trusted. Default: "127.0.0.1,172.16.0.0/12" — covers loopback
+      # plus the entire Docker default bridge range. Add your reverse-
+      # proxy's IP/CIDR if it sits outside that range.
       # MOON_TRUSTED_PROXIES: 127.0.0.1,172.16.0.0/12
 
-      # Set to true only when the cookie is delivered over HTTPS.
-      # MOON_COOKIE_SECURE: "true"
+      # JWT secret. If unset, one is auto-generated on first start and
+      # persisted to data/jwt.key (so existing sessions survive restart).
+      # Override only if you want to externalise it (e.g. mount from a
+      # secret manager). Min 32 chars.
+      # MOON_JWT_SECRET: ...
+
+      # SSRF defense for the icon-fetch endpoint:
+      #   - allow_private_fetch defaults to false (refuse 10.x, 172.16/12,
+      #     192.168.x, link-local, loopback).
+      #   - allowed_fetch_hosts is an optional comma-separated allowlist;
+      #     when set, only listed hosts may be fetched.
+      # MOON_ALLOW_PRIVATE_FETCH: "false"
+      # MOON_ALLOWED_FETCH_HOSTS: cdn.example.com,icons.example.org
+
     volumes:
+      # SQLite db + uploads/ (icons + wallpapers) + jwt.key all live here.
+      # Back this directory up — everything else is rebuilt from source
+      # on container restart and recovers without state.
       - ./data:/data
