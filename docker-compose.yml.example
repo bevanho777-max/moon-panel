@@ -1,0 +1,48 @@
+services:
+  moon-panel:
+    # Build locally; or pin to a published image once you push one.
+    build: .
+    image: moon-panel:latest
+    container_name: moon-panel
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # User/group mapping — set to whatever owns ./data on the host.
+      # Synology default user is usually PUID=1026 PGID=100 ("users" group).
+      # Most other Linux: PUID=1000 PGID=1000.
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+
+      # Operational
+      MOON_ENV: production
+      MOON_PUBLIC_MODE: "false"
+
+      # First-run admin password (only used while users table is empty).
+      # Comment this out after first start so the value isn't sitting in your
+      # compose file.
+      # MOON_ADMIN_PASSWORD: 仅"首次启动且 DB 中无 admin"时使用，
+      #   作为 bootstrap 凭据。一旦 admin 用户已创建（users 表非空），
+      #   本变量被 silent 忽略 —— 修改此处后重启容器无任何效果。
+      #
+      # 改密码：admin UI 顶栏 → admin▾ 下拉 → 修改密码
+      # 忘密码恢复：进容器 sqlite3 /data/moon.db 'DELETE FROM users WHERE username="admin";'，
+      # 重启后用本变量重新 bootstrap。
+      #
+      # 安全：≥8 字符（后端 binding 强制），公网部署建议 ≥14 + 混合字符类。
+      MOON_ADMIN_PASSWORD: changeme
+
+      # MOON_ADMIN_PASSWORD: change-me-on-first-start
+
+      # Reverse-proxy origin if the panel is fronted by nginx/traefik on a
+      # different domain. Empty (default) disables CORS for same-origin deploys.
+      # MOON_CORS_ORIGINS: https://panel.example.com
+
+      # CIDR list of proxies whose X-Forwarded-* headers are trusted.
+      # Default below covers loopback + the entire Docker default network range.
+      # MOON_TRUSTED_PROXIES: 127.0.0.1,172.16.0.0/12
+
+      # Set to true only when the cookie is delivered over HTTPS.
+      # MOON_COOKIE_SECURE: "true"
+    volumes:
+      - ./data:/data

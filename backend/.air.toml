@@ -1,0 +1,34 @@
+# air config for Go hot reload during local dev.
+# Install once: go install github.com/air-verse/air@latest
+# Run from backend/: MOON_PORT=3001 air
+#
+# Watches .go / .html / .tpl files, ignores tmp / data / web/dist (frontend
+# build output that air would rebuild on every vite build → restart loop).
+# tmp_dir is the air working dir for the rebuilt binary.
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/main.exe ./cmd/server"
+  bin = "./tmp/main.exe"
+  delay = 500
+  stop_on_error = true
+  send_interrupt = true
+  kill_delay = 1000
+  include_ext = ["go", "tpl", "tmpl", "html"]
+  exclude_dir = ["tmp", "data", "web/dist", "vendor"]
+  exclude_regex = ["_test\\.go"]
+  log = "build-errors.log"
+
+[log]
+  time = false
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
+
+[misc]
+  clean_on_exit = true

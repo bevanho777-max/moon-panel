@@ -1,0 +1,89 @@
+name: CI
+
+# Pull requests + pushes to main. Tag pushes are excluded — they go to
+# release.yml, which already builds the binary as part of the docker image.
+# CI here is "is this code shippable?" without spending the multi-arch cost.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# No write permissions needed — CI only reads and reports.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (vet + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          # actions/setup-go restores the module cache automatically when
+          # go.sum is at the path specified by `cache-dependency-path` (or
+          # discovered next to go.mod). Saves ~30s on warm CI runs.
+          cache-dependency-path: backend/go.sum
+
+      # `go vet` catches obvious bugs (Printf format mismatches, unreachable
+      # code, etc). Cheap (~5s on this codebase) and a good first gate.
+      - name: go vet
+        run: go vet ./...
+
+      # Compile-only check. We don't ship the artifact from CI — release.yml
+      # rebuilds inside Docker for reproducibility. This step exists so a PR
+      # that breaks the Go build fails fast (~20s) without waiting for the
+      # frontend to also build.
+      - name: go build
+        run: go build ./...
+
+  frontend:
+    name: Frontend (typecheck + vitest + e2e)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Cache npm based on lockfile hash. First run: ~40s install. Cached:
+          # ~5s restore + skip download. Note: `npm ci` requires a lockfile,
+          # which we have committed (package-lock.json).
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies (clean)
+        run: npm ci
+
+      # `npm run build` = vue-tsc -b + vite build. Catches type errors AND
+      # build-time issues (missing imports, broken plugin config). Output
+      # goes to ../backend/web/dist; we don't upload it as an artifact since
+      # the release workflow rebuilds from source.
+      - name: Type-check + build
+        run: npm run build
+
+      # Vitest unit tests. Fast — runs in process, no browser needed.
+      - name: Vitest
+        run: npm run test
+
+      # Playwright e2e. Note: our Playwright config mocks all API calls in
+      # spec files via page.route(), so no Go backend instance is needed —
+      # `vite preview` serves the freshly-built dist on :4173 and the specs
+      # validate frontend behavior + screenshots without round-tripping to
+      # SQLite. Only chromium is installed to keep CI under 2min total.
+      - name: Install Playwright browsers (chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright e2e
+        run: npm run test:e2e:all

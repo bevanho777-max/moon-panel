@@ -1,0 +1,204 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Naive UI's darkTheme styles only Naive components. Raw <div>s and the body
+   itself need this fallback so plain-div pages don't show the white browser
+   default. Color values pulled from naive-ui darkTheme tokens.
+   Phase 2.5c: bg-color is on <html> (the canvas) instead of <body>. The
+   wallpaper layer in App.vue sits at z-index:-1 inside #app — if body had a
+   bg-color, the negative-z-index trick would not reveal anything underneath.
+   Painting on <html> keeps the dark fallback even when wallpaper is null
+   (because <html> bg is the document canvas, behind every positioned el). */
+html {
+  background-color: #101014;
+}
+body {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Phase 2.5c: NaiveUI Layout containers ship with an opaque dark background
+   (--n-color from darkTheme tokens). That covers the wallpaper-layer at
+   z-index:-1 in App.vue. Force the structural ones transparent — the dark
+   fallback comes from html { background-color: #101014 } above, so when
+   wallpaper is null the visual is identical to pre-2.5c.
+   !important required: NaiveUI cssr injects runtime stylesheets that load
+   AFTER main.css, so equal-specificity selectors lose source-order ties.
+   Affected: NLayout root + content/footer/sider variants.
+   Header is INTENTIONALLY excluded — admin/home top nav must stay opaque
+   for menu readability over wallpaper (acrylic upgrade decision: 1A). */
+.n-layout,
+.n-layout-content,
+.n-layout-footer,
+.n-layout-sider {
+  background-color: transparent !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Acrylic frosted-glass surfaces (Phase 2.5c-acrylic).
+
+   Active only when document.body has class `has-wallpaper` (App.vue toggles
+   this when ui.wallpaper changes). Three tiers reflect content readability
+   needs:
+
+   - light  — most transparent (rgba 255,255,255,0.04). For HomeHero widgets
+              that are ambient / decorative; user expects to read the
+              wallpaper through the surface.
+   - medium — default (rgba 20,20,24,0.55). For most content surfaces:
+              CardItem, admin NCard sections.
+   - strong — most opaque (rgba 20,20,24,0.65). For focal surfaces where
+              data entry / reading must dominate: login, modal panels.
+
+   Why class-gated rather than always-on:
+   - When no wallpaper is set, components keep their original opaque dark
+     bg (NaiveUI defaults). Adding acrylic with no wallpaper would just look
+     like extra translucency on solid black — no visual benefit, only paint
+     cost. Toggling via body class avoids that.
+
+   Why both utility classes AND global selectors:
+   - Utility classes (.mp-acrylic-*) for custom divs (CardItem, CityWidget,
+     LoginCard's wrapping NCard etc.) — explicit opt-in.
+   - Global rules on .n-card / .n-modal .n-card — automatic for all NaiveUI
+     cards, including admin sections + 10+ modals. Saves touching each one.
+   - Specificity ordering: .n-modal .n-card (0,3,0) > .mp-acrylic-strong /
+     .n-card / .mp-acrylic-medium (all 0,2,0). For ties, source order in this
+     file wins — keep `.n-card` BEFORE `.mp-acrylic-strong` so login's
+     explicit strong class wins over the medium global default.
+
+   Browser support:
+   - @supports gates real acrylic on backdrop-filter capability. Chrome 76+,
+     Edge 79+, Safari 9+ (with -webkit prefix), Firefox 103+. Mobile coverage
+     near 100% in 2026.
+   - @supports not (...) sets the fallback: a near-opaque flat dark color so
+     the surface is still readable without blur.
+   - prefers-contrast: more — high-contrast users get the same flat fallback.
+     This is the SEMANTICALLY CORRECT trigger; prefers-reduced-motion is for
+     animation/parallax, not static blur (W3C MQ4 spec). */
+
+:root {
+  --mp-acrylic-bg-strong: rgba(20, 20, 24, 0.65);
+  --mp-acrylic-bg-medium: rgba(20, 20, 24, 0.55);
+  --mp-acrylic-bg-light: rgba(255, 255, 255, 0.04);
+  --mp-acrylic-border: rgba(255, 255, 255, 0.08);
+  --mp-acrylic-blur: 24px;
+  --mp-acrylic-saturate: 180%;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* Order matters: .n-card sets medium first, then .mp-acrylic-strong (same
+     specificity) overrides it for login etc. via source order. */
+  body.has-wallpaper .n-card {
+    background-color: var(--mp-acrylic-bg-medium) !important;
+    -webkit-backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    border: 1px solid var(--mp-acrylic-border);
+  }
+  body.has-wallpaper .n-modal .n-card {
+    background-color: var(--mp-acrylic-bg-strong) !important;
+  }
+  body.has-wallpaper .mp-acrylic-light {
+    background-color: var(--mp-acrylic-bg-light);
+    -webkit-backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    border: 1px solid var(--mp-acrylic-border);
+  }
+  body.has-wallpaper .mp-acrylic-medium {
+    background-color: var(--mp-acrylic-bg-medium);
+    -webkit-backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    border: 1px solid var(--mp-acrylic-border);
+  }
+  body.has-wallpaper .mp-acrylic-strong {
+    background-color: var(--mp-acrylic-bg-strong) !important;
+    -webkit-backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    backdrop-filter: blur(var(--mp-acrylic-blur)) saturate(var(--mp-acrylic-saturate));
+    border: 1px solid var(--mp-acrylic-border);
+  }
+
+  /* NDataTable nested-list pattern (macOS Big Sur / Win11 Settings style).
+     Default NaiveUI behavior paints the entire DataTable hierarchy with
+     --n-color (solid dark from darkTheme tokens), which inside an acrylic
+     NCard reads as "frosted box containing a hard solid box" — visually
+     jarring. Fix: outer container layers go transparent so the parent
+     NCard's medium acrylic shows through; cells get a darker translucent
+     fill so rows remain distinguishable. Stacked alpha works out to ~0.73
+     effective opacity at cell positions vs ~0.55 at the surrounding NCard
+     padding — rows feel "deeper" than the card frame, matching the spec
+     ("比 acrylic medium 稍深"). Affects all 5 admin pages with NDataTable
+     (Cards / Groups / AuditLog / Security / SiteSettings search engines). */
+  body.has-wallpaper .n-data-table,
+  body.has-wallpaper .n-data-table-wrapper,
+  body.has-wallpaper .n-data-table-base-table,
+  body.has-wallpaper .n-data-table-table,
+  body.has-wallpaper .n-data-table-thead,
+  body.has-wallpaper .n-data-table-tbody,
+  body.has-wallpaper .n-data-table-empty {
+    /* Note both -base-table AND -table — NaiveUI uses both names in its
+       cssr output (-base-table is the wrapper, -table-table is the inner
+       <table>). Found via F12 forEach across all DataTable descendants;
+       missing -table-table was the actual culprit for the "solid black
+       box inside acrylic NCard" regression. Symmetry maintained in the
+       prefers-contrast block below. */
+    background-color: transparent !important;
+  }
+  body.has-wallpaper .n-data-table-th,
+  body.has-wallpaper .n-data-table-td {
+    background-color: rgba(20, 20, 24, 0.4) !important;
+  }
+  /* Hover row: subtle white tint for feedback. NaiveUI applies hover via TR
+     parent class — both selectors covered to handle older + newer cssr
+     output shapes without depending on internal naming. */
+  body.has-wallpaper .n-data-table-tr:hover .n-data-table-td,
+  body.has-wallpaper .n-data-table-tr--hover .n-data-table-td {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+  }
+}
+
+/* Browser without backdrop-filter (very rare in 2026): flat opaque fallback. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body.has-wallpaper .n-card,
+  body.has-wallpaper .mp-acrylic-light,
+  body.has-wallpaper .mp-acrylic-medium,
+  body.has-wallpaper .mp-acrylic-strong {
+    background-color: rgba(20, 20, 24, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* High-contrast user preference (Windows high-contrast mode, macOS Increase
+   Contrast). Disable acrylic — flat dark surface for max legibility. */
+@media (prefers-contrast: more) {
+  body.has-wallpaper .n-card,
+  body.has-wallpaper .n-modal .n-card,
+  body.has-wallpaper .mp-acrylic-light,
+  body.has-wallpaper .mp-acrylic-medium,
+  body.has-wallpaper .mp-acrylic-strong,
+  body.has-wallpaper .n-data-table-table,
+  body.has-wallpaper .n-data-table-th,
+  body.has-wallpaper .n-data-table-td {
+    background-color: rgba(20, 20, 24, 0.95) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

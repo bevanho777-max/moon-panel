@@ -1,0 +1,147 @@
+name: Release
+
+# Trigger on pushed semver tags ONLY (v0.1.0, v1.2.3, ...). Pre-release suffixes
+# like v0.2.0-rc1 are also matched by `v*.*.*` and treated as pre-release by
+# softprops/action-gh-release based on the tag pattern.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# GITHUB_TOKEN scopes:
+#   contents: write  — required to create the GitHub Release attached to the tag
+#   packages: write  — required to push the multi-arch image to ghcr.io
+# These are repo-scoped; no personal access token / extra secret is needed.
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}   # bevanho777-max/moon-panel
+
+jobs:
+  release:
+    name: Build multi-arch image + GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source at the tag
+        uses: actions/checkout@v4
+        with:
+          # We need the full history to extract the matching CHANGELOG section
+          # — shallow clones (default depth=1) work too because CHANGELOG.md
+          # always lives at HEAD, but keeping fetch-depth: 0 is harmless and
+          # future-proof for git-based release-note generators.
+          fetch-depth: 0
+
+      # QEMU: emulate arm64 syscalls during apk add / image finalize.
+      # The Go cross-compile in our Dockerfile runs natively on amd64 (see
+      # backend stage with --platform=$BUILDPLATFORM), so QEMU is only used
+      # for the tiny final-image steps. Total arm64 build ≈ same as amd64.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Auth to GHCR using GITHUB_TOKEN. github.actor is the user that pushed
+      # the tag (you, in solo-maintainer mode). Token is short-lived per
+      # workflow run.
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Compute three published tags from one git tag:
+      #   v0.1.0 → 0.1.0 (full),  0.1 (minor track),  latest
+      # docker/metadata-action handles the semver math + emits OCI labels
+      # (org.opencontainers.image.*) automatically. enable_latest=auto means
+      # `latest` is added for non-prerelease semver tags only, so v0.2.0-rc1
+      # would NOT clobber latest — important once we start cutting RCs.
+      - name: Compute image tags + labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern=latest
+
+      # Build amd64 + arm64 in one buildx invocation. With our Dockerfile's
+      # --platform=$BUILDPLATFORM trick + pure-Go SQLite, both arches share
+      # the same cross-compile path; no per-arch matrix needed.
+      # cache-from/cache-to: type=gha uses GitHub Actions cache (free, ~10GB
+      # quota per repo). First release is a cold build (~6-8 min); subsequent
+      # tag pushes hit the cache and finish in ~3 min if the Dockerfile didn't
+      # change.
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Extract the CHANGELOG section matching this tag for the GitHub Release
+      # body. The awk script grabs lines from `## [X.Y.Z]` up to (but not
+      # including) the next `## [` header. If no matching section exists, falls
+      # back to a one-liner pointing at the full changelog.
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE="$(mktemp)"
+          # index()-based matching avoids the regex character-class trap where
+          # "[0.1.0]" parses as "match one of 0, 1, ., 0" — a real bug we hit
+          # while smoke-testing this workflow. Bracket-literal regex is also
+          # awk-dialect-dependent (gawk vs mawk), so we sidestep regex entirely.
+          awk -v ver="$VERSION" -v hdr="## [" -v tail="]" '
+            index($0, hdr ver tail) == 1 { found=1; print; next }
+            # Stop at next "## [..." section (works for non-latest entries) ...
+            found && index($0, hdr) == 1 { exit }
+            # ... or at the link-reference block at bottom of file
+            # (catches "[Unreleased]: https://..." etc when extracting the
+            # latest section, which has no later "## [" sentinel).
+            found && index($0, "[") == 1 && index($0, "]:") > 0 { exit }
+            found { print }
+          ' CHANGELOG.md > "$NOTES_FILE"
+          if [ ! -s "$NOTES_FILE" ]; then
+            echo "No CHANGELOG section found for $VERSION — using fallback." >&2
+            echo "Release notes: see [CHANGELOG.md](./CHANGELOG.md)." > "$NOTES_FILE"
+          fi
+          # Append the published image refs so users can copy-paste a docker pull
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Container images** (multi-arch \`linux/amd64\` + \`linux/arm64\`):"
+            echo ""
+            echo '```bash'
+            echo "docker pull ${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+            echo "docker pull ${REGISTRY}/${IMAGE_NAME}:latest"
+            echo '```'
+          } >> "$NOTES_FILE"
+          echo "path=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+
+      # softprops/action-gh-release auto-detects pre-release from semver
+      # suffix (e.g. v0.2.0-rc1 → prerelease=true). draft=false publishes
+      # immediately; flip to true if you want to review the rendered notes
+      # in GitHub UI before announcing.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: ${{ steps.notes.outputs.path }}
+          draft: false
+          generate_release_notes: false   # we provide our own from CHANGELOG

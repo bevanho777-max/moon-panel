@@ -1,0 +1,11 @@
+/tools/
+/dist/
+**/node_modules/
+/frontend/dist/
+/backend/web/dist/
+/data/
+*.db
+*.db-shm
+*.db-wal
+.git/
+*.log

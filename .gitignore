@@ -1,0 +1,115 @@
+# Runtime data
+/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Local dev data + air hot-reload working dir (see docs/DEV.md)
+/backend/data-dev/
+/backend/tmp/
+/backend/build-errors.log
+
+# Backend build artifacts
+/backend/moon-panel
+/backend/moon-panel.exe
+/backend/web/dist/
+
+# Frontend build artifacts
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
+
+# Project policy: all build-tool configs live in .ts (vite, vitest, eslint,
+# tailwind, etc.). A compiled .js sibling SILENTLY SHADOWS the .ts because
+# Vite resolves config priority js > mjs > ts. Caused a real outage 2026-05-02:
+# leftover vite.config.js (orphan from past `tsc` on vite.config.ts) routed
+# /api proxy to stale :3000 instead of :3001 — see docs/DEV.md §10.1.
+# If you ever genuinely need a .js config, `!`-allowlist it explicitly below
+# (e.g. `!frontend/tailwind.config.js`).
+/frontend/*.config.js
+/frontend/*.config.cjs
+/frontend/*.config.mjs
+/frontend/*.config.d.ts
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Env
+.env
+.env.local
+*.local
+
+# Logs
+*.log
+
+# Portable toolchain (session-scoped Go install)
+/tools/
+
+# Verification screenshots (Phase 2.4+ Playwright output, per phase subdir)
+/screenshots/
+
+# Test output (Playwright HTML report + traces, vitest coverage). Generated
+# locally and in CI; not source.
+/frontend/playwright-report/
+/frontend/test-results/
+/frontend/coverage/
+
+# Local backup files. Convention: when you make a `.MYCOPY` of any file as
+# a manual safety net before risky edits, this rule keeps it out of git
+# regardless of which file or where in the tree.
+*.MYCOPY
+*.bak
+*.orig
+
+# Docker Compose: only the .example template is committed. The active
+# docker-compose.yml is host-specific (real passwords, NAS-mounted paths,
+# private hostnames) and stays local. Same rule for the override convention.
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.override.yaml
+docker-compose.local.yml
+*.local.yml
+
+# === 5a 补漏 ===
+
+# Test output at repo root (in addition to /frontend/* paths above) — covers
+# the case where someone runs playwright/vitest from the repo root or a
+# different working dir.
+/playwright-report/
+/test-results/
+/coverage/
+
+# Backup-export artifacts. Phase 4c backup feature produces these files;
+# they contain a snapshot of all groups/cards/settings — never commit.
+*.zip
+moon-panel-backup-*.json
+
+# More editor / OS leftovers.
+*.backup
+*.SAVE
+.history/
+
+# Memory files containing local-path residue (D-drive paths, NAS hostnames,
+# session-specific notes). Public OSS users don't need these; the tracked
+# memory files are vetted for portability.
+/memory/feedback_d_drive_residue.md
+
+# Backup snapshots (NAS data backups, not for repo)
+/data-emergency-*/
+/data-old-*/
+
+
+# Active deployment yml (template only is committed as .example)
+docker-compose.yml
+
+
+# Local diagnostic output (not for repo)
+git-add-preview*.txt
+
