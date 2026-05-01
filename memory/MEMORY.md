@@ -1,3 +1,9 @@
+# Moon Panel — Claude Code memory log
+
+> This directory is the persistent memory written by [Claude Code](https://claude.com/claude-code) while building Moon Panel. Each entry below points to a `feedback_*` / `project_*` file capturing a lesson, decision, or correction from a real session — what to repeat, what to avoid, and why. The entries shaped Claude's behavior on later turns, so future contributors using Claude Code on this repo inherit them automatically. They're committed publicly (rather than kept private to the maintainer) so the AI-collaboration trail is auditable end-to-end. See the README's *AI Collaboration* section for context.
+
+## Entries
+
 - [Moon Panel 项目背景](project_moon_panel.md) — 自托管导航面板，替代 Sun-Panel，单密码 + 内外网切换 + 单文件部署
 - [Memory 写入位置](feedback_memory_location.md) — 新 memory 只写 P:\moon-panel\memory\，不要写自动 memory 目录
 - [状态变更操作前必须征求确认](feedback_state_changes.md) — push/rebase/删文件/装依赖等先问，代码改动直接做
