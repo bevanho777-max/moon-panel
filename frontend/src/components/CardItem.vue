@@ -332,7 +332,15 @@ const tooltipText = computed(() => {
   -webkit-backdrop-filter: blur(8px) saturate(120%);
   backdrop-filter: blur(8px) saturate(120%);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: background 200ms ease, transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  /* Hover uses translateY + box-shadow instead of scale, so the
+     backdrop-filter region keeps a fixed size and the browser doesn't
+     re-sample the wallpaper under each card on every frame. The previous
+     scale(1.03) made backdrop blur ~3x more expensive per frame. */
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background-color 180ms ease;
+  will-change: transform, box-shadow;
   cursor: pointer;
   min-width: 0;
   /* iOS: suppress system long-press menu */
@@ -343,16 +351,23 @@ const tooltipText = computed(() => {
   color: inherit;
 }
 .card-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: scale(1.03);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  /* Subtle white tint over the existing acrylic — half a notch above the
+     idle 0.06 so the change registers without "everything turns white". */
+  background-color: rgba(255, 255, 255, 0.08);
+  /* Outer 1px ring + soft drop glow replace the old scale-up. Uses the
+     existing brand blue (#5b8def family); dynamic theme primary isn't
+     exposed as a CSS var today, so plumbing that could be a follow-up. */
+  box-shadow:
+    0 0 0 1px rgba(135, 165, 240, 0.3),
+    0 6px 20px rgba(91, 141, 239, 0.15);
+  transform: translateY(-1px);
 }
 .card-item--disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 .card-item--disabled:hover {
+  background-color: rgba(255, 255, 255, 0.06);
   transform: none;
   box-shadow: none;
 }
