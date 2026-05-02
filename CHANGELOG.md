@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-03
+
+Pure perf hotfix: card hover/click lag root-caused to NDropdown over-eager
+mounting, not the wallpaper / acrylic stack we suspected through 5b-3/5b-4.
+
+### Changed
+
+- `CardItem.vue` lazy-mounts its NDropdown (`v-if="dropdownMounted"`).
+  Pre-v0.1.4 every card kept a fully-instantiated NDropdown alive with
+  `:show="false"` — NaiveUI spins up VBinder + popper.js listeners +
+  ResizeObserver per instance regardless of show state, so 5 cards on
+  the home page = 5 popper machines doing nothing on every paint and
+  every layout recalc. First right-click on a card now flips the v-if;
+  subsequent right-clicks toggle `:show` only. Cards that never get
+  right-clicked never pay the popper cost.
+- Verified hover state remains 100% CSS-driven (no `@mouseenter` /
+  `@mouseleave` / JS hover refs in `CardItem.vue`). The earlier 5b-3
+  hover transition rework is still in effect; this release is purely
+  about the unrelated NDropdown overhead.
+
 ## [0.1.3] - 2026-05-03
 
 Hotfix release for two functional bugs surfaced testing v0.1.2 in
@@ -204,7 +224,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.0...v0.1.1

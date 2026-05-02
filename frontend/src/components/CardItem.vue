@@ -17,11 +17,23 @@ const url = computed(() =>
   }),
 )
 
+// NDropdown is lazy-mounted (v0.1.4): pre-v0.1.4 it was always rendered
+// with :show="false", but NaiveUI still spins up VBinder + popper.js
+// listeners + ResizeObserver per instance. With 5 cards on the home page
+// that was 5 popper machines doing nothing on every initial paint — the
+// hover/click lag root cause that 5b-3 / 5b-4 didn't fully resolve.
+// First right-click flips dropdownMounted to true and keeps it; closes
+// then go through showMenu only, so we still get the cheap hide path.
+const dropdownMounted = ref(false)
 const showMenu = ref(false)
 const menuX = ref(0)
 const menuY = ref(0)
 
 function openMenu(x: number, y: number) {
+  dropdownMounted.value = true
+  // Even after first mount, force a false→nextTick(true) toggle so
+  // NDropdown re-positions when the user right-clicks at a new spot
+  // while a previous menu is still showing on this card.
   showMenu.value = false
   menuX.value = x
   menuY.value = y
@@ -290,6 +302,7 @@ const tooltipText = computed(() => {
   </div>
 
   <NDropdown
+    v-if="dropdownMounted"
     placement="bottom-start"
     trigger="manual"
     :show="showMenu"
