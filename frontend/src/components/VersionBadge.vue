@@ -88,20 +88,36 @@ function fmtDate(s: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-// Pull a one-line preview from a release body. The body is markdown — we
-// don't ship a markdown renderer (out of scope for v0.1.2), so we grab the
-// first non-empty, non-decorative line and strip leading "## " / list dash.
+// Pull a 1-2 line prose preview from a release body (markdown).
+//
+// The CHANGELOG sections start with "## [X.Y.Z] - YYYY-MM-DD" — v0.1.2's
+// previewBody returned that line verbatim (after stripping the "##"),
+// which read as a redundant date repeat in the popover. v0.1.3 walks past
+// every heading / hr / code-fence / link-ref line and grabs the first
+// genuine prose paragraph, joining up to 2 lines and truncating at ~120
+// chars so the popover stays compact.
 function previewBody(body: string): string {
   if (!body) return ''
   const lines = body.split('\n')
+  const prose: string[] = []
   for (const raw of lines) {
     const trimmed = raw.trim()
-    if (!trimmed) continue
-    if (trimmed === '---') continue
-    if (trimmed.startsWith('```')) continue
-    return trimmed.replace(/^#+\s*/, '').replace(/^[-*]\s+/, '')
+    if (!trimmed) {
+      // Blank line ends the current paragraph — break out once we have
+      // collected something, otherwise keep skipping leading blanks.
+      if (prose.length > 0) break
+      continue
+    }
+    if (trimmed.startsWith('#')) continue            // any heading level
+    if (trimmed.startsWith('---')) continue          // horizontal rule
+    if (trimmed.startsWith('```')) continue          // code fence
+    if (/^\[.+\]:\s/.test(trimmed)) continue         // markdown link reference
+    prose.push(trimmed.replace(/^[-*]\s+/, ''))
+    if (prose.length >= 2) break
   }
-  return ''
+  let text = prose.join(' ')
+  if (text.length > 120) text = text.slice(0, 117) + '…'
+  return text
 }
 
 onMounted(() => {

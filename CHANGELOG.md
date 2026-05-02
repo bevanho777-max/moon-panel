@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-05-03
+
+Hotfix release for two functional bugs surfaced testing v0.1.2 in
+production, plus a long-standing placeholder filled in.
+
+### Fixed
+
+- Version badge no longer renders as `vundefined`. The frontend
+  `getVersion()` helper in v0.1.2 typed the axios call as `<VersionInfo>`
+  and read `.data` as if it were the inner payload — but the backend
+  wraps every response in `{code, msg, data}`, and the http client (plain
+  axios) doesn't unwrap. Result: `version.value.version` was reading the
+  envelope's nonexistent `version` field, returning `undefined`. The
+  LDFLAGS injection itself was working correctly the whole time. Fixed
+  to follow the same `data.data!` pattern as `panel.ts`.
+- Version-badge popover preview now skips heading / hr / code-fence /
+  link-reference lines and takes the first genuine prose paragraph
+  (joined up to 2 lines, truncated at 120 chars). v0.1.2's preview
+  returned the heading line stripped of `##`, which read as a redundant
+  date repeat (e.g. `[0.1.2] - 2026-05-02`).
+
+### Added
+
+- `GET /api/admin/stats` (auth-gated) returning `groups_count`,
+  `cards_count`, `engines_count`, and the count of audit-log entries
+  written in the last 7 days. Drives the admin Overview page —
+  previously hardcoded to `0`.
+- Admin Overview now displays the four real counters instead of the
+  three zero-filled placeholders. The "本页未来会显示..." NAlert is
+  removed; the page is now an actual overview.
+
 ## [0.1.2] - 2026-05-02
 
 Adds an in-app version indicator so deployments can see at a glance whether
@@ -173,7 +204,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bevanho777-max/moon-panel/releases/tag/v0.1.0

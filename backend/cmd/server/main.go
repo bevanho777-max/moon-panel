@@ -133,6 +133,7 @@ func main() {
 	(&api.SearchEngineHandler{DB: db}).Register(apiGroup, requireAuth)
 	(&api.SettingHandler{DB: db}).Register(apiGroup, requireAuth)
 	(&api.AuditLogHandler{DB: db}).Register(apiGroup, requireAuth)
+	(&api.StatsHandler{DB: db}).Register(apiGroup, requireAuth)
 
 	// Weather endpoint is public (homepage widget needs it without login),
 	// rate-limited per IP to prevent amplification attacks against Open-Meteo.

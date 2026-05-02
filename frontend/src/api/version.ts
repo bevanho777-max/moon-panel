@@ -6,7 +6,7 @@
 // the badge once or twice per session"), cached in localStorage for 30
 // minutes so re-opens of the popover don't re-hit the API.
 
-import { http } from './client'
+import { http, type ApiResponse } from './client'
 
 export interface VersionInfo {
   version: string
@@ -15,8 +15,13 @@ export interface VersionInfo {
 }
 
 export async function getVersion(): Promise<VersionInfo> {
-  const { data } = await http.get<VersionInfo>('/version')
-  return data
+  // The backend wraps every response in {code, msg, data}; the http client
+  // (plain axios) does NOT unwrap, so we have to reach into .data.data
+  // ourselves. Same pattern as panel.ts. v0.1.2 missed this and rendered
+  // "vundefined" because data.version was reading the envelope, not the
+  // inner payload.
+  const { data } = await http.get<ApiResponse<VersionInfo>>('/version')
+  return data.data!
 }
 
 export interface GitHubRelease {
