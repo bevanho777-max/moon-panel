@@ -30,6 +30,20 @@ if [ -z "$USER_NAME" ]; then
 fi
 
 mkdir -p "$DATA_DIR"
-chown -R "$USER_NAME:$GROUP_NAME" "$DATA_DIR"
+
+# Chown by NUMERIC PUID:PGID rather than resolved USER_NAME:GROUP_NAME, so a
+# corrupted /etc/passwd or a silent adduser/addgroup failure above still
+# results in correctly-owned files (kernel only cares about numeric IDs;
+# passwd/group are name lookup tables). Fail-fast on chown error: the
+# server would otherwise crash later opening /data/jwt.key with an opaque
+# permission-denied, and the container would restart-loop without an
+# obvious cause. Better to bail here with a clear message.
+echo "[entrypoint] PUID=$PUID PGID=$PGID DATA_DIR=$DATA_DIR (user=$USER_NAME group=$GROUP_NAME)"
+if ! chown -R "$PUID:$PGID" "$DATA_DIR"; then
+    echo "[entrypoint] FATAL: chown -R $PUID:$PGID $DATA_DIR failed" >&2
+    echo "[entrypoint]   check the volume is writable and not mounted read-only" >&2
+    exit 1
+fi
+echo "[entrypoint] chown'd $DATA_DIR to $PUID:$PGID; starting moon-panel"
 
 exec su-exec "$USER_NAME:$GROUP_NAME" "$@"

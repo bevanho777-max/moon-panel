@@ -121,6 +121,173 @@ it's only consulted while the users table is empty.
 Set `PUID=1026 PGID=100` (default `users` group on DSM) so files in `./data`
 end up owned by your DSM user instead of the container's anonymous UID.
 
+## Deployment
+
+The Quick Start above is the build-from-source shortcut. This section walks
+through the published-image flow with NAS-specific PUID/PGID guidance and
+the rest of the operational lifecycle.
+
+### Prerequisites
+
+- Docker 24+ with the Compose v2 plugin (`docker compose ...`)
+- Linux, Synology DSM 7.2+, Unraid, or TrueNAS Scale
+- ~50 MiB free disk for the image, 5 MiB+ for the data volume
+
+### Step 1 — Determine PUID / PGID
+
+Files written under your data directory will end up owned by this UID/GID.
+Match it to the host user that should own `./data`:
+
+| Platform | Find with | Typical |
+|---|---|---|
+| Generic Linux | `id $USER` | `1000:1000` |
+| Synology DSM | SSH in, run `id $USER` | `1026:100` (`users` group) |
+| Unraid | (well-known) | `99:100` (`nobody:users`) |
+| TrueNAS Scale | dataset owner per pool config | varies |
+
+### Step 2 — Prepare the data directory
+
+```bash
+mkdir -p /your/path/moon-panel/data
+sudo chown -R PUID:PGID /your/path/moon-panel/data
+```
+
+The container's entrypoint runs `chown -R` on every start, so the host-side
+`chown` here is optional in v0.1.1+. On hosts where the Docker daemon
+creates bind-mount targets as `root` (most Linuxes do), pre-creating the
+directory yourself avoids a brief moment of root-owned files.
+
+### Step 3 — docker-compose.yml
+
+Copy [docker-compose.yml.example](docker-compose.yml.example) and edit
+`MOON_ADMIN_PASSWORD`. Pin the image to a specific tag for reproducibility:
+
+```yaml
+services:
+  moon-panel:
+    image: ghcr.io/bevanho777-max/moon-panel:0.1.1
+    container_name: moon-panel
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PUID: 1026
+      PGID: 100
+      MOON_ENV: production
+      MOON_PUBLIC_MODE: "false"
+      MOON_ADMIN_PASSWORD: <set on first start, then comment out>
+    volumes:
+      - ./data:/data
+```
+
+### Step 4 — Start
+
+```bash
+docker compose up -d
+docker compose logs -f moon-panel
+```
+
+Expected log sequence on first start:
+
+```
+[entrypoint] PUID=1026 PGID=100 DATA_DIR=/data (user=moon group=users)
+[entrypoint] chown'd /data to 1026:100; starting moon-panel
+moon-panel listening on :3000 (env=production public_mode=false ...)
+```
+
+### Step 5 — Access
+
+Open `http://<host-ip>:3000` in your browser. Log in as `admin` with the
+password from `MOON_ADMIN_PASSWORD`. After first login, comment out
+`MOON_ADMIN_PASSWORD` from the compose file — it's only consulted while
+the users table is empty, so leaving it set is harmless but unnecessary.
+
+## Updating
+
+### Track patch releases (recommended)
+
+Pin to the minor track in `docker-compose.yml`:
+
+```yaml
+image: ghcr.io/bevanho777-max/moon-panel:0.1
+```
+
+Then:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+`:0.1` always points to the latest `0.1.x` patch, so bug fixes and
+security patches arrive automatically. Your data under `./data` survives
+image swaps untouched.
+
+### Manual / version-pinned update
+
+If you'd rather pin to a specific tag and update on your own schedule:
+
+1. Edit `docker-compose.yml`: change `image:` to the exact target version.
+2. `docker compose pull`
+3. `docker compose up -d`
+
+### Rolling back
+
+Pin the image to a previous tag (e.g., `:0.1.0`) in compose and
+`docker compose up -d`. Data files are forward-compatible across patch
+versions but **not** guaranteed across major-version downgrades.
+
+## Common Issues
+
+### `permission denied opening /data/jwt.key`
+
+Cause: the host directory ownership doesn't match `PUID:PGID`, or the
+volume is mounted read-only.
+
+Fix:
+
+```bash
+sudo chown -R PUID:PGID /your/path/data
+docker compose restart
+```
+
+v0.1.1+ entrypoint logs the chown step explicitly. Check
+`docker compose logs moon-panel` for `[entrypoint] chown'd /data to ...`
+— if you don't see that line, the entrypoint exited before reaching chown
+(check earlier log lines for the cause).
+
+### `Bind mount failed: source path does not exist`
+
+Cause: docker compose tried to mount `./data` before the host directory
+existed. Some Docker versions auto-create the path as root; others fail.
+
+Fix:
+
+```bash
+mkdir -p ./data
+docker compose up -d
+```
+
+### Container restarts repeatedly
+
+Cause: the entrypoint or the server crashes shortly after start. Common
+reasons in order of likelihood:
+
+1. Permission denied opening `/data/jwt.key` (see above)
+2. `MOON_ADMIN_PASSWORD` shorter than 8 characters — backend rejects the
+   bootstrap and exits non-zero on first start
+3. Port conflict (`bind: address already in use :3000`)
+
+Diagnose:
+
+```bash
+docker compose logs moon-panel | tail -50
+```
+
+The lines between `[entrypoint] PUID=...` and the next visible failure
+usually point at the cause. If the log is empty, the entrypoint died
+before printing — most often a missing or unreadable volume.
+
 ## Configuration
 
 All environment variables (set them in `docker-compose.yml`):

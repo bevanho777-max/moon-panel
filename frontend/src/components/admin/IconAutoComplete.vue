@@ -16,7 +16,7 @@
 //   - File upload — Cards uses IconUploader as a sibling; not part of
 //     the icon-picker contract.
 
-import { computed, h, ref, type VNode } from 'vue'
+import { computed, h, nextTick, ref, type VNode } from 'vue'
 import type { AutoCompleteOption } from 'naive-ui'
 import {
   type IconCandidate,
@@ -133,9 +133,14 @@ function onUpdate(v: string) {
   emit('update:modelValue', v)
 }
 function onSelect(v: string | number) {
-  // Selection commits the value via emit('update:modelValue') from the
-  // child too; we just forward the select event for parents that want
-  // to react (e.g. URL paste → auto-fetch in Cards.vue).
+  // NAutoComplete's select() handler does doSelect(option.value) for the
+  // select event AND doUpdateValue(option.label) for the v-model — the
+  // input commits the LABEL, not the value. Our options use label = bare
+  // name ("vmware-esxi") and value = "lucide:vmware-esxi" or full URL,
+  // so without intervention the saved icon would lose its prefix and
+  // fail the icon-format check. Schedule the override in nextTick so it
+  // lands AFTER NAutoComplete's synchronous label commit.
+  nextTick(() => emit('update:modelValue', String(v)))
   emit('select', v)
 }
 function onBlur() {

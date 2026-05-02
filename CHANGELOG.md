@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-02
+
+Hotfix release covering two functional bugs surfaced in v0.1.0 production
+deployment, an entrypoint robustness pass, and a substantial deployment
+documentation expansion.
+
+### Fixed
+
+- Icon autocomplete now correctly commits the selected option's value
+  (`lucide:<name>` for Lucide icons, full CDN URL for dashboard-icons)
+  instead of the bare name. NAutoComplete's default behavior writes the
+  option's `label` into the v-model on selection — that's correct for
+  picker UIs where label === value, but our options use display name as
+  label and prefixed/qualified strings as value. The fix overrides the
+  v-model in `nextTick()` after select so the prefix isn't lost; saves
+  no longer trip the icon-format validation warning.
+- Default builtin wallpapers now appear in the admin Site Settings
+  picker on private-mode (`MOON_PUBLIC_MODE=false`) deployments. The
+  initial `ui.ensureLoaded()` call hits a 401 before login (the panel
+  endpoint requires auth in private mode) and silently bails, leaving
+  `ui.builtins` as `[]`. App.vue now watches `auth.authenticated` and
+  re-fetches the panel on the false→true transition — covers regular
+  login, TOTP verification, and first-time admin init in a single watch.
+
+### Changed
+
+- `docker/entrypoint.sh`: chown the data directory by numeric
+  `$PUID:$PGID` rather than via resolved user/group names, so a
+  corrupted `/etc/passwd` or a silent `addgroup`/`adduser` failure
+  doesn't leave files root-owned. Added an explicit startup log line
+  (`[entrypoint] chown'd /data to ...`) and fail-fast on chown error
+  (a clear FATAL message instead of crash-looping with an opaque
+  permission-denied later in the stack).
+
+### Added
+
+- README: full Deployment / Updating / Common Issues sections in both
+  English and Chinese. Walks through PUID/PGID determination per
+  platform (Linux / Synology / Unraid / TrueNAS), step-by-step compose
+  setup, expected log sequence, the `:0.1` minor-track upgrade pattern,
+  and troubleshooting for the most common failure modes (permission
+  denied on jwt.key, bind-mount path missing, restart loops).
+
 ## [0.1.0] - 2026-05-02
 
 Initial public release. Self-hosted dashboard / start page with single-password
@@ -96,5 +139,6 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bevanho777-max/moon-panel/releases/tag/v0.1.0

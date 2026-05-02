@@ -106,6 +106,163 @@ PUID=$(id -u) PGID=$(id -g) docker compose up -d --build
 群晖 DSM 的默认用户组是 `users`，把 `PUID=1026 PGID=100` 设上，`./data`
 里的文件就会归属你 DSM 用户而不是容器内匿名 UID。
 
+## 部署
+
+上面的 Quick Start 是从源码 build 的快捷方式。这一节走完整的"用发布镜像"
+流程，含 NAS 平台 PUID/PGID 提示和后续运维生命周期。
+
+### 前置要求
+
+- Docker 24+，含 Compose v2 插件 (`docker compose ...`)
+- Linux / Synology DSM 7.2+ / Unraid / TrueNAS Scale
+- ~50 MiB 可用磁盘装镜像，5 MiB+ 装数据卷
+
+### Step 1 — 确定 PUID / PGID
+
+数据目录里的文件会归这个 UID/GID 所有。匹配你想让 `./data` 归属的宿主机
+用户:
+
+| 平台 | 查询命令 | 典型值 |
+|---|---|---|
+| 通用 Linux | `id $USER` | `1000:1000` |
+| Synology DSM | SSH 后 `id $USER` | `1026:100` (`users` 组) |
+| Unraid | (业内默认) | `99:100` (`nobody:users`) |
+| TrueNAS Scale | dataset 配置看 owner | 视配置 |
+
+### Step 2 — 准备数据目录
+
+```bash
+mkdir -p /your/path/moon-panel/data
+sudo chown -R PUID:PGID /your/path/moon-panel/data
+```
+
+容器 entrypoint 每次启动会跑 `chown -R`，所以 v0.1.1+ 起这个宿主机端 chown
+是可选的。但在 Docker daemon 用 `root` 自动创建 bind-mount 目录的主机上
+(大多数 Linux 是这样)，提前自己 mkdir 可以避开"短暂被 root 拥有"的窗口。
+
+### Step 3 — docker-compose.yml
+
+复制 [docker-compose.yml.example](docker-compose.yml.example) 改
+`MOON_ADMIN_PASSWORD`。锁定到具体 tag 保证可复现:
+
+```yaml
+services:
+  moon-panel:
+    image: ghcr.io/bevanho777-max/moon-panel:0.1.1
+    container_name: moon-panel
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PUID: 1026
+      PGID: 100
+      MOON_ENV: production
+      MOON_PUBLIC_MODE: "false"
+      MOON_ADMIN_PASSWORD: <首次启动设置后注释掉>
+    volumes:
+      - ./data:/data
+```
+
+### Step 4 — 启动
+
+```bash
+docker compose up -d
+docker compose logs -f moon-panel
+```
+
+首次启动期待看到的日志:
+
+```
+[entrypoint] PUID=1026 PGID=100 DATA_DIR=/data (user=moon group=users)
+[entrypoint] chown'd /data to 1026:100; starting moon-panel
+moon-panel listening on :3000 (env=production public_mode=false ...)
+```
+
+### Step 5 — 访问
+
+浏览器开 `http://<host-ip>:3000`，用 `admin` + `MOON_ADMIN_PASSWORD` 登录。
+首次登录后把 `MOON_ADMIN_PASSWORD` 从 compose 注释掉 — users 表非空时这个
+变量被忽略，留着不会出问题但也没必要保留。
+
+## 升级
+
+### 跟最新 patch（推荐）
+
+`docker-compose.yml` 锁到 minor 版本:
+
+```yaml
+image: ghcr.io/bevanho777-max/moon-panel:0.1
+```
+
+然后:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+`:0.1` 始终指向最新的 `0.1.x` patch — bug 修复和安全补丁会自动跟上，
+`./data` 数据跨镜像替换原样保留。
+
+### 手动 / 锁版本升级
+
+如果想锁定具体版本自己控节奏:
+
+1. 编辑 `docker-compose.yml`，把 `image:` 改成目标版本号
+2. `docker compose pull`
+3. `docker compose up -d`
+
+### 回滚
+
+把 image 改回旧 tag (例如 `:0.1.0`) → `docker compose up -d`。
+patch 版本之间数据格式向前兼容，但**主版本回滚不保证可行**。
+
+## 常见问题
+
+### `permission denied opening /data/jwt.key`
+
+原因: 宿主机目录 owner 跟 `PUID:PGID` 不匹配，或卷以只读挂载。
+
+修复:
+
+```bash
+sudo chown -R PUID:PGID /your/path/data
+docker compose restart
+```
+
+v0.1.1+ entrypoint 会显式打 chown 步骤的日志。看
+`docker compose logs moon-panel` 是否有 `[entrypoint] chown'd /data to ...`
+那行 — 没有就说明 entrypoint 在 chown 之前就退出了 (看更早的 log 找原因)。
+
+### `Bind mount failed: source path does not exist`
+
+原因: docker compose 在宿主机目录还没建好就尝试挂载 `./data`。某些 Docker
+版本会自动用 root 建目录，另一些直接报错。
+
+修复:
+
+```bash
+mkdir -p ./data
+docker compose up -d
+```
+
+### 容器反复重启
+
+原因: entrypoint 或 server 启动后很快崩溃。常见原因 (按概率排序):
+
+1. `/data/jwt.key` 权限不对 (见上面)
+2. `MOON_ADMIN_PASSWORD` 短于 8 字符 — 后端拒绝 bootstrap，首次启动直接非零退出
+3. 端口冲突 (`bind: address already in use :3000`)
+
+排错:
+
+```bash
+docker compose logs moon-panel | tail -50
+```
+
+`[entrypoint] PUID=...` 之后到首次错误之间的行通常指向真因。如果 log 是空的，
+说明 entrypoint 还没来得及打日志就死了 — 多半是卷不存在或不可读。
+
 ## 配置
 
 所有环境变量（在 `docker-compose.yml` 里设置）：

@@ -30,11 +30,29 @@ watch(
   { immediate: true },
 )
 
+// Private-mode hydration: when MOON_PUBLIC_MODE=false, /api/public/panel is
+// gated behind auth, so the cold-start ui.ensureLoaded() in onMounted hits
+// a 401 and silently bails — leaving builtins/wallpaper/theme empty and
+// breaking the admin WallpaperPicker grid (v0.1.0 bug). Once the user
+// flips to authenticated (login / TOTP / first-time admin init all land
+// here), re-pull the panel so the in-memory store actually reflects the
+// server state. Public-mode deployments never hit this path because the
+// initial fetch already succeeds.
+watch(
+  () => auth.authenticated,
+  async (now, prev) => {
+    if (now && !prev) {
+      await ui.refresh()
+    }
+  },
+)
+
 onMounted(() => {
   auth.refresh()
   // Wallpaper / theme load runs in parallel with auth — neither blocks the
   // other. Errors inside ensureLoaded fall back to defaults silently
-  // (private-mode login page would 401 here; that's expected).
+  // (private-mode login page would 401 here; that's expected — the watch
+  // above hydrates after the user authenticates).
   ui.ensureLoaded()
 })
 </script>
