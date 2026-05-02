@@ -5,6 +5,13 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
+  // Strip console.* and `debugger` from the production bundle. Vite's
+  // default esbuild minify keeps console calls; for a public-facing panel
+  // we don't want diagnostic spam in users' browser consoles. Marginal
+  // bundle-size + INP win (~5ms tops); the main motivation is hygiene.
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

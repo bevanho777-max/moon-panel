@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, h, nextTick, onMounted, ref, type VNode } from 'vue'
+import { computed, h, nextTick, ref, type VNode } from 'vue'
 import { NDropdown, type DropdownOption } from 'naive-ui'
 import type { Card } from '@/api/card'
 import { useNetworkStore } from '@/stores/network'
@@ -9,21 +9,6 @@ import LucideIcon from '@/components/LucideIcon.vue'
 
 const props = defineProps<{ card: Card }>()
 const network = useNetworkStore()
-
-// Plex-badge diagnostic (Phase 2.5a, per user request — F12 console reveals
-// whether url_internal/external is whitespace-only, which would silently
-// bypass the auto-badge logic). Logs once per card mount, only when actually
-// suspicious (non-empty raw value but trim-empty).
-onMounted(() => {
-  for (const field of ['url_internal', 'url_external'] as const) {
-    const v = props.card[field]
-    if (v && v.trim() === '') {
-      console.warn(
-        `[Moon Panel] Card "${props.card.title}" (id=${props.card.id}) ${field} is whitespace-only — auto-badge logic treats this as set, you may want to clear it. Raw: ${JSON.stringify(v)}`,
-      )
-    }
-  }
-})
 
 const url = computed(() =>
   effectiveURL(props.card, {
@@ -92,13 +77,15 @@ function handleMenuSelect(key: string | number) {
   showMenu.value = false
 }
 
-// Computed: which network sides are populated. Drives the auto "仅内网/仅外网"
-// badge — both populated → no badge (default state, switcher chooses).
-const internalSet = computed(() => props.card.url_internal.trim() !== '')
-const externalSet = computed(() => props.card.url_external.trim() !== '')
+// Drives the auto "仅内网/仅外网" badge — both URLs set → no badge (default,
+// switcher chooses), exactly one set → that side's badge. Folded from three
+// computeds (5b-4): the per-side trim()-emptiness checks were only ever
+// consumed here, so inlining cuts two reactive nodes per card.
 const networkBadge = computed<'internal-only' | 'external-only' | null>(() => {
-  if (internalSet.value && !externalSet.value) return 'internal-only'
-  if (externalSet.value && !internalSet.value) return 'external-only'
+  const internal = props.card.url_internal.trim() !== ''
+  const external = props.card.url_external.trim() !== ''
+  if (internal && !external) return 'internal-only'
+  if (external && !internal) return 'external-only'
   return null
 })
 
@@ -144,11 +131,6 @@ const lucideName = computed(() =>
 const cardClasses = computed(() => ({
   'card-item': true,
   'card-item--disabled': !url.value,
-  // Phase 2.5c-acrylic: when body.has-wallpaper, the global rule overrides
-  // .card-item's own bg/backdrop-filter to medium-tier acrylic. When no
-  // wallpaper, the class is a no-op and the existing .card-item style
-  // (rgba(255,255,255,0.06) + 8px blur from Phase 2.5b) keeps showing.
-  'mp-acrylic-medium': true,
 }))
 
 const target = computed(() => (props.card.open_in_new_tab ? '_blank' : '_self'))
@@ -326,16 +308,11 @@ const tooltipText = computed(() => {
   gap: 14px;
   padding: 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  /* Frosted glass: blur is invisible on pure dark bg but kicks in once a
-     background image is set in Phase 2.5b. Saturate boosts color a bit. */
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
-  backdrop-filter: blur(8px) saturate(120%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  /* Hover uses translateY + box-shadow instead of scale, so the
-     backdrop-filter region keeps a fixed size and the browser doesn't
-     re-sample the wallpaper under each card on every frame. The previous
-     scale(1.03) made backdrop blur ~3x more expensive per frame. */
+  /* 5b-4: opaque dark blue-purple instead of acrylic. backdrop-filter is
+     gone — sampling 5+ wallpaper regions per frame dominated INP. The new
+     base reads cleanly over any wallpaper without blur cost. */
+  background: rgba(40, 40, 60, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition:
     box-shadow 180ms ease,
     transform 180ms ease,
@@ -351,9 +328,10 @@ const tooltipText = computed(() => {
   color: inherit;
 }
 .card-item:hover {
-  /* Subtle white tint over the existing acrylic — half a notch above the
-     idle 0.06 so the change registers without "everything turns white". */
-  background-color: rgba(255, 255, 255, 0.08);
+  /* Slightly lighter shade of the new opaque base — same hue, "wakes up"
+     without changing visual character. The translateY + glow are the
+     primary hover signals; bg shift is a quiet supporting cue. */
+  background-color: rgba(60, 60, 80, 0.78);
   /* Outer 1px ring + soft drop glow replace the old scale-up. Uses the
      existing brand blue (#5b8def family); dynamic theme primary isn't
      exposed as a CSS var today, so plumbing that could be a follow-up. */
@@ -367,7 +345,7 @@ const tooltipText = computed(() => {
   cursor: not-allowed;
 }
 .card-item--disabled:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(40, 40, 60, 0.65);
   transform: none;
   box-shadow: none;
 }
