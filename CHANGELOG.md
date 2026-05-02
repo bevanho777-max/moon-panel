@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-05-03
+
+Continuation of the card hover-perf hunt. v0.1.4 (NDropdown lazy mount)
+helped, but Bevan's F12 Performance still showed Frames mostly-red on
+mouse-over. Re-diagnosed and root-caused: the v0.1.5 fix is unrelated to
+the v0.1.4 NDropdown work — both were genuine but distinct issues.
+
+### Changed
+
+- `CardItem.vue` hover: dropped the outer drop-glow line of the v5b-3
+  hover `box-shadow`. The drop glow used a 20 px blur radius + 6 px
+  y-offset, so its painted region extended ~26 px past the card box.
+  That overshoot landed inside the parent `.home-group`'s
+  `backdrop-filter: blur(6px)` region, and the browser had to re-sample
+  the home-group's backdrop on every animated hover frame. With 5 cards
+  transitioning in/out as the cursor moved across the grid, paint
+  became the bottleneck. Hover signal still has the inner 1 px brand-blue
+  ring, the `translateY(-1px)` lift, and the background-color brighten
+  — only the soft glow is gone.
+- `CardItem.vue` base style adds `contain: layout paint style`. Future
+  shadow / overlay additions stay clipped inside the card box and can't
+  silently regress this fix by re-triggering parent backdrop sampling.
+
 ## [0.1.4] - 2026-05-03
 
 Pure perf hotfix: card hover/click lag root-caused to NDropdown over-eager
@@ -224,7 +247,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.1...v0.1.2

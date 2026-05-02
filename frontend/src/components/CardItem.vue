@@ -326,6 +326,13 @@ const tooltipText = computed(() => {
      base reads cleanly over any wallpaper without blur cost. */
   background: rgba(40, 40, 60, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  /* v0.1.5: paint containment. Prevents future style additions (shadows,
+     overlays) from forcing repaint outside the card's box, which would
+     ripple into the parent .home-group's backdrop-filter and trigger
+     expensive backdrop re-sampling. layout+paint+style is the standard
+     "isolate this subtree" trio; no visual change today, just a
+     guardrail so the v0.1.5 hover-repaint fix can't quietly regress. */
+  contain: layout paint style;
   transition:
     box-shadow 180ms ease,
     transform 180ms ease,
@@ -342,15 +349,18 @@ const tooltipText = computed(() => {
 }
 .card-item:hover {
   /* Slightly lighter shade of the new opaque base — same hue, "wakes up"
-     without changing visual character. The translateY + glow are the
+     without changing visual character. The translateY + ring are the
      primary hover signals; bg shift is a quiet supporting cue. */
   background-color: rgba(60, 60, 80, 0.78);
-  /* Outer 1px ring + soft drop glow replace the old scale-up. Uses the
-     existing brand blue (#5b8def family); dynamic theme primary isn't
-     exposed as a CSS var today, so plumbing that could be a follow-up. */
-  box-shadow:
-    0 0 0 1px rgba(135, 165, 240, 0.3),
-    0 6px 20px rgba(91, 141, 239, 0.15);
+  /* v0.1.5: ONLY the inner 1px ring. The 5b-3 outer drop glow
+     (`0 6px 20px rgba(91,141,239,0.15)`) extended ~26px past the card's
+     edge with its 20px blur radius, landing inside the parent
+     .home-group's `backdrop-filter: blur(6px)` region — which forced
+     re-sampling that backdrop on every animated hover frame. Frames
+     went all-red. The ring stays inside (or hugs) the card box and
+     paints cheap. translateY + bg shift carry the rest of the
+     "wakes up" feel. */
+  box-shadow: 0 0 0 1px rgba(135, 165, 240, 0.3);
   transform: translateY(-1px);
 }
 .card-item--disabled {
