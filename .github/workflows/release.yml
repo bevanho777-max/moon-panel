@@ -70,6 +70,16 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern=latest
 
+      # v0.1.2: build metadata fed to the Dockerfile via --build-arg so the
+      # backend's internal/api/version.go vars get LDFLAGS-overridden with
+      # real values. metadata-action.outputs.version drops the leading "v"
+      # (so "v0.1.2" → "0.1.2") which is what the GET /api/version JSON
+      # returns. BUILD_DATE is wall-clock UTC at workflow start.
+      - name: Compute build metadata
+        id: meta_build
+        run: |
+          echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       # Build amd64 + arm64 in one buildx invocation. With our Dockerfile's
       # --platform=$BUILDPLATFORM trick + pure-Go SQLite, both arches share
       # the same cross-compile path; no per-arch matrix needed.
@@ -86,6 +96,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            BUILD_DATE=${{ steps.meta_build.outputs.build_date }}
+            COMMIT=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-02
+
+Adds an in-app version indicator so deployments can see at a glance whether
+they're behind upstream, plus the build-time wiring (LDFLAGS) to embed real
+version metadata into the released binary.
+
+### Added
+
+- Version badge in the bottom-left corner of the home page and admin
+  layout. Click to open a popover showing the running version + build
+  date + short commit, the most recent 3 GitHub releases (tag, date,
+  one-line preview), and a "View all on GitHub" link.
+- `GET /api/version` (public, no auth) returning the binary's
+  `{ version, build_date, commit }`. Frontend reads this on every page
+  load; backend value is set at `go build` time via `-ldflags -X` so it
+  reflects the actual published image, not a hardcoded constant.
+- Recent releases are pulled from the public
+  `api.github.com/repos/.../releases` endpoint (no auth, 60 req/h is
+  plenty for click-to-open) and cached in `localStorage` for 30 minutes
+  per session. Network / 429 errors fall back to stale cache or hide the
+  releases section gracefully — the current-version display always
+  works.
+
+### Changed
+
+- `Dockerfile`: backend build stage now accepts `VERSION`, `BUILD_DATE`,
+  `COMMIT` build args and feeds them into `-ldflags -X` overrides for
+  `internal/api.{Version,BuildDate,Commit}`. Local `docker build` without
+  the args keeps the dev defaults; release builds get real values.
+- `.github/workflows/release.yml`: passes the tag-derived version,
+  workflow start time, and full commit SHA into the build via
+  `--build-arg`. No retag required to refresh metadata — the next tag
+  push fills in fresh values.
+
 ## [0.1.1] - 2026-05-02
 
 Hotfix release covering two functional bugs surfaced in v0.1.0 production
@@ -139,6 +173,7 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bevanho777-max/moon-panel/releases/tag/v0.1.0

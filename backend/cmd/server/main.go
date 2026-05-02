@@ -109,6 +109,7 @@ func main() {
 	apiGroup.Use(middleware.AuditLog(db))
 
 	api.RegisterHealth(apiGroup)
+	api.RegisterVersion(apiGroup)
 	(&api.AuthHandler{DB: db, Auth: authSvc, CookieSecure: cfg.CookieSecure, Lockout: loginLockout}).Register(apiGroup, requireAuth)
 	(&api.TOTPHandler{DB: db, Auth: authSvc, CookieSecure: cfg.CookieSecure, TOTPLockout: totpLockout}).Register(apiGroup, requireAuth)
 	// Apply same trusted-IP matcher to TOTP lockout so home networks bypass

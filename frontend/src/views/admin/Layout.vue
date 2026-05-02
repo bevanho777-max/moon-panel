@@ -15,6 +15,7 @@ import {
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import ChangePasswordModal from '@/components/admin/ChangePasswordModal.vue'
+import VersionBadge from '@/components/VersionBadge.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -102,6 +103,7 @@ function handleUserMenu(key: string) {
     </NLayoutContent>
 
     <ChangePasswordModal v-model:show="showPasswordModal" />
+    <VersionBadge />
   </NLayout>
 </template>
 

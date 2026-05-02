@@ -41,6 +41,8 @@ Docker 镜像在树莓派、群晖 NAS、VPS 上都能跑。
 - Lucide 图标库 + dashboard-icons 目录，autocomplete 选择器；图标支持 URL /
   上传 / Lucide 名 / 从 URL 抓取 四种来源
 - 移动端响应式布局，长按打开卡片目标选择器
+- 应用内版本标识（左下角），点击查看最近 3 个 GitHub release 摘要 — 一眼
+  看出当前部署是否跟得上上游，无需离开面板
 
 ### 认证与安全
 - 单密码 admin 登录（无邮箱、无注册、无 SSO — 这是设计取舍）

@@ -47,6 +47,9 @@ works on your home network and over the internet without changing config.
 - Lucide icon library + dashboard-icons catalog with autocomplete picker;
   icons can be a URL, an upload, a Lucide name, or fetched from a URL
 - Mobile-responsive layout with long-press to open card target picker
+- In-app version indicator (bottom-left) with one-click access to recent
+  release notes from GitHub — spot when your deployment falls behind
+  upstream without leaving the panel
 
 ### Auth & Security
 - Single-password admin login (no email, no signup, no SSO — by design)

@@ -17,6 +17,7 @@ import NetworkSwitcher from '@/components/NetworkSwitcher.vue'
 import CardItem from '@/components/CardItem.vue'
 import HeaderSearchBox from '@/components/HeaderSearchBox.vue'
 import HomeHero from '@/components/HomeHero.vue'
+import VersionBadge from '@/components/VersionBadge.vue'
 
 const router = useRouter()
 const message = useMessage()
@@ -190,6 +191,7 @@ onMounted(load)
         </template>
       </NSpin>
     </NLayoutContent>
+    <VersionBadge />
   </NLayout>
 </template>
 

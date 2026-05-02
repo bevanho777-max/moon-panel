@@ -20,6 +20,13 @@ RUN mkdir -p /out && cp -r ../backend/web/dist /out/dist
 FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS backend
 ARG TARGETOS
 ARG TARGETARCH
+# v0.1.2: build-time version metadata, injected into the binary via
+# -ldflags -X overrides. release.yml fills these from the pushed git tag,
+# the workflow run timestamp, and the commit SHA. Local `docker build`
+# without --build-arg keeps the dev defaults defined in api/version.go.
+ARG VERSION=dev
+ARG BUILD_DATE=unknown
+ARG COMMIT=unknown
 WORKDIR /src
 # GOPROXY: try CN mirror first for fast local builds; fall through to default.
 # CI runners outside CN reach proxy.golang.org via the `direct` fallback in
@@ -35,8 +42,14 @@ COPY --from=frontend /out/dist ./web/dist
 # the missing entries — fast in steady state, correct after any dep bump.
 RUN go mod tidy
 ENV CGO_ENABLED=0
+# v0.1.2: -X overrides inject the build-time version vars declared in
+# internal/api/version.go. Single long line for the -ldflags value: nesting
+# Dockerfile line continuations (\) inside the quoted string confuses the
+# parser into treating the next line as a new instruction.
 RUN GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
-    go build -trimpath -ldflags="-s -w" -o /out/moon-panel ./cmd/server
+    go build -trimpath \
+    -ldflags "-s -w -X github.com/moon-panel/moon-panel/internal/api.Version=${VERSION} -X github.com/moon-panel/moon-panel/internal/api.BuildDate=${BUILD_DATE} -X github.com/moon-panel/moon-panel/internal/api.Commit=${COMMIT}" \
+    -o /out/moon-panel ./cmd/server
 
 # ---- Stage 3: alpine runtime with PUID/PGID support (LinuxServer.io style) ----
 # Why alpine instead of distroless: NAS users (Synology, Unraid, TrueNAS) expect
