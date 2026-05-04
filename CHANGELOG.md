@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-05-05
+
+Final card-hover-perf hotfix in the v0.1.x line. Bevan's Paint Flashing
+trace showed all five home-page cards flashing green *as one region*
+when the cursor moved across the grid — not five independent flashes,
+one. The cause: `.home-group`'s `backdrop-filter: blur(6px)` made the
+entire group a single composite region, so any child card's hover
+transition forced the whole group to re-composite. v0.1.5's
+`contain: layout paint style` on the card prevents paint from escaping
+the card box, but doesn't stop the parent from re-compositing when
+child output changes — that's a different mechanism.
+
+### Changed
+
+- Dropped `backdrop-filter` from `.home-group` in `Home.vue`. The 5b-4
+  decision to keep it was based on a "small blur is cheap" assumption
+  that this version's evidence overturned. Cards now paint as
+  independent regions; group loses the frosted-glass effect but keeps
+  the `rgba(255,255,255,0.025)` translucent fill and 1 px border for
+  visual grouping over the wallpaper.
+
 ## [0.1.5] - 2026-05-03
 
 Continuation of the card hover-perf hunt. v0.1.4 (NDropdown lazy mount)
@@ -247,7 +268,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.2...v0.1.3

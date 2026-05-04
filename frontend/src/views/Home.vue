@@ -247,10 +247,20 @@ onMounted(load)
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 16px;
-  /* Frosted-glass for groups too — same degraded-on-dark, lit-up-on-bgimage
-     behavior as cards. Saturate on bg image lifts color; on dark bg it's a no-op. */
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  /* v0.1.6: backdrop-filter removed.
+     5b-4 kept it on the assumption that 6 px blur was cheap enough for
+     2-3 group instances. v0.1.6 Paint Flashing disproved that — the
+     blur turned the entire group into a single composite region, so
+     ANY child-card hover transition (bg / translate / ring) forced
+     the whole group region to re-composite. Five cards were flashing
+     green together because they share the parent's paint unit, not
+     because each card was repainting individually. CardItem's
+     `contain: layout paint style` (v0.1.5) prevents child paint from
+     escaping its box, but doesn't stop the parent from re-compositing
+     when child output changes. Dropping the filter splits the cards
+     back into independent paint regions. Trade: group loses the
+     frosted-glass effect; the 0.025 bg + 1 px border still gives a
+     subtle structural frame over the wallpaper. */
 }
 .home-group:last-child {
   margin-bottom: 0;
