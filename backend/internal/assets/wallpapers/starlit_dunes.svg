@@ -1,0 +1,65 @@
+<!-- Generated for Moon Panel v0.2.3, MIT licensed.
+     Starlit dunes: deep purple→amber gradient sky, low warm-glow moon
+     halo, two layers of dune silhouettes, golden + white starfield. ~2 KB.
+     Tuned for the risen theme's warm-brown / golden palette. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0e2a"/>
+      <stop offset="55%" stop-color="#3a1e2a"/>
+      <stop offset="80%" stop-color="#7c4528"/>
+      <stop offset="100%" stop-color="#b86a3a"/>
+    </linearGradient>
+    <radialGradient id="moonHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe2b0" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#d4af7a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#d4af7a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="duneFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a1e22" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#3a1e22" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="1380" cy="720" rx="240" ry="240" fill="url(#moonHalo)"/>
+
+  <!-- Far dune ridge -->
+  <path d="M 0 800 Q 320 740 640 790 T 1280 800 T 1920 760 L 1920 1080 L 0 1080 Z"
+        fill="url(#duneFar)"/>
+
+  <!-- Near dune ridge (darker, wave-shaped) -->
+  <path d="M 0 920 Q 280 860 560 900 T 1120 910 T 1680 880 T 1920 905 L 1920 1080 L 0 1080 Z"
+        fill="#1a0e1a"/>
+
+  <!-- White starfield -->
+  <g fill="#ffffff">
+    <circle cx="120" cy="90" r="0.9" opacity="0.85"/>
+    <circle cx="280" cy="180" r="0.6" opacity="0.6"/>
+    <circle cx="410" cy="60" r="1.2" opacity="0.95"/>
+    <circle cx="540" cy="240" r="0.7" opacity="0.7"/>
+    <circle cx="700" cy="130" r="0.5" opacity="0.5"/>
+    <circle cx="820" cy="320" r="1.0" opacity="0.85"/>
+    <circle cx="960" cy="80" r="0.8" opacity="0.75"/>
+    <circle cx="1080" cy="210" r="0.6" opacity="0.65"/>
+    <circle cx="1240" cy="160" r="0.9" opacity="0.8"/>
+    <circle cx="1380" cy="50" r="0.7" opacity="0.7"/>
+    <circle cx="1520" cy="280" r="1.3" opacity="0.95"/>
+    <circle cx="1680" cy="120" r="0.5" opacity="0.55"/>
+    <circle cx="1820" cy="220" r="0.9" opacity="0.8"/>
+    <circle cx="60" cy="380" r="0.7" opacity="0.65"/>
+    <circle cx="180" cy="540" r="0.5" opacity="0.5"/>
+    <circle cx="340" cy="460" r="0.8" opacity="0.75"/>
+    <circle cx="1860" cy="540" r="0.7" opacity="0.7"/>
+    <circle cx="220" cy="240" r="0.4" opacity="0.45"/>
+    <circle cx="900" cy="440" r="0.5" opacity="0.5"/>
+    <circle cx="1480" cy="430" r="0.6" opacity="0.6"/>
+  </g>
+
+  <!-- Golden bright stars -->
+  <g fill="#d4af7a">
+    <circle cx="640" cy="200" r="1.6" opacity="0.95"/>
+    <circle cx="1120" cy="380" r="1.8" opacity="0.95"/>
+    <circle cx="1740" cy="380" r="1.5" opacity="0.95"/>
+    <circle cx="320" cy="100" r="1.4" opacity="0.9"/>
+  </g>
+</svg>

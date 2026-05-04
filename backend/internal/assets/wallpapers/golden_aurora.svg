@@ -1,0 +1,59 @@
+<!-- Generated for Moon Panel v0.2.3, MIT licensed.
+     Golden aurora: dark-brown sky with two soft golden bands waving
+     across, faint mountain silhouette, scattered starfield. The bands'
+     glow is baked once via SVG <feGaussianBlur> filter — applied to a
+     defs path, painted to the canvas, no per-frame filtering. ~2.3 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0608"/>
+      <stop offset="65%" stop-color="#150a08"/>
+      <stop offset="100%" stop-color="#1a0e08"/>
+    </linearGradient>
+    <linearGradient id="band1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4af7a" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#e0c190" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#d4af7a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="band2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c19a5e" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#d4af7a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#c19a5e" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="auroraBlur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+
+  <!-- Aurora bands — softly blurred at draw time, NOT a CSS filter -->
+  <g filter="url(#auroraBlur)">
+    <path d="M -100 380 Q 480 240 1000 360 Q 1480 460 2020 320 L 2020 460 Q 1480 600 1000 500 Q 480 380 -100 520 Z"
+          fill="url(#band1)"/>
+    <path d="M -100 540 Q 540 420 1080 520 Q 1560 620 2020 480 L 2020 600 Q 1560 760 1080 660 Q 540 580 -100 680 Z"
+          fill="url(#band2)"/>
+  </g>
+
+  <!-- Distant mountain silhouette -->
+  <path d="M 0 880 L 240 740 L 540 800 L 820 700 L 1100 790 L 1400 720 L 1700 800 L 1920 760 L 1920 1080 L 0 1080 Z"
+        fill="#0a0606" opacity="0.95"/>
+
+  <!-- Starfield — sparse, since aurora glow already gives the eye plenty -->
+  <g fill="#ffffff">
+    <circle cx="120" cy="90" r="0.9" opacity="0.85"/>
+    <circle cx="380" cy="50" r="0.7" opacity="0.7"/>
+    <circle cx="640" cy="120" r="1.0" opacity="0.85"/>
+    <circle cx="900" cy="60" r="0.6" opacity="0.65"/>
+    <circle cx="1180" cy="100" r="1.1" opacity="0.9"/>
+    <circle cx="1460" cy="40" r="0.7" opacity="0.7"/>
+    <circle cx="1720" cy="120" r="0.9" opacity="0.8"/>
+    <circle cx="1860" cy="200" r="0.5" opacity="0.55"/>
+    <circle cx="60" cy="220" r="0.8" opacity="0.75"/>
+    <circle cx="240" cy="140" r="0.5" opacity="0.5"/>
+  </g>
+  <g fill="#e0c190">
+    <circle cx="780" cy="180" r="1.6" opacity="0.95"/>
+    <circle cx="1320" cy="220" r="1.4" opacity="0.9"/>
+    <circle cx="1640" cy="80" r="1.3" opacity="0.85"/>
+  </g>
+</svg>

@@ -1,0 +1,39 @@
+<!-- Generated for Moon Panel v0.2.3, MIT licensed.
+     Sunset haze: wine-red → gold → near-white horizon gradient, soft
+     setting sun disk, faint early stars (semi-transparent), darker
+     mountain silhouette at the bottom. ~1.4 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a1224"/>
+      <stop offset="40%" stop-color="#7a2a3a"/>
+      <stop offset="70%" stop-color="#c97a4a"/>
+      <stop offset="100%" stop-color="#f0c878"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff5d8"/>
+      <stop offset="50%" stop-color="#d4af7a" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#d4af7a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="960" cy="780" rx="200" ry="200" fill="url(#sun)"/>
+
+  <!-- Faint early stars (low opacity, only top portion) -->
+  <g fill="#ffffff">
+    <circle cx="120" cy="90" r="0.6" opacity="0.45"/>
+    <circle cx="280" cy="180" r="0.4" opacity="0.35"/>
+    <circle cx="540" cy="240" r="0.5" opacity="0.4"/>
+    <circle cx="820" cy="120" r="0.7" opacity="0.5"/>
+    <circle cx="1080" cy="210" r="0.4" opacity="0.35"/>
+    <circle cx="1380" cy="80" r="0.6" opacity="0.45"/>
+    <circle cx="1680" cy="180" r="0.5" opacity="0.4"/>
+    <circle cx="1820" cy="100" r="0.4" opacity="0.35"/>
+    <circle cx="380" cy="50" r="0.5" opacity="0.4"/>
+    <circle cx="1200" cy="40" r="0.6" opacity="0.45"/>
+  </g>
+
+  <!-- Distant darker mountain silhouette -->
+  <path d="M 0 940 L 220 860 L 480 900 L 760 820 L 1040 880 L 1320 840 L 1600 880 L 1920 850 L 1920 1080 L 0 1080 Z"
+        fill="#1a0e1a" opacity="0.85"/>
+</svg>

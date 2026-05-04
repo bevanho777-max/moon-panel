@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-05-05
+
+Risen-theme follow-up: 5 new starry / luxurious wallpapers tuned for the
+warm golden palette, plus a UX touch where switching theme auto-swaps
+the wallpaper to the matching default — but only for builtin wallpapers
+(custom uploads are preserved).
+
+### Added
+
+- 5 new builtin SVG wallpapers (~10 KB total):
+  `starlit_dunes` (night sky over a warm dune ridge with low moon halo),
+  `velvet_galaxy` (deep-purple radial space with a golden core and
+  spiral arms), `golden_aurora` (dark-brown sky with two soft golden
+  aurora bands, blur baked once via `feGaussianBlur` in the SVG), 
+  `sunset_haze` (wine-red → gold horizon with a setting-sun disk),
+  `obsidian_stars` (near-black sky with a dense starfield + a few
+  golden glow-stars). Total builtin count: 14.
+- Theme → recommended wallpaper auto-swap. When the user changes the
+  theme preset (`moon` ↔ `risen`) and they're currently on a builtin
+  wallpaper, the wallpaper switches to the theme's recommended one in
+  the same `/admin/settings` PUT so the panel reads visually coherent
+  right away. moon → `builtin:night`, risen → `builtin:starlit_dunes`.
+  Custom uploads are intentionally NOT overridden — that's a personal
+  choice we don't second-guess.
+
+### Notes
+
+- v0.2.2 `CityWidget.vue` color theming was reported as missing but
+  was actually already in place from v0.2.2. Verified 6/6 colours
+  (`bg`, `border`, name, time, temp, date) are bound to
+  `--mp-weather-*` tokens; no new edit needed.
+
 ## [0.2.2] - 2026-05-05
 
 Completes the theme system started in v0.2.1. v0.2.1 shipped just brand
@@ -433,7 +465,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.7...v0.2.0

@@ -47,6 +47,12 @@ function builtinLabel(id: string): string {
     case 'mountain': return '雪山'
     case 'meadow': return '草原'
     case 'forest': return '森林'
+    // v0.2.3 additions — risen-tuned starry / luxury palette
+    case 'starlit_dunes': return '星辉沙丘'
+    case 'velvet_galaxy': return '天鹅绒银河'
+    case 'golden_aurora': return '金极光'
+    case 'sunset_haze': return '落日朦胧'
+    case 'obsidian_stars': return '黑曜石繁星'
     default: return id
   }
 }

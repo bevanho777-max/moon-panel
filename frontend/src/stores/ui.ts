@@ -144,16 +144,41 @@ export const useUIStore = defineStore('ui', () => {
     blur.value = Math.max(0, Math.min(20, Math.round(px)))
   }
 
-  /** v0.2.1: theme preset setter. Persists "site.theme_preset" via the
-   *  generic /admin/settings endpoint. Optimistic — flips immediately so
-   *  the data-theme attribute + font lazy-load chain fires fast. */
+  // v0.2.3: theme → recommended wallpaper map. moon's daily-driver visual
+  // pairs with the night sky; risen's warm golden palette pairs with the
+  // starlit-dunes wallpaper introduced this release. Builtin-only — users
+  // who picked their own upload keep it on theme switch.
+  const THEME_WALLPAPER_MAP: Record<'moon' | 'risen', string> = {
+    moon: 'builtin:night',
+    risen: 'builtin:starlit_dunes',
+  }
+
+  /** v0.2.1+ (v0.2.3 update): theme preset setter. Persists "site.theme_preset"
+   *  via the generic /admin/settings endpoint, optimistic.
+   *  v0.2.3: when the user is on a builtin wallpaper, also auto-swap to the
+   *  theme's recommended builtin so the panel feels visually coherent
+   *  immediately after switching themes. Custom uploads are preserved
+   *  (they're a personal choice; we don't override). Both updates ride a
+   *  single /admin/settings PUT so they land atomically. */
   async function setThemePreset(preset: 'moon' | 'risen') {
-    const prev = themePreset.value
+    const prevTheme = themePreset.value
+    const prevWallpaper = wallpaper.value
     themePreset.value = preset
+
+    const payload: Record<string, string> = { 'site.theme_preset': preset }
+    const recommended = THEME_WALLPAPER_MAP[preset]
+    const isOnBuiltin = !!prevWallpaper && prevWallpaper.startsWith('builtin:')
+    const shouldSwapWallpaper = isOnBuiltin && prevWallpaper !== recommended
+    if (shouldSwapWallpaper) {
+      payload['ui.wallpaper'] = recommended
+      wallpaper.value = recommended
+    }
+
     try {
-      await updateSettings({ 'site.theme_preset': preset })
+      await updateSettings(payload)
     } catch (e) {
-      themePreset.value = prev
+      themePreset.value = prevTheme
+      if (shouldSwapWallpaper) wallpaper.value = prevWallpaper
       throw e
     }
   }

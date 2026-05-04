@@ -39,12 +39,17 @@ func IsValidThemeID(id string) bool {
 
 // BuiltinWallpaperIDs returns the canonical list of available builtin wallpaper
 // IDs in display order. Used by the public panel endpoint to advertise choices
-// to the frontend. v0.2.0 added 6 new SVGs:
-//   galaxy, ocean, sunset, mountain, meadow, forest.
+// to the frontend.
+//
+// v0.2.0 added 6 (galaxy / ocean / sunset / mountain / meadow / forest).
+// v0.2.3 added 5 starry / luxurious wallpapers tuned for the risen theme:
+//   starlit_dunes, velvet_galaxy, golden_aurora, sunset_haze, obsidian_stars.
+// Total: 14.
 func BuiltinWallpaperIDs() []string {
 	return []string{
 		"night", "aurora", "graphite",
 		"galaxy", "ocean", "sunset", "mountain", "meadow", "forest",
+		"starlit_dunes", "velvet_galaxy", "golden_aurora", "sunset_haze", "obsidian_stars",
 	}
 }
 

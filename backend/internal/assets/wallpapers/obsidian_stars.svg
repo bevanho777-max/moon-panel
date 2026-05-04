@@ -1,0 +1,102 @@
+<!-- Generated for Moon Panel v0.2.3, MIT licensed.
+     Obsidian stars: near-pure-black sky with a barely-perceptible deep
+     purple radial tint, dense white starfield, a handful of golden
+     glow-stars rendered with a stacked radial gradient for cheap
+     "twinkle" without filter overhead. ~3 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="space" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0a0612"/>
+      <stop offset="60%" stop-color="#020108"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <radialGradient id="goldStar" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff5d8"/>
+      <stop offset="40%" stop-color="#e0c190" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#d4af7a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#space)"/>
+
+  <!-- Dense white starfield (~80 stars across the canvas) -->
+  <g fill="#ffffff">
+    <circle cx="80" cy="60" r="0.7" opacity="0.7"/>
+    <circle cx="180" cy="140" r="0.5" opacity="0.55"/>
+    <circle cx="280" cy="80" r="1.0" opacity="0.85"/>
+    <circle cx="380" cy="200" r="0.6" opacity="0.6"/>
+    <circle cx="480" cy="40" r="0.8" opacity="0.75"/>
+    <circle cx="560" cy="160" r="0.4" opacity="0.45"/>
+    <circle cx="640" cy="100" r="1.1" opacity="0.9"/>
+    <circle cx="740" cy="240" r="0.6" opacity="0.6"/>
+    <circle cx="820" cy="60" r="0.5" opacity="0.5"/>
+    <circle cx="920" cy="180" r="0.9" opacity="0.8"/>
+    <circle cx="1020" cy="120" r="0.4" opacity="0.45"/>
+    <circle cx="1120" cy="40" r="0.7" opacity="0.7"/>
+    <circle cx="1220" cy="220" r="1.2" opacity="0.95"/>
+    <circle cx="1320" cy="100" r="0.5" opacity="0.55"/>
+    <circle cx="1420" cy="180" r="0.7" opacity="0.65"/>
+    <circle cx="1520" cy="60" r="1.0" opacity="0.85"/>
+    <circle cx="1620" cy="140" r="0.5" opacity="0.5"/>
+    <circle cx="1720" cy="80" r="0.8" opacity="0.75"/>
+    <circle cx="1820" cy="200" r="0.6" opacity="0.6"/>
+    <circle cx="1880" cy="40" r="0.4" opacity="0.45"/>
+
+    <circle cx="40" cy="320" r="0.6" opacity="0.6"/>
+    <circle cx="160" cy="400" r="0.9" opacity="0.8"/>
+    <circle cx="260" cy="340" r="0.4" opacity="0.45"/>
+    <circle cx="380" cy="500" r="0.7" opacity="0.65"/>
+    <circle cx="500" cy="380" r="1.0" opacity="0.85"/>
+    <circle cx="620" cy="460" r="0.5" opacity="0.5"/>
+    <circle cx="720" cy="540" r="0.8" opacity="0.75"/>
+    <circle cx="840" cy="420" r="0.6" opacity="0.6"/>
+    <circle cx="940" cy="500" r="0.4" opacity="0.45"/>
+    <circle cx="1040" cy="380" r="0.9" opacity="0.8"/>
+    <circle cx="1140" cy="460" r="0.7" opacity="0.7"/>
+    <circle cx="1240" cy="520" r="0.5" opacity="0.55"/>
+    <circle cx="1340" cy="400" r="1.1" opacity="0.9"/>
+    <circle cx="1440" cy="480" r="0.4" opacity="0.45"/>
+    <circle cx="1540" cy="380" r="0.7" opacity="0.65"/>
+    <circle cx="1640" cy="500" r="0.9" opacity="0.8"/>
+    <circle cx="1740" cy="420" r="0.5" opacity="0.55"/>
+    <circle cx="1840" cy="540" r="0.8" opacity="0.75"/>
+
+    <circle cx="100" cy="660" r="0.7" opacity="0.7"/>
+    <circle cx="220" cy="740" r="0.5" opacity="0.55"/>
+    <circle cx="340" cy="680" r="0.9" opacity="0.85"/>
+    <circle cx="460" cy="800" r="0.4" opacity="0.45"/>
+    <circle cx="580" cy="700" r="1.0" opacity="0.85"/>
+    <circle cx="700" cy="780" r="0.6" opacity="0.6"/>
+    <circle cx="820" cy="660" r="0.7" opacity="0.7"/>
+    <circle cx="960" cy="740" r="0.5" opacity="0.55"/>
+    <circle cx="1080" cy="680" r="0.9" opacity="0.8"/>
+    <circle cx="1200" cy="800" r="0.4" opacity="0.45"/>
+    <circle cx="1320" cy="720" r="0.8" opacity="0.75"/>
+    <circle cx="1440" cy="640" r="0.6" opacity="0.6"/>
+    <circle cx="1560" cy="780" r="0.5" opacity="0.5"/>
+    <circle cx="1680" cy="700" r="1.0" opacity="0.85"/>
+    <circle cx="1800" cy="760" r="0.5" opacity="0.55"/>
+
+    <circle cx="80" cy="900" r="0.7" opacity="0.65"/>
+    <circle cx="240" cy="980" r="0.5" opacity="0.5"/>
+    <circle cx="420" cy="940" r="0.9" opacity="0.8"/>
+    <circle cx="580" cy="1020" r="0.4" opacity="0.45"/>
+    <circle cx="740" cy="900" r="0.6" opacity="0.6"/>
+    <circle cx="900" cy="960" r="0.7" opacity="0.65"/>
+    <circle cx="1080" cy="900" r="0.5" opacity="0.55"/>
+    <circle cx="1240" cy="1000" r="0.8" opacity="0.75"/>
+    <circle cx="1420" cy="940" r="0.6" opacity="0.6"/>
+    <circle cx="1580" cy="900" r="0.4" opacity="0.45"/>
+    <circle cx="1740" cy="980" r="1.0" opacity="0.85"/>
+    <circle cx="1860" cy="920" r="0.5" opacity="0.5"/>
+  </g>
+
+  <!-- Golden glow-stars: bright center + soft halo via radialGradient -->
+  <ellipse cx="600" cy="280" rx="14" ry="14" fill="url(#goldStar)"/>
+  <circle cx="600" cy="280" r="1.4" fill="#fff5d8"/>
+  <ellipse cx="1380" cy="600" rx="16" ry="16" fill="url(#goldStar)"/>
+  <circle cx="1380" cy="600" r="1.6" fill="#fff5d8"/>
+  <ellipse cx="240" cy="780" rx="12" ry="12" fill="url(#goldStar)"/>
+  <circle cx="240" cy="780" r="1.2" fill="#fff5d8"/>
+  <ellipse cx="1700" cy="320" rx="13" ry="13" fill="url(#goldStar)"/>
+  <circle cx="1700" cy="320" r="1.4" fill="#fff5d8"/>
+</svg>
