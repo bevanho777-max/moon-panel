@@ -4,7 +4,6 @@ import {
   NAlert,
   NButton,
   NPopconfirm,
-  NSlider,
   NSpace,
   NSpin,
   useMessage,
@@ -26,14 +25,6 @@ const uploads = ref<UploadedWallpaper[]>([])
 const loading = ref(false)
 const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
-
-// Live blur during slider drag — store keeps the optimistic value, real PUT
-// is debounced to ~350 ms after the last update so we don't spam
-// /admin/settings on every pixel of slider motion. Using a debounce instead
-// of NSlider's @dragend keeps the behavior consistent for keyboard (arrow
-// keys), touch, and mouse — all funnel through @update:value.
-const blurDraft = ref(ui.blur)
-let blurSaveTimer: ReturnType<typeof setTimeout> | null = null
 
 const builtinItems = computed(() =>
   ui.builtins.map((id) => ({
@@ -78,17 +69,6 @@ async function pick(spec: string | null) {
   } catch (e) {
     message.error(e instanceof ApiError ? e.message : '应用失败')
   }
-}
-
-function onSliderUpdate(value: number) {
-  blurDraft.value = value
-  ui.previewBlur(value)
-  if (blurSaveTimer) clearTimeout(blurSaveTimer)
-  blurSaveTimer = setTimeout(() => {
-    ui.setBlur(value).catch((e) => {
-      message.error(e instanceof ApiError ? e.message : '保存模糊度失败')
-    })
-  }, 350)
 }
 
 function triggerUpload() {
