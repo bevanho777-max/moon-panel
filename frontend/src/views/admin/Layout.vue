@@ -14,10 +14,12 @@ import {
 } from 'naive-ui'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
 import ChangePasswordModal from '@/components/admin/ChangePasswordModal.vue'
 import VersionBadge from '@/components/VersionBadge.vue'
 
 const auth = useAuthStore()
+const ui = useUIStore()
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
@@ -77,7 +79,7 @@ function handleUserMenu(key: string) {
 <template>
   <NLayout>
     <NLayoutHeader bordered class="admin-header">
-      <div class="admin-header__title">Moon Panel · 管理后台</div>
+      <div class="admin-header__title">{{ (ui.siteTitle || 'Moon Panel') }} · 管理后台</div>
       <NMenu
         mode="horizontal"
         :options="menuOptions"

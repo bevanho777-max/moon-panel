@@ -52,16 +52,21 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
     :data-loading="weather === null"
     :title="`${city.name_cn} / ${city.name_en} · ${city.tz}`"
   >
-    <div class="cw__name">{{ cityLabel }}</div>
-    <div class="cw__time">{{ timeStr }}</div>
-    <div class="cw__date">{{ dateStr }}</div>
-    <div class="cw__weather">
-      <span class="cw__emoji" :title="emojiInfo.label">{{ emojiInfo.emoji }}</span>
-      <span class="cw__temp">{{ tempStr }}</span>
+    <!-- v0.2.0: compact two-row layout. Was 4 stacked rows (~190px tall)
+         which made hero dominate the home page; now ~90px tall so the
+         card grid is the visual focus. Row 1 = identity, Row 2 = state. -->
+    <div class="cw__row cw__row--top">
+      <span class="cw__name">{{ cityLabel }}</span>
+      <span class="cw__time">{{ timeStr }}</span>
     </div>
-    <!-- Phase 4a polish: pulse bar at the bottom while weather is loading.
-         More informative than the bare "—" placeholder; signals work-in-flight
-         rather than "feature broken". Auto-disappears once weather lands. -->
+    <div class="cw__row cw__row--bottom">
+      <span class="cw__weather">
+        <span class="cw__emoji" :title="emojiInfo.label">{{ emojiInfo.emoji }}</span>
+        <span class="cw__temp">{{ tempStr }}</span>
+      </span>
+      <span class="cw__date">{{ dateStr }}</span>
+    </div>
+    <!-- Phase 4a polish: pulse bar at the bottom while weather is loading. -->
     <div class="cw__loading-bar" aria-hidden="true" />
   </div>
 </template>
@@ -70,16 +75,60 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
 .cw {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 14px 18px;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  min-width: 140px;
+  min-width: 160px;
   flex: 1 1 0;
   position: relative;
   overflow: hidden;
+}
+.cw__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.cw__name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cw__time {
+  font-size: 1.4rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.96);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.cw__weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.cw__emoji {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.cw__temp {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.82);
+}
+.cw__date {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.5);
 }
 .cw__loading-bar {
   position: absolute;
@@ -100,39 +149,5 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
 @keyframes cw-pulse {
   0%   { background-position: 200% 0; }
   100% { background-position: -100% 0; }
-}
-.cw__name {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.78);
-  letter-spacing: 0.02em;
-}
-.cw__time {
-  font-size: 1.85rem;
-  font-weight: 300;
-  font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.96);
-  line-height: 1.1;
-  margin-top: 2px;
-}
-.cw__date {
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.5);
-}
-.cw__weather {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-.cw__emoji {
-  font-size: 1.25rem;
-  line-height: 1;
-}
-.cw__temp {
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.82);
 }
 </style>

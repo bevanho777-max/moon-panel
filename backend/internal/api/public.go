@@ -53,10 +53,12 @@ func (h *PublicHandler) getPanel(c *gin.Context) {
 	cities := loadCitiesSetting(h.DB)
 	tempUnit := loadTempUnitSetting(h.DB)
 	ui := loadUISettings(h.DB)
+	title := loadSiteTitleSetting(h.DB)
 
 	OK(c, gin.H{
 		"site": gin.H{
 			"public_mode": h.PublicMode,
+			"title":       title,
 			"cities":      cities,
 			"temp_unit":   tempUnit,
 			"ui":          ui,
@@ -64,6 +66,20 @@ func (h *PublicHandler) getPanel(c *gin.Context) {
 		"groups":         groups,
 		"search_engines": engines,
 	})
+}
+
+// loadSiteTitleSetting reads the "site.title" setting and falls back to
+// "Moon Panel" if missing. v0.2.0: lets admins rename the panel for their
+// own deployments (homelab, family dashboard etc.) without touching code.
+func loadSiteTitleSetting(db *gorm.DB) string {
+	var s model.Setting
+	if err := db.Where("key = ?", "site.title").First(&s).Error; err != nil {
+		return "Moon Panel"
+	}
+	if s.Value == "" {
+		return "Moon Panel"
+	}
+	return s.Value
 }
 
 // loadCitiesSetting reads widget.cities, parses the JSON array, and returns

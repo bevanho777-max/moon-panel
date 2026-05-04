@@ -1,0 +1,29 @@
+<!-- Generated for Moon Panel v0.2.0, MIT licensed.
+     Warm sunset palette: deep purple high sky → pink mid → amber low,
+     a soft sun glow, two faint cloud bands, low mountain silhouette. ~1.5 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1850"/>
+      <stop offset="35%" stop-color="#7c3a78"/>
+      <stop offset="65%" stop-color="#d65c70"/>
+      <stop offset="100%" stop-color="#f5a060"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff0c8"/>
+      <stop offset="40%" stop-color="#ffc070" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#ffc070" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloud" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd9b8" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffd9b8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="1280" cy="640" rx="220" ry="220" fill="url(#sun)"/>
+  <ellipse cx="600" cy="420" rx="520" ry="50" fill="url(#cloud)"/>
+  <ellipse cx="1480" cy="280" rx="380" ry="40" fill="url(#cloud)"/>
+  <ellipse cx="900" cy="540" rx="600" ry="35" fill="url(#cloud)" opacity="0.7"/>
+  <path d="M 0 920 L 280 800 L 540 880 L 820 760 L 1100 850 L 1380 720 L 1700 820 L 1920 780 L 1920 1080 L 0 1080 Z"
+        fill="#1a0e2c" opacity="0.9"/>
+</svg>

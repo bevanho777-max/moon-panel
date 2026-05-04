@@ -28,6 +28,10 @@ export const useUIStore = defineStore('ui', () => {
   const blur = ref<number>(0)
   const themePrimary = ref<string | null>(null)
   const builtins = ref<string[]>([])
+  // v0.2.0: site.title is admin-editable (defaults to "Moon Panel"). Lives
+  // in the ui store because it's display chrome — same lifecycle as
+  // wallpaper/theme — and gets hydrated by the same getPanel() call.
+  const siteTitle = ref<string>('Moon Panel')
   const loaded = ref(false)
   const loading = ref(false)
 
@@ -73,6 +77,7 @@ export const useUIStore = defineStore('ui', () => {
       blur.value = ui.wallpaper_blur
       themePrimary.value = ui.theme_primary
       builtins.value = ui.builtins
+      siteTitle.value = panel.site.title || 'Moon Panel'
       loaded.value = true
     } catch {
       // 401 or network error: keep defaults, mark loaded so the bg layer
@@ -135,6 +140,20 @@ export const useUIStore = defineStore('ui', () => {
     blur.value = Math.max(0, Math.min(20, Math.round(px)))
   }
 
+  /** v0.2.0: site title setter. Persists "site.title" via /admin/settings.
+   *  Empty string clears back to backend default ("Moon Panel"). */
+  async function setSiteTitle(title: string) {
+    const trimmed = title.trim()
+    const prev = siteTitle.value
+    siteTitle.value = trimmed || 'Moon Panel'
+    try {
+      await updateSettings({ 'site.title': trimmed })
+    } catch (e) {
+      siteTitle.value = prev
+      throw e
+    }
+  }
+
   /** Same idea for color picker live-preview. */
   function previewThemePrimary(hex: string | null) {
     themePrimary.value = hex ? '#' + hex.replace(/^#/, '').toLowerCase() : null
@@ -145,6 +164,7 @@ export const useUIStore = defineStore('ui', () => {
     blur,
     themePrimary,
     builtins,
+    siteTitle,
     loaded,
     loading,
     wallpaperUrl,
@@ -154,6 +174,7 @@ export const useUIStore = defineStore('ui', () => {
     setWallpaper,
     setBlur,
     setThemePrimary,
+    setSiteTitle,
     previewBlur,
     previewThemePrimary,
   }

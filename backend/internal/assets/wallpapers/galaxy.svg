@@ -1,0 +1,51 @@
+<!-- Generated for Moon Panel v0.2.0, MIT licensed.
+     Deep-space scene: black background with a soft galactic core glow,
+     two large rotated ellipses for spiral arms, and a sparse starfield.
+     Pure SVG, ~1.5 KB, no rasterization, scales cleanly to any viewport. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="space" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0a0820"/>
+      <stop offset="60%" stop-color="#040410"/>
+      <stop offset="100%" stop-color="#000005"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="20%">
+      <stop offset="0%" stop-color="#fff5d8" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#ffb86b" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ffb86b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="arm" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9aa8e0" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#5a4a8a" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#5a4a8a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#space)"/>
+  <g transform="translate(960 540)">
+    <ellipse cx="0" cy="0" rx="780" ry="220" fill="url(#arm)" transform="rotate(20)"/>
+    <ellipse cx="0" cy="0" rx="660" ry="170" fill="url(#arm)" transform="rotate(-15)"/>
+    <ellipse cx="0" cy="0" rx="220" ry="220" fill="url(#core)"/>
+  </g>
+  <g fill="#ffffff">
+    <circle cx="120" cy="90" r="0.9" opacity="0.85"/>
+    <circle cx="280" cy="180" r="0.6" opacity="0.6"/>
+    <circle cx="410" cy="60" r="1.3" opacity="0.95"/>
+    <circle cx="540" cy="240" r="0.7" opacity="0.7"/>
+    <circle cx="700" cy="130" r="0.5" opacity="0.5"/>
+    <circle cx="220" cy="780" r="1.1" opacity="0.9"/>
+    <circle cx="360" cy="900" r="0.8" opacity="0.75"/>
+    <circle cx="1240" cy="160" r="1.0" opacity="0.85"/>
+    <circle cx="1380" cy="50" r="0.7" opacity="0.7"/>
+    <circle cx="1520" cy="280" r="1.4" opacity="0.95"/>
+    <circle cx="1680" cy="120" r="0.5" opacity="0.55"/>
+    <circle cx="1820" cy="220" r="0.9" opacity="0.8"/>
+    <circle cx="1740" cy="820" r="1.2" opacity="0.9"/>
+    <circle cx="1580" cy="930" r="0.6" opacity="0.6"/>
+    <circle cx="1380" cy="1010" r="0.5" opacity="0.5"/>
+    <circle cx="160" cy="540" r="0.7" opacity="0.65"/>
+    <circle cx="60" cy="380" r="1.0" opacity="0.85"/>
+    <circle cx="1860" cy="540" r="0.8" opacity="0.75"/>
+    <circle cx="80" cy="980" r="0.6" opacity="0.55"/>
+    <circle cx="1860" cy="980" r="1.1" opacity="0.9"/>
+  </g>
+</svg>

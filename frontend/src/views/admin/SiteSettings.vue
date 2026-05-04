@@ -43,8 +43,24 @@ import { showStatefulInputHintOnce } from '@/utils/statefulInputHint'
 import { getMe } from '@/api/auth'
 import { listTrustedIPs, deleteTrustedIP, type TrustedIPEntry } from '@/api/security'
 import type { City } from '@/utils/citySearch'
+import { useUIStore } from '@/stores/ui'
+import draggable from 'vuedraggable'
 
 const message = useMessage()
+const ui = useUIStore()
+
+// v0.2.0: site title editor. Draft mirrors the live store value; save on
+// blur or explicit click. Empty submission resets to backend default
+// "Moon Panel" (the store's setSiteTitle handles that fallback).
+const siteTitleDraft = ref(ui.siteTitle)
+async function saveSiteTitle() {
+  try {
+    await ui.setSiteTitle(siteTitleDraft.value)
+    message.success('站点名已保存')
+  } catch (e) {
+    message.error(e instanceof ApiError ? e.message : '保存失败')
+  }
+}
 
 const engines = ref<SearchEngine[]>([])
 const loading = ref(false)
@@ -402,6 +418,26 @@ onMounted(() => {
 
 <template>
   <NSpace vertical :size="24">
+    <!-- v0.2.0: Section 0 — Site identity. Goes at top so the most
+         immediately-visible customization is also the easiest to find. -->
+    <NCard title="站点信息">
+      <NSpace align="center" :size="12" style="width: 100%">
+        <span class="ws__label" style="min-width: 5em">站点名称</span>
+        <NInput
+          v-model:value="siteTitleDraft"
+          placeholder="Moon Panel"
+          maxlength="40"
+          show-count
+          style="max-width: 320px"
+        />
+        <NButton
+          type="primary"
+          :disabled="siteTitleDraft.trim() === ui.siteTitle"
+          @click="saveSiteTitle"
+        >保存</NButton>
+      </NSpace>
+    </NCard>
+
     <!-- Section 1: Search Engines (active) -->
     <NCard>
       <template #header>
@@ -442,23 +478,39 @@ onMounted(() => {
           <div v-if="cities.length === 0" class="ws__empty">
             还没有城市。点右上角"添加城市"开始。主页 hero 区会展示这些城市的当地时间和气温。
           </div>
+          <!-- v0.2.0: drag-to-reorder. Cities live as a JSON array in the
+               widget.cities setting (single row, ordered), so persisting a
+               new order just means re-stringifying after the drag — same
+               saveCities() that ran on add/remove already. -->
           <div v-else class="ws__cities">
-            <div v-for="(c, idx) in cities" :key="`${c.tz}_${c.lat}_${c.lon}`" class="ws__city">
-              <span class="ws__cn">{{ c.name_cn }}</span>
-              <span class="ws__en">{{ c.name_en }}</span>
-              <span class="ws__tz">{{ c.tz }}</span>
-              <span class="ws__coords">{{ c.lat.toFixed(2) }}, {{ c.lon.toFixed(2) }}</span>
-              <NPopconfirm
-                :positive-text="'移除'"
-                :negative-text="'取消'"
-                @positive-click="removeCity(idx)"
-              >
-                <template #trigger>
-                  <NButton size="tiny" type="error" tertiary>移除</NButton>
-                </template>
-                移除「{{ c.name_cn }}」？
-              </NPopconfirm>
-            </div>
+            <draggable
+              v-model="cities"
+              :item-key="(c: City) => `${c.tz}_${c.lat}_${c.lon}`"
+              handle=".ws__drag"
+              ghost-class="ws__city--ghost"
+              animation="150"
+              @end="saveCities"
+            >
+              <template #item="{ element: c, index: idx }">
+                <div class="ws__city">
+                  <span class="ws__drag" title="拖拽排序">☰</span>
+                  <span class="ws__cn">{{ c.name_cn }}</span>
+                  <span class="ws__en">{{ c.name_en }}</span>
+                  <span class="ws__tz">{{ c.tz }}</span>
+                  <span class="ws__coords">{{ c.lat.toFixed(2) }}, {{ c.lon.toFixed(2) }}</span>
+                  <NPopconfirm
+                    :positive-text="'移除'"
+                    :negative-text="'取消'"
+                    @positive-click="removeCity(idx)"
+                  >
+                    <template #trigger>
+                      <NButton size="tiny" type="error" tertiary>移除</NButton>
+                    </template>
+                    移除「{{ c.name_cn }}」？
+                  </NPopconfirm>
+                </div>
+              </template>
+            </draggable>
           </div>
           <div class="ws__temp-unit">
             <span>气温单位：</span>
@@ -701,6 +753,25 @@ onMounted(() => {
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+/* v0.2.0: drag handle for the cities list (Task E). */
+.ws__drag {
+  cursor: grab;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 1.05rem;
+  user-select: none;
+  flex-shrink: 0;
+  transition: color 120ms ease;
+}
+.ws__drag:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+.ws__drag:active {
+  cursor: grabbing;
+}
+.ws__city--ghost {
+  opacity: 0.4;
+  background: rgba(91, 141, 239, 0.12);
 }
 .ws__cn {
   font-weight: 500;

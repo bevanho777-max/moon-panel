@@ -30,6 +30,18 @@ watch(
   { immediate: true },
 )
 
+// v0.2.0: keep the browser tab title in sync with the admin-set siteTitle.
+// Runs on every change (including the initial hydration from getPanel),
+// so a fresh page load shows "Foo Lab" immediately rather than briefly
+// flashing "Moon Panel".
+watch(
+  () => ui.siteTitle,
+  (val) => {
+    if (val) document.title = val
+  },
+  { immediate: true },
+)
+
 // Private-mode hydration: when MOON_PUBLIC_MODE=false, /api/public/panel is
 // gated behind auth, so the cold-start ui.ensureLoaded() in onMounted hits
 // a 401 and silently bails — leaving builtins/wallpaper/theme empty and

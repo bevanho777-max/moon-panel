@@ -1,0 +1,36 @@
+<!-- Generated for Moon Panel v0.2.0, MIT licensed.
+     Cool dawn over peaks: blue-purple gradient sky, three layered mountain
+     silhouettes with snow caps, faint sun disk. ~1.6 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e1a36"/>
+      <stop offset="50%" stop-color="#3a4e7a"/>
+      <stop offset="100%" stop-color="#6a82a8"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fde8c0" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#fde8c0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="1500" cy="320" rx="140" ry="140" fill="url(#sun)"/>
+
+  <!-- back layer (lightest, farthest) -->
+  <path d="M 0 820 L 240 660 L 520 720 L 800 600 L 1100 700 L 1400 580 L 1680 680 L 1920 620 L 1920 1080 L 0 1080 Z"
+        fill="#5a72a0" opacity="0.55"/>
+  <!-- snow caps on back peaks -->
+  <path d="M 240 660 L 280 690 L 200 690 Z" fill="#ffffff" opacity="0.45"/>
+  <path d="M 800 600 L 850 640 L 750 640 Z" fill="#ffffff" opacity="0.45"/>
+  <path d="M 1400 580 L 1450 620 L 1350 620 Z" fill="#ffffff" opacity="0.45"/>
+
+  <!-- middle layer -->
+  <path d="M 0 920 L 180 800 L 420 870 L 660 760 L 940 840 L 1240 740 L 1500 830 L 1780 760 L 1920 800 L 1920 1080 L 0 1080 Z"
+        fill="#2e3e64" opacity="0.85"/>
+  <path d="M 660 760 L 700 790 L 620 790 Z" fill="#ffffff" opacity="0.55"/>
+  <path d="M 1240 740 L 1280 770 L 1200 770 Z" fill="#ffffff" opacity="0.55"/>
+
+  <!-- front layer (darkest, closest) -->
+  <path d="M 0 1000 L 320 920 L 640 970 L 960 900 L 1280 960 L 1600 890 L 1920 940 L 1920 1080 L 0 1080 Z"
+        fill="#141c34"/>
+</svg>

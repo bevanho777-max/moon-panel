@@ -1,0 +1,27 @@
+<!-- Generated for Moon Panel v0.2.0, MIT licensed.
+     Sunrise over water: warm horizon between cool sky and cool water,
+     soft sun disk slightly above horizon, faint reflective band. ~1 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a3a6b"/>
+      <stop offset="40%" stop-color="#3e6092"/>
+      <stop offset="58%" stop-color="#e88a5c"/>
+      <stop offset="62%" stop-color="#d4795a"/>
+      <stop offset="100%" stop-color="#1f3550"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff2c8"/>
+      <stop offset="55%" stop-color="#ffc97a" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ffc97a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="reflect" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd089" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffd089" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="960" cy="610" rx="190" ry="190" fill="url(#sun)"/>
+  <rect x="900" y="640" width="120" height="380" fill="url(#reflect)"/>
+  <rect x="0" y="630" width="1920" height="1.5" fill="#ffffff" opacity="0.18"/>
+</svg>

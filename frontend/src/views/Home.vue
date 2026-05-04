@@ -18,6 +18,9 @@ import CardItem from '@/components/CardItem.vue'
 import HeaderSearchBox from '@/components/HeaderSearchBox.vue'
 import HomeHero from '@/components/HomeHero.vue'
 import VersionBadge from '@/components/VersionBadge.vue'
+import { useUIStore } from '@/stores/ui'
+
+const ui = useUIStore()
 
 const router = useRouter()
 const message = useMessage()
@@ -119,7 +122,7 @@ onMounted(load)
         <span class="home-header__logo">
           <component :is="moonIcon()" />
         </span>
-        <span class="home-header__title">Moon Panel</span>
+        <span class="home-header__title">{{ ui.siteTitle || 'Moon Panel' }}</span>
       </div>
       <div class="home-header__spacer" />
       <NSpace align="center" :size="12">

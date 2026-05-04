@@ -49,6 +49,11 @@ function builtinLabel(id: string): string {
     case 'night': return '夜空'
     case 'aurora': return '极光'
     case 'graphite': return '石墨'
+    // v0.2.0 additions
+    case 'galaxy': return '银河'
+    case 'ocean': return '海洋'
+    case 'sunset': return '日落'
+    case 'mountain': return '雪山'
     default: return id
   }
 }
@@ -217,35 +222,19 @@ onMounted(refresh)
       </NSpin>
     </div>
 
-    <!-- Blur slider -->
-    <div class="wp__section">
-      <div class="wp__row">
-        <span class="wp__label">背景模糊度</span>
-        <span class="wp__blur-value">{{ ui.blur }} px</span>
-      </div>
-<NSlider
-        :value="ui.blur"
-        :min="0"
-        :max="20"
-        :step="1"
-        :disabled="!currentSpec"
-        @update:value="onSliderUpdate"
-      />
-      <div v-if="!currentSpec" class="wp__hint">先选一张壁纸再调节模糊度</div>
-    </div>
+    <!-- v0.2.0: blur slider hidden. v0.1.7 removed CSS filter on
+         wallpaper-layer (root cause of global continuous repaint, see
+         App.vue notes), so this slider has no visible effect anymore.
+         The ui.wallpaper_blur setting + backend column are kept to
+         avoid a db migration; a future release can decide whether to
+         bake blur into the wallpaper at upload time, then remove the
+         field. Until then, the slider is just hidden. -->
 
     <!-- Reset -->
     <div class="wp__section">
       <NSpace>
         <NButton :disabled="!currentSpec" tertiary @click="pick(null)">
           清除壁纸
-        </NButton>
-        <NButton
-          v-if="ui.blur > 0"
-          tertiary
-          @click="(blurDraft = 0, ui.setBlur(0))"
-        >
-          模糊度归零
         </NButton>
       </NSpace>
     </div>

@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-05
+
+First feature release after the v0.1.x stabilization line. v0.1.x ended at
+`v0.1.7` once the wallpaper-layer paint cascade was rooted out; v0.2.0
+turns to user-facing additions: a customizable site title, four new
+builtin wallpapers, a more compact weather hero, and drag-to-reorder for
+the hero's city list. The defunct blur slider (UI of a feature that
+v0.1.7 removed) is hidden.
+
+### Added
+
+- `site.title` setting and an admin input for it. Empty value falls back
+  to "Moon Panel". The browser tab title and both home / admin headers
+  read live from the new `ui.siteTitle` store slot, so a homelab can
+  rename the panel to anything (e.g. "Foo Family Hub") without code
+  changes. Persisted via the existing `/api/admin/settings` endpoint —
+  no schema migration.
+- 4 new builtin SVG wallpapers shipping inside the binary:
+  `galaxy` (deep-space galactic core + scattered stars), `ocean`
+  (sunrise over water), `sunset` (warm sky with clouds and silhouette),
+  `mountain` (cold dawn over snow-capped peaks). Each is hand-tuned
+  pure SVG (1-2 KB), gradient-based, no `<feGaussianBlur>` filters
+  (lessons from v0.1.7) — they composite cheap and stay sharp at any
+  resolution. The original `night` / `aurora` / `graphite` set is kept
+  as-is. Total builtin count: 7. The `meadow` and `forest` ideas from
+  the v0.2.0 spec are deferred — algorithmic prairie/forest art needs
+  a different design pass to look natural rather than diagrammatic.
+- Drag-to-reorder for the hero city list in
+  `admin/site-settings`. Cities are stored as a JSON array in a single
+  `widget.cities` setting row, so the reorder is a pure-frontend
+  shuffle persisted by the existing save path — no API change.
+  `vuedraggable` was already a dependency (used by the groups / cards
+  sort modals).
+
+### Changed
+
+- Hero `CityWidget` re-laid out from a 4-row stack (~190 px tall) to a
+  2-row compact layout (~90 px tall): top row pairs city name with
+  current time, bottom row pairs weather emoji + temperature with the
+  date. Hero now lets the card grid be the page's visual focus instead
+  of dominating the fold. Acrylic surface (`.mp-acrylic-light`) and
+  loading-pulse bar are unchanged.
+- Hidden the wallpaper blur slider in admin settings. v0.1.7 removed
+  the CSS filter on the wallpaper layer (the root cause of the global
+  continuous-repaint regression), so the slider had no visible effect
+  anymore. The `ui.wallpaper_blur` setting + backend column are kept
+  for schema stability; a future release can decide whether to bake
+  blur into the uploaded wallpaper at canvas-compress time.
+
 ## [0.1.7] - 2026-05-05
 
 Final card-perf fix in the v0.1.x line, and the most surprising one.
@@ -294,7 +343,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.7...v0.2.0
 [0.1.7]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.4...v0.1.5

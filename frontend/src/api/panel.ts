@@ -25,6 +25,8 @@ export interface UISettings {
 
 export interface SiteInfo {
   public_mode: boolean
+  /** v0.2.0: admin-customizable site title; falls back to "Moon Panel". */
+  title: string
   cities: City[]
   temp_unit: TempUnit
   ui: UISettings
