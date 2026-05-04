@@ -1,0 +1,36 @@
+<!-- Generated for Moon Panel v0.2.0, MIT licensed.
+     Spring meadow under soft sky: pale blue → warm cream gradient,
+     low rolling-hill silhouette, layered grass undulations from
+     mid-green to deep forest green below the horizon. ~1.2 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a8c8e8"/>
+      <stop offset="55%" stop-color="#dee8ee"/>
+      <stop offset="80%" stop-color="#f0d8b0"/>
+      <stop offset="100%" stop-color="#e8b88a"/>
+    </linearGradient>
+    <linearGradient id="distant" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a7e96" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#5a7e96" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="meadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7ba267"/>
+      <stop offset="100%" stop-color="#2a4220"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <!-- Distant rolling hills (low contrast silhouette) -->
+  <path d="M 0 720 L 220 600 L 440 680 L 680 560 L 920 660 L 1180 580 L 1420 660 L 1680 560 L 1920 620 L 1920 750 L 0 750 Z"
+        fill="url(#distant)"/>
+  <!-- Foreground meadow base -->
+  <rect x="0" y="720" width="1920" height="360" fill="url(#meadow)"/>
+  <!-- Three wave layers, increasingly dark + closer-spaced toward foreground.
+       Quadratic curves give a wind-rolled-grass feel without per-blade detail. -->
+  <path d="M 0 790 Q 240 770 480 790 T 960 790 T 1440 790 T 1920 790 L 1920 810 L 0 810 Z"
+        fill="#587e48" opacity="0.55"/>
+  <path d="M 0 880 Q 200 858 400 880 T 800 880 T 1200 880 T 1600 880 T 1920 880 L 1920 905 L 0 905 Z"
+        fill="#446236" opacity="0.6"/>
+  <path d="M 0 990 Q 240 970 480 990 T 960 990 T 1440 990 T 1920 990 L 1920 1080 L 0 1080 Z"
+        fill="#2c4220" opacity="0.7"/>
+</svg>

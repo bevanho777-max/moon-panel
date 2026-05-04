@@ -19,11 +19,12 @@ func WallpaperFS() (fs.FS, error) {
 
 // BuiltinWallpaperIDs returns the canonical list of available builtin wallpaper
 // IDs in display order. Used by the public panel endpoint to advertise choices
-// to the frontend. v0.2.0 added 4 new SVGs: galaxy / ocean / sunset / mountain.
+// to the frontend. v0.2.0 added 6 new SVGs:
+//   galaxy, ocean, sunset, mountain, meadow, forest.
 func BuiltinWallpaperIDs() []string {
 	return []string{
 		"night", "aurora", "graphite",
-		"galaxy", "ocean", "sunset", "mountain",
+		"galaxy", "ocean", "sunset", "mountain", "meadow", "forest",
 	}
 }
 

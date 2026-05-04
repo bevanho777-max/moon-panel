@@ -24,16 +24,16 @@ v0.1.7 removed) is hidden.
   rename the panel to anything (e.g. "Foo Family Hub") without code
   changes. Persisted via the existing `/api/admin/settings` endpoint —
   no schema migration.
-- 4 new builtin SVG wallpapers shipping inside the binary:
+- 6 new builtin SVG wallpapers shipping inside the binary:
   `galaxy` (deep-space galactic core + scattered stars), `ocean`
   (sunrise over water), `sunset` (warm sky with clouds and silhouette),
-  `mountain` (cold dawn over snow-capped peaks). Each is hand-tuned
-  pure SVG (1-2 KB), gradient-based, no `<feGaussianBlur>` filters
-  (lessons from v0.1.7) — they composite cheap and stay sharp at any
-  resolution. The original `night` / `aurora` / `graphite` set is kept
-  as-is. Total builtin count: 7. The `meadow` and `forest` ideas from
-  the v0.2.0 spec are deferred — algorithmic prairie/forest art needs
-  a different design pass to look natural rather than diagrammatic.
+  `mountain` (cold dawn over snow-capped peaks), `meadow` (rolling
+  hills under pale sky with layered grass undulations), `forest`
+  (warm-dusk sky with three-layer evergreen-tree silhouette). Each
+  is hand-tuned pure SVG (~1-3 KB), gradient-based, no
+  `<feGaussianBlur>` filters (lessons from v0.1.7) — they composite
+  cheap and stay sharp at any resolution. The original `night` /
+  `aurora` / `graphite` set is kept as-is. Total builtin count: 9.
 - Drag-to-reorder for the hero city list in
   `admin/site-settings`. Cities are stored as a JSON array in a single
   `widget.cities` setting row, so the reorder is a pure-frontend

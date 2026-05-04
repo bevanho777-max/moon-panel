@@ -45,6 +45,8 @@ function builtinLabel(id: string): string {
     case 'ocean': return '海洋'
     case 'sunset': return '日落'
     case 'mountain': return '雪山'
+    case 'meadow': return '草原'
+    case 'forest': return '森林'
     default: return id
   }
 }

@@ -1,0 +1,75 @@
+<!-- Generated for Moon Panel v0.2.0, MIT licensed.
+     Dusk over evergreen forest: warm sky gradient (purple → orange) with
+     a sun disk near the horizon, three layers of pointed-tree silhouettes
+     for depth (back lighter/smaller, front darkest/largest). The peak
+     vertices are placed by hand to suggest natural variation rather
+     than perfectly even sawtooth. ~2.5 KB. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a3e"/>
+      <stop offset="45%" stop-color="#5a3960"/>
+      <stop offset="75%" stop-color="#d27660"/>
+      <stop offset="100%" stop-color="#f0a468"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff0c8"/>
+      <stop offset="50%" stop-color="#ffc070" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ffc070" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="960" cy="720" rx="180" ry="180" fill="url(#sun)"/>
+
+  <!-- Back layer: smaller / lighter peaks, hint of horizon trees. -->
+  <path d="M 0 850
+           L 60 805 L 100 850
+           L 165 815 L 215 850
+           L 275 800 L 325 850
+           L 390 810 L 440 850
+           L 500 795 L 550 850
+           L 615 810 L 665 850
+           L 730 800 L 780 850
+           L 850 815 L 900 850
+           L 970 805 L 1020 850
+           L 1090 815 L 1140 850
+           L 1210 800 L 1260 850
+           L 1330 810 L 1380 850
+           L 1450 800 L 1500 850
+           L 1565 815 L 1615 850
+           L 1685 805 L 1735 850
+           L 1805 815 L 1855 850
+           L 1920 820 L 1920 1080 L 0 1080 Z"
+        fill="#2c2848" opacity="0.6"/>
+
+  <!-- Mid layer: bigger peaks, darker. -->
+  <path d="M 0 940
+           L 80 875 L 145 940
+           L 230 860 L 305 940
+           L 390 870 L 470 940
+           L 555 855 L 630 940
+           L 720 870 L 800 940
+           L 885 860 L 965 940
+           L 1050 875 L 1130 940
+           L 1215 855 L 1295 940
+           L 1380 870 L 1465 940
+           L 1545 860 L 1625 940
+           L 1710 875 L 1790 940
+           L 1870 860 L 1920 920
+           L 1920 1080 L 0 1080 Z"
+        fill="#1a1a36" opacity="0.85"/>
+
+  <!-- Front layer: biggest peaks, near-black silhouette. -->
+  <path d="M 0 1020
+           L 110 935 L 200 1010
+           L 305 945 L 405 1010
+           L 510 935 L 615 1010
+           L 720 940 L 825 1010
+           L 935 935 L 1040 1010
+           L 1150 940 L 1250 1010
+           L 1360 935 L 1460 1010
+           L 1565 945 L 1670 1010
+           L 1775 935 L 1870 1005
+           L 1920 1015 L 1920 1080 L 0 1080 Z"
+        fill="#0a0a1a"/>
+</svg>
