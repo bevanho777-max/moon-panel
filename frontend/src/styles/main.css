@@ -6,6 +6,35 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* v0.2.1: theme presets. App.vue sets <html data-theme="moon"|"risen">
+   based on the persisted ui.themePreset; absence of the attribute (e.g.
+   the brief moment before ui.ensureLoaded() resolves) falls through to
+   the moon ruleset via the same selector below.
+   moon = 100% v0.2.0 visual default — Bevan's daily-use theme.
+   risen = warm serif look, opt-in. */
+:root,
+:root[data-theme="moon"] {
+  --mp-brand-primary: #5b8def;
+  --mp-brand-accent: #87a5f0;
+  --mp-brand-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mp-brand-font-size: 1.05rem;
+  --mp-brand-font-weight: 600;
+  --mp-brand-letter-spacing: 0.01em;
+  --mp-brand-color: rgba(255, 255, 255, 0.95);
+  --mp-status-bar-display: none;
+}
+:root[data-theme="risen"] {
+  --mp-brand-primary: #d4af7a;
+  --mp-brand-accent: #c19a5e;
+  --mp-brand-font: 'Playfair Display', 'Noto Serif SC', Georgia, 'SimSun', serif;
+  --mp-brand-font-size: 1.55rem;
+  --mp-brand-font-weight: 700;
+  --mp-brand-letter-spacing: 0.04em;
+  --mp-brand-color: rgba(245, 235, 215, 0.95);
+  --mp-status-bar-display: flex;
+}
+
 * {
   box-sizing: border-box;
 }

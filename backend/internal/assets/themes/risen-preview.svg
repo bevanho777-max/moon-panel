@@ -1,0 +1,17 @@
+<!-- Generated for Moon Panel v0.2.1, MIT licensed.
+     "Risen" theme preview thumbnail (120x80): warm dark bg, golden-brown
+     Risen wordmark in serif, two faint card outlines, status-bar hint
+     at bottom (the risen-only feature). ~750 B. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80">
+  <rect width="120" height="80" fill="#1a140f"/>
+  <rect x="6" y="34" width="50" height="14" rx="2" fill="rgba(212,175,122,0.07)" stroke="rgba(212,175,122,0.18)"/>
+  <rect x="62" y="34" width="50" height="14" rx="2" fill="rgba(212,175,122,0.07)" stroke="rgba(212,175,122,0.18)"/>
+  <!-- Status bar hint at bottom (risen-only feature) -->
+  <rect x="22" y="60" width="76" height="10" rx="2" fill="rgba(20,15,10,0.55)" stroke="rgba(212,175,122,0.18)"/>
+  <line x1="44" y1="63" x2="44" y2="67" stroke="rgba(212,175,122,0.45)" stroke-width="1"/>
+  <line x1="64" y1="63" x2="64" y2="67" stroke="rgba(212,175,122,0.45)" stroke-width="1"/>
+  <line x1="84" y1="63" x2="84" y2="67" stroke="rgba(212,175,122,0.45)" stroke-width="1"/>
+  <text x="60" y="22" text-anchor="middle"
+        font-family="'Playfair Display', 'Noto Serif SC', Georgia, serif"
+        font-style="italic" font-size="18" font-weight="700" fill="#d4af7a">Risen</text>
+</svg>

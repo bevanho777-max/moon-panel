@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-05-05
+
+Theme system: the panel now ships two visual presets, with the v0.2.0
+default ("moon") preserved exactly and a new opt-in alternative
+("risen", warm serif) selectable from admin → Site Settings.
+
+### Added
+
+- `site.theme_preset` setting ("moon" | "risen") returned from
+  `/api/public/panel`. Stored in the existing `Setting` key/value table
+  — no migration. Backend falls back to "moon" when unset or invalid.
+- New CSS variable layer in `main.css` keyed by `:root[data-theme="..."]`.
+  All theme-aware styles read `--mp-brand-font`, `--mp-brand-font-size`,
+  `--mp-brand-color`, `--mp-status-bar-display` etc. through the
+  cascade. The "moon" ruleset reproduces v0.2.0's hardcoded values
+  exactly, so default-theme users see no visual change at all.
+- `App.vue` watches `ui.themePreset`, sets `<html data-theme="...">`,
+  and lazy-loads serif fonts only when the user actually flips to
+  "risen" — `await import('@fontsource/playfair-display/700.css')`
+  inside the conditional means moon-theme users never make a font
+  network request. Failure to load fonts (offline, CDN miss) falls
+  back silently to the system serif stack via the multi-family
+  `--mp-brand-font` value.
+- `StatusBar.vue` (mounted on home + admin) renders a small fixed
+  bottom bar with version / cards / groups / uptime. Visibility is
+  CSS-gated by `--mp-status-bar-display` (moon=`none`, risen=`flex`)
+  so the component is mounted on both themes but only paints under
+  risen. Polls `/api/site/stats` once on mount and every 5 minutes.
+- `GET /api/site/stats` (public, no auth) — lightweight stats
+  endpoint feeding the status bar. Distinct from
+  `/api/admin/stats` (auth-gated, 4 fields incl. audit count).
+- Admin `ThemePicker.vue` component embedded in the "Site Information"
+  card on `/admin/site-settings`. Two thumbnail tiles
+  (Moon / Risen) with one-click apply (no save button — same UX as
+  the wallpaper picker). Thumbnails come from
+  `/assets/themes/{moon,risen}-preview.svg`, embedded into the binary
+  via `assets.ThemeFS()` + a new `r.GET("/assets/themes/:name", ...)`
+  handler that mirrors the wallpaper-preview pattern.
+
+### Changed
+
+- `WallpaperPicker.vue` info alert now reads `内置 {N} 张` from
+  `ui.builtins.length` instead of the hardcoded `3`. The blur-slider
+  hint sentence (defunct since v0.1.7) is removed.
+- New runtime npm dependencies (lazy-loaded only): `@fontsource/playfair-display`
+  (Latin serif), `@fontsource/noto-serif-sc` (Chinese serif). Bundle
+  sizes only land when "risen" is selected.
+
 ## [0.2.0] - 2026-05-05
 
 First feature release after the v0.1.x stabilization line. v0.1.x ended at
@@ -343,7 +391,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.7...v0.2.0
 [0.1.7]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.5...v0.1.6

@@ -18,6 +18,7 @@ import CardItem from '@/components/CardItem.vue'
 import HeaderSearchBox from '@/components/HeaderSearchBox.vue'
 import HomeHero from '@/components/HomeHero.vue'
 import VersionBadge from '@/components/VersionBadge.vue'
+import StatusBar from '@/components/StatusBar.vue'
 import { useUIStore } from '@/stores/ui'
 
 const ui = useUIStore()
@@ -195,6 +196,7 @@ onMounted(load)
       </NSpin>
     </NLayoutContent>
     <VersionBadge />
+    <StatusBar />
   </NLayout>
 </template>
 
@@ -222,9 +224,14 @@ onMounted(load)
   color: #5b8def;
 }
 .home-header__title {
-  font-weight: 600;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
+  /* v0.2.1: brand vars from main.css [data-theme]. moon resolves to the
+     v0.2.0 hardcoded values (1.05rem / weight 600 / 0.01em); risen
+     resolves to a larger serif look. */
+  font-family: var(--mp-brand-font);
+  font-weight: var(--mp-brand-font-weight);
+  font-size: var(--mp-brand-font-size);
+  letter-spacing: var(--mp-brand-letter-spacing);
+  color: var(--mp-brand-color);
   white-space: nowrap;
 }
 .home-header__spacer {

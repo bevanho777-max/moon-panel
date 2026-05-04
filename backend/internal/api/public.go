@@ -54,18 +54,36 @@ func (h *PublicHandler) getPanel(c *gin.Context) {
 	tempUnit := loadTempUnitSetting(h.DB)
 	ui := loadUISettings(h.DB)
 	title := loadSiteTitleSetting(h.DB)
+	theme := loadThemePresetSetting(h.DB)
 
 	OK(c, gin.H{
 		"site": gin.H{
-			"public_mode": h.PublicMode,
-			"title":       title,
-			"cities":      cities,
-			"temp_unit":   tempUnit,
-			"ui":          ui,
+			"public_mode":  h.PublicMode,
+			"title":        title,
+			"theme_preset": theme,
+			"cities":       cities,
+			"temp_unit":    tempUnit,
+			"ui":           ui,
 		},
 		"groups":         groups,
 		"search_engines": engines,
 	})
+}
+
+// loadThemePresetSetting reads the "site.theme_preset" setting and falls
+// back to "moon" (the v0.2.0 default visual). v0.2.1: the panel ships two
+// presets — "moon" (current blue/sans-serif default) and "risen" (golden
+// brown / serif). Anonymous public-panel viewers see whichever is set so
+// the home page renders identically before/after login.
+func loadThemePresetSetting(db *gorm.DB) string {
+	var s model.Setting
+	if err := db.Where("key = ?", "site.theme_preset").First(&s).Error; err != nil {
+		return "moon"
+	}
+	if s.Value != "moon" && s.Value != "risen" {
+		return "moon"
+	}
+	return s.Value
 }
 
 // loadSiteTitleSetting reads the "site.title" setting and falls back to

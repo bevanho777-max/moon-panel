@@ -45,6 +45,7 @@ import { listTrustedIPs, deleteTrustedIP, type TrustedIPEntry } from '@/api/secu
 import type { City } from '@/utils/citySearch'
 import { useUIStore } from '@/stores/ui'
 import draggable from 'vuedraggable'
+import ThemePicker from '@/components/admin/ThemePicker.vue'
 
 const message = useMessage()
 const ui = useUIStore()
@@ -421,20 +422,26 @@ onMounted(() => {
     <!-- v0.2.0: Section 0 — Site identity. Goes at top so the most
          immediately-visible customization is also the easiest to find. -->
     <NCard title="站点信息">
-      <NSpace align="center" :size="12" style="width: 100%">
-        <span class="ws__label" style="min-width: 5em">站点名称</span>
-        <NInput
-          v-model:value="siteTitleDraft"
-          placeholder="Moon Panel"
-          maxlength="40"
-          show-count
-          style="max-width: 320px"
-        />
-        <NButton
-          type="primary"
-          :disabled="siteTitleDraft.trim() === ui.siteTitle"
-          @click="saveSiteTitle"
-        >保存</NButton>
+      <NSpace vertical :size="20" style="width: 100%">
+        <NSpace align="center" :size="12" style="width: 100%">
+          <span class="ws__label" style="min-width: 5em">站点名称</span>
+          <NInput
+            v-model:value="siteTitleDraft"
+            placeholder="Moon Panel"
+            maxlength="40"
+            show-count
+            style="max-width: 320px"
+          />
+          <NButton
+            type="primary"
+            :disabled="siteTitleDraft.trim() === ui.siteTitle"
+            @click="saveSiteTitle"
+          >保存</NButton>
+        </NSpace>
+        <div>
+          <div class="ws__label" style="margin-bottom: 8px">主题预设</div>
+          <ThemePicker />
+        </div>
       </NSpace>
     </NCard>
 

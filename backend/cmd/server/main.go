@@ -110,6 +110,7 @@ func main() {
 
 	api.RegisterHealth(apiGroup)
 	api.RegisterVersion(apiGroup)
+	(&api.SiteStatsHandler{DB: db, StartedAt: time.Now()}).Register(apiGroup)
 	(&api.AuthHandler{DB: db, Auth: authSvc, CookieSecure: cfg.CookieSecure, Lockout: loginLockout}).Register(apiGroup, requireAuth)
 	(&api.TOTPHandler{DB: db, Auth: authSvc, CookieSecure: cfg.CookieSecure, TOTPLockout: totpLockout}).Register(apiGroup, requireAuth)
 	// Apply same trusted-IP matcher to TOTP lockout so home networks bypass
@@ -168,6 +169,15 @@ func main() {
 	r.GET("/assets/wallpapers/:name", builtinWallpaperHandler(wallpaperFS))
 	r.HEAD("/assets/wallpapers/:name", builtinWallpaperHandler(wallpaperFS))
 
+	// v0.2.1: theme preview thumbnails (admin theme picker). Same handler
+	// pattern as wallpapers — strict ID validation + long Cache-Control.
+	themeFS, err := assets.ThemeFS()
+	if err != nil {
+		log.Fatalf("theme embed: %v", err)
+	}
+	r.GET("/assets/themes/:name", themePreviewHandler(themeFS))
+	r.HEAD("/assets/themes/:name", themePreviewHandler(themeFS))
+
 	fsys, err := web.Sub()
 	if err != nil {
 		log.Fatalf("embed fs: %v", err)
@@ -202,6 +212,32 @@ func builtinWallpaperHandler(fsys fs.FS) gin.HandlerFunc {
 			return
 		}
 		data, err := fs.ReadFile(fsys, id+".svg")
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"code": 404, "msg": "not found"})
+			return
+		}
+		c.Header("Content-Type", "image/svg+xml")
+		c.Header("Cache-Control", "public, max-age=31536000, immutable")
+		c.Data(http.StatusOK, "image/svg+xml", data)
+	}
+}
+
+// themePreviewHandler serves embedded theme preview SVGs at
+// /assets/themes/:name. v0.2.1: only "moon" / "risen" resolve. URL convention
+// is `/assets/themes/moon-preview.svg` — handler accepts the bare id
+// ("moon", "risen") or the full filename ("moon-preview.svg") for caller
+// flexibility. Same long-cache headers as wallpapers.
+func themePreviewHandler(fsys fs.FS) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.Param("name")
+		// Accept both "moon" and "moon-preview.svg" forms.
+		stem := strings.TrimSuffix(name, ".svg")
+		stem = strings.TrimSuffix(stem, "-preview")
+		if !assets.IsValidThemeID(stem) {
+			c.JSON(http.StatusNotFound, gin.H{"code": 404, "msg": "not found"})
+			return
+		}
+		data, err := fs.ReadFile(fsys, stem+"-preview.svg")
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"code": 404, "msg": "not found"})
 			return

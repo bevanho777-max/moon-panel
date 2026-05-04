@@ -1,0 +1,11 @@
+<!-- Generated for Moon Panel v0.2.1, MIT licensed.
+     "Moon" theme preview thumbnail (120x80): dark bg, brand-blue Moon
+     wordmark in sans-serif, two faint card outlines. ~600 B. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80">
+  <rect width="120" height="80" fill="#15171f"/>
+  <rect x="6" y="44" width="50" height="14" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+  <rect x="62" y="44" width="50" height="14" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+  <text x="60" y="30" text-anchor="middle"
+        font-family="-apple-system, system-ui, 'Segoe UI', sans-serif"
+        font-size="16" font-weight="600" fill="#5b8def">Moon</text>
+</svg>

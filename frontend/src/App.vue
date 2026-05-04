@@ -42,6 +42,34 @@ watch(
   { immediate: true },
 )
 
+// v0.2.1: theme preset → <html data-theme="..."> + lazy-load risen-only
+// fonts. CRITICAL: moon (the default) must trigger NO font network
+// requests, so the dynamic import sits inside an `if (val === 'risen')`
+// branch. Once loaded the fonts stay cached for the session; switching
+// back to moon doesn't unload them but `--mp-brand-font` for moon points
+// at the system stack so they're not used.
+const fontsLoaded = { risen: false }
+watch(
+  () => ui.themePreset,
+  async (val) => {
+    document.documentElement.dataset.theme = val
+    if (val === 'risen' && !fontsLoaded.risen) {
+      fontsLoaded.risen = true
+      try {
+        await Promise.all([
+          import('@fontsource/playfair-display/700.css'),
+          import('@fontsource/noto-serif-sc/700.css'),
+        ])
+      } catch {
+        // Font CDN / network failure: serif fallbacks in --mp-brand-font
+        // (Georgia / SimSun) keep the look approximately correct. Don't
+        // surface a user-visible error for this.
+      }
+    }
+  },
+  { immediate: true },
+)
+
 // Private-mode hydration: when MOON_PUBLIC_MODE=false, /api/public/panel is
 // gated behind auth, so the cold-start ui.ensureLoaded() in onMounted hits
 // a 401 and silently bails — leaving builtins/wallpaper/theme empty and

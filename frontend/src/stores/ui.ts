@@ -32,6 +32,9 @@ export const useUIStore = defineStore('ui', () => {
   // in the ui store because it's display chrome — same lifecycle as
   // wallpaper/theme — and gets hydrated by the same getPanel() call.
   const siteTitle = ref<string>('Moon Panel')
+  // v0.2.1: theme preset. "moon" (default v0.2.0 visual) or "risen" (warm
+  // serif). Watched in App.vue for body data-theme + lazy font load.
+  const themePreset = ref<'moon' | 'risen'>('moon')
   const loaded = ref(false)
   const loading = ref(false)
 
@@ -78,6 +81,7 @@ export const useUIStore = defineStore('ui', () => {
       themePrimary.value = ui.theme_primary
       builtins.value = ui.builtins
       siteTitle.value = panel.site.title || 'Moon Panel'
+      themePreset.value = panel.site.theme_preset === 'risen' ? 'risen' : 'moon'
       loaded.value = true
     } catch {
       // 401 or network error: keep defaults, mark loaded so the bg layer
@@ -140,6 +144,20 @@ export const useUIStore = defineStore('ui', () => {
     blur.value = Math.max(0, Math.min(20, Math.round(px)))
   }
 
+  /** v0.2.1: theme preset setter. Persists "site.theme_preset" via the
+   *  generic /admin/settings endpoint. Optimistic — flips immediately so
+   *  the data-theme attribute + font lazy-load chain fires fast. */
+  async function setThemePreset(preset: 'moon' | 'risen') {
+    const prev = themePreset.value
+    themePreset.value = preset
+    try {
+      await updateSettings({ 'site.theme_preset': preset })
+    } catch (e) {
+      themePreset.value = prev
+      throw e
+    }
+  }
+
   /** v0.2.0: site title setter. Persists "site.title" via /admin/settings.
    *  Empty string clears back to backend default ("Moon Panel"). */
   async function setSiteTitle(title: string) {
@@ -165,6 +183,7 @@ export const useUIStore = defineStore('ui', () => {
     themePrimary,
     builtins,
     siteTitle,
+    themePreset,
     loaded,
     loading,
     wallpaperUrl,
@@ -175,6 +194,7 @@ export const useUIStore = defineStore('ui', () => {
     setBlur,
     setThemePrimary,
     setSiteTitle,
+    setThemePreset,
     previewBlur,
     previewThemePrimary,
   }

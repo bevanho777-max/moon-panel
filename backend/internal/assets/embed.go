@@ -17,6 +17,26 @@ func WallpaperFS() (fs.FS, error) {
 	return fs.Sub(wallpaperFS, "wallpapers")
 }
 
+//go:embed themes/*.svg
+var themeFS embed.FS
+
+// ThemeFS returns the embedded themes/ directory. v0.2.1 ships two preview
+// thumbnails: moon-preview.svg and risen-preview.svg, used by the admin
+// theme picker.
+func ThemeFS() (fs.FS, error) {
+	return fs.Sub(themeFS, "themes")
+}
+
+// IsValidThemeID reports whether id matches a shipped theme preset.
+func IsValidThemeID(id string) bool {
+	for _, t := range []string{"moon", "risen"} {
+		if t == id {
+			return true
+		}
+	}
+	return false
+}
+
 // BuiltinWallpaperIDs returns the canonical list of available builtin wallpaper
 // IDs in display order. Used by the public panel endpoint to advertise choices
 // to the frontend. v0.2.0 added 6 new SVGs:

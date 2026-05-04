@@ -17,6 +17,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import ChangePasswordModal from '@/components/admin/ChangePasswordModal.vue'
 import VersionBadge from '@/components/VersionBadge.vue'
+import StatusBar from '@/components/StatusBar.vue'
 
 const auth = useAuthStore()
 const ui = useUIStore()
@@ -106,6 +107,7 @@ function handleUserMenu(key: string) {
 
     <ChangePasswordModal v-model:show="showPasswordModal" />
     <VersionBadge />
+    <StatusBar />
   </NLayout>
 </template>
 
@@ -118,7 +120,13 @@ function handleUserMenu(key: string) {
   gap: 1.5rem;
 }
 .admin-header__title {
-  font-weight: 600;
+  /* v0.2.1: brand vars from main.css [data-theme]. moon equals previous
+     hardcoded weight 600 / inherited size; risen resolves to serif. */
+  font-family: var(--mp-brand-font);
+  font-weight: var(--mp-brand-font-weight);
+  font-size: var(--mp-brand-font-size);
+  letter-spacing: var(--mp-brand-letter-spacing);
+  color: var(--mp-brand-color);
   white-space: nowrap;
 }
 .admin-header__menu {

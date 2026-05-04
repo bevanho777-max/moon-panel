@@ -131,9 +131,7 @@ onMounted(refresh)
 <template>
   <NSpace vertical :size="16">
     <NAlert type="info" :show-icon="false">
-      内置 3 张轻量 SVG 壁纸（任意分辨率清晰），或上传自己的图片（自动压到 1920×1080 webp）。
-      <br />
-      模糊度 0-20px：用于让前景内容更突出。重置 = 不应用壁纸。
+      内置 {{ ui.builtins.length }} 张轻量 SVG 壁纸（任意分辨率清晰），或上传自己的图片（自动压到 1920×1080 webp）。重置 = 不应用壁纸。
     </NAlert>
 
     <!-- Builtin grid -->

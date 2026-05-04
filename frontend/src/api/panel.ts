@@ -27,6 +27,8 @@ export interface SiteInfo {
   public_mode: boolean
   /** v0.2.0: admin-customizable site title; falls back to "Moon Panel". */
   title: string
+  /** v0.2.1: theme preset id; "moon" (default, current visual) or "risen". */
+  theme_preset: 'moon' | 'risen'
   cities: City[]
   temp_unit: TempUnit
   ui: UISettings
