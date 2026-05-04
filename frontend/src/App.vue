@@ -60,16 +60,18 @@ onMounted(() => {
 <template>
   <NConfigProvider :theme="theme" :theme-overrides="themeOverrides">
     <!-- Wallpaper layer: fixed full-viewport, behind everything (z-index:-1).
-         CSS `filter: blur()` is on this layer alone — front-of-screen content
-         is never blurred. `transform: translateZ(0)` forces a GPU compositor
-         layer so blur stays smooth on mobile / low-end devices. -->
+         v0.1.7: dropped the `filter: blur()` binding. A 4K wallpaper run
+         through 9 px Gaussian every frame = continuous GPU work, which
+         made both home and admin feel laggy from page load (Bevan, F12
+         Performance, all-red Frames at idle). Console-disabling the
+         filter alone instantly returned 60 fps. The ui.blur setting
+         (slider in admin/site-settings) is still persisted, just no
+         longer applied — a future release can decide whether to bake
+         blur into the wallpaper at upload time or hide the slider. -->
     <div
       v-if="ui.wallpaperUrl"
       class="wallpaper-layer"
-      :style="{
-        backgroundImage: `url(${ui.wallpaperUrl})`,
-        filter: ui.blur > 0 ? `blur(${ui.blur}px)` : 'none',
-      }"
+      :style="{ backgroundImage: `url(${ui.wallpaperUrl})` }"
       aria-hidden="true"
     />
     <NMessageProvider>
@@ -87,13 +89,11 @@ onMounted(() => {
   background-position: center center;
   background-repeat: no-repeat;
   pointer-events: none;
-  /* GPU compositor layer for smooth blur, even on mobile. */
-  transform: translateZ(0);
-  will-change: filter;
-  /* When blur > 0, blurred edges expose the underlying body color. Scaling
-     up by ~1.05 hides the soft edge without distorting the visible center. */
-}
-.wallpaper-layer[style*="blur"] {
-  transform: translateZ(0) scale(1.05);
+  /* v0.1.7: removed `transform: translateZ(0)` + `will-change: filter`.
+     They existed to GPU-accelerate the filter that's now gone; without
+     a filter the layer-promotion isn't needed and the will-change hint
+     would just cost memory for no benefit. The `[style*="blur"]` scale
+     rule that compensated for blurred-edge bleed is also gone — no
+     blur, no soft edge. */
 }
 </style>

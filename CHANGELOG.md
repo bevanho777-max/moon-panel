@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-05-05
+
+Final card-perf fix in the v0.1.x line, and the most surprising one.
+v0.1.4-v0.1.6 hunted card-side paint causes (NDropdown, drop shadow,
+group backdrop-filter) — each helped, but Bevan's home + admin pages
+still felt laggy from page load. v0.1.7 root-caused it to a different
+layer entirely: the wallpaper itself.
+
+### Changed
+
+- Dropped the `filter: blur(${ui.blur}px)` binding on `.wallpaper-layer`
+  (and the companion `transform: translateZ(0) scale(1.05)` that
+  compensated for blur-edge bleed). The original design ran the loaded
+  wallpaper image through a 9 px Gaussian blur on every frame; with a
+  4K background that was continuous GPU work behind every interaction,
+  cascading to feel like jank everywhere — including admin pages that
+  share the same fixed wallpaper layer. Console-disabling the filter
+  alone instantly returned 60 fps in Bevan's diagnostic.
+- The `ui.wallpaper_blur` setting (admin slider 0-20 px) is still
+  persisted in the database; it just has no visual effect for now. A
+  follow-up release can decide whether to bake the blur into the
+  uploaded wallpaper at canvas-compress time, or remove the slider.
+- Visual: built-in wallpaper detail (e.g. `night.svg` starfield, aurora
+  gradient bands) now renders sharp instead of soft-blurred. Cards
+  retain their own translucent fills for legibility.
+
 ## [0.1.6] - 2026-05-05
 
 Final card-hover-perf hotfix in the v0.1.x line. Bevan's Paint Flashing
@@ -268,7 +294,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.3...v0.1.4
