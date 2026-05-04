@@ -221,17 +221,20 @@ onMounted(load)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #5b8def;
+  /* v0.2.2: moon icon glyph colour follows the theme accent so risen's
+     golden palette doesn't get a stray blue glyph in the corner. */
+  color: var(--mp-brand-accent);
 }
 .home-header__title {
-  /* v0.2.1: brand vars from main.css [data-theme]. moon resolves to the
-     v0.2.0 hardcoded values (1.05rem / weight 600 / 0.01em); risen
-     resolves to a larger serif look. */
+  /* v0.2.1+/v0.2.2: brand vars from main.css [data-theme]. The token
+     values for moon literally equal what was previously hardcoded
+     (1.05rem / 600 / 0.01em / rgba(255,255,255,0.96)); risen swaps
+     to a serif + larger + golden palette. */
   font-family: var(--mp-brand-font);
   font-weight: var(--mp-brand-font-weight);
   font-size: var(--mp-brand-font-size);
   letter-spacing: var(--mp-brand-letter-spacing);
-  color: var(--mp-brand-color);
+  color: var(--mp-brand-primary);
   white-space: nowrap;
 }
 .home-header__spacer {
@@ -254,8 +257,10 @@ onMounted(load)
 .home-group {
   margin-bottom: 32px;
   padding: 24px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  /* v0.2.2: theme-driven group container. moon = v0.2.0 hardcoded values
+     verbatim; risen = warm-brown subtle frame with golden border. */
+  background: var(--mp-group-bg);
+  border: 1px solid var(--mp-group-border);
   border-radius: 16px;
   /* v0.1.6: backdrop-filter removed.
      5b-4 kept it on the assumption that 6 px blur was cheap enough for
@@ -284,11 +289,11 @@ onMounted(load)
   font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: rgba(255, 255, 255, 0.92);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--mp-group-title);
+  border-bottom: 1px solid var(--mp-group-divider);
 }
 .home-group__icon {
-  color: #5b8def;
+  color: var(--mp-group-icon);
   flex-shrink: 0;
 }
 .home-group__placeholder {

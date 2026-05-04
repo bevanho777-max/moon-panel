@@ -78,8 +78,10 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
   justify-content: center;
   gap: 4px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* v0.2.2: theme-driven background + border. Moon resolves to the
+     v0.2.0 hardcoded values; risen swaps to warm-brown / golden. */
+  background: var(--mp-weather-bg);
+  border: 1px solid var(--mp-weather-border);
   border-radius: 10px;
   min-width: 160px;
   flex: 1 1 0;
@@ -96,7 +98,7 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
 .cw__name {
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--mp-weather-text);
   letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
@@ -106,7 +108,7 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
   font-size: 1.4rem;
   font-weight: 300;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--mp-weather-time);
   line-height: 1;
   flex-shrink: 0;
 }
@@ -123,12 +125,12 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
 .cw__temp {
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--mp-weather-temp);
 }
 .cw__date {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--mp-weather-date);
 }
 .cw__loading-bar {
   position: absolute;

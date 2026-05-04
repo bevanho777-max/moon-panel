@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-05-05
+
+Completes the theme system started in v0.2.1. v0.2.1 shipped just brand
+typography + status-bar visibility under `data-theme`; the rest of the
+panel (cards, weather, group containers, badges) was still hardcoded
+moon-blue. v0.2.2 routes those colors through the same token layer so a
+risen-theme deployment actually looks risen end-to-end, while moon-theme
+deployments remain pixel-equivalent to v0.2.0/v0.2.1.
+
+### Changed
+
+- Expanded `:root[data-theme]` token set in `main.css` to cover the full
+  visible surface: card bg / border / hover / ring / text, weather card
+  bg / border / time / temp / date, group container bg / border / title /
+  divider / icon, internal/external badges, and global text levels.
+- `CardItem.vue`: `--mp-card-bg` / `-bg-hover` / `-border` / `-hover-ring`
+  / `-text` and `--mp-badge-bg` / `-text` plus `--mp-text-tertiary` for
+  the description line. Moon resolves to the literal v0.2.0 rgba strings;
+  risen swaps to warm-brown bg + golden 1px border + golden hover ring +
+  cream text + golden badges.
+- `CityWidget.vue`: weather card bg / border / city name / time / temp /
+  date all bind to `--mp-weather-*` tokens.
+- `Home.vue`: header logo glyph, brand title color, and the home-group
+  container (bg / border / title / divider / icon) bind to tokens. Header
+  logo glyph picks up `--mp-brand-accent` so the moon-icon SVG matches
+  the active theme's accent (blue for moon, golden for risen).
+- `admin/Layout.vue`: brand title color binds to `--mp-brand-primary`
+  (replaces the v0.2.1 transient `--mp-brand-color` that's been removed).
+
+### Notes
+
+- NaiveUI components (NCard / NInput / NDataTable / NDropdown / NSelect
+  etc.) retain their built-in dark theme styling — fully re-theming
+  NaiveUI internals would require dynamic `themeOverrides` passes through
+  `NConfigProvider`, which is its own follow-up. The user-visible
+  Moon-Panel-authored chrome is fully themed; surrounding NaiveUI form
+  controls stay neutral and look correct under both presets.
+- Moon theme tokens were chosen to literally equal the v0.2.0 hardcoded
+  rgba strings (e.g. `--mp-card-text` = `rgba(255,255,255,0.92)` matches
+  the previous `.card-item__title` color), so a moon-theme user post-
+  v0.2.2 sees zero visual drift from v0.2.0.
+
 ## [0.2.1] - 2026-05-05
 
 Theme system: the panel now ships two visual presets, with the v0.2.0
@@ -391,7 +433,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.7...v0.2.0
 [0.1.7]: https://github.com/bevanho777-max/moon-panel/compare/v0.1.6...v0.1.7

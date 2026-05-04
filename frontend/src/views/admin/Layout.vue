@@ -120,13 +120,13 @@ function handleUserMenu(key: string) {
   gap: 1.5rem;
 }
 .admin-header__title {
-  /* v0.2.1: brand vars from main.css [data-theme]. moon equals previous
-     hardcoded weight 600 / inherited size; risen resolves to serif. */
+  /* v0.2.1+/v0.2.2: brand vars from main.css [data-theme]. moon resolves
+     to v0.2.0-equivalent values; risen swaps to serif + larger + golden. */
   font-family: var(--mp-brand-font);
   font-weight: var(--mp-brand-font-weight);
   font-size: var(--mp-brand-font-size);
   letter-spacing: var(--mp-brand-letter-spacing);
-  color: var(--mp-brand-color);
+  color: var(--mp-brand-primary);
   white-space: nowrap;
 }
 .admin-header__menu {

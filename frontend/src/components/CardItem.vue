@@ -321,11 +321,12 @@ const tooltipText = computed(() => {
   gap: 14px;
   padding: 14px;
   border-radius: 12px;
-  /* 5b-4: opaque dark blue-purple instead of acrylic. backdrop-filter is
-     gone — sampling 5+ wallpaper regions per frame dominated INP. The new
-     base reads cleanly over any wallpaper without blur cost. */
-  background: rgba(40, 40, 60, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* 5b-4 + v0.2.2: opaque dark base instead of acrylic. Color values now
+     resolve from --mp-card-* tokens so the risen theme can swap in warm
+     brown / golden border without touching this file. The moon token
+     values literally equal the previously-hardcoded rgba strings. */
+  background: var(--mp-card-bg);
+  border: 1px solid var(--mp-card-border);
   /* v0.1.5: paint containment. Prevents future style additions (shadows,
      overlays) from forcing repaint outside the card's box, which would
      ripple into the parent .home-group's backdrop-filter and trigger
@@ -348,19 +349,13 @@ const tooltipText = computed(() => {
   color: inherit;
 }
 .card-item:hover {
-  /* Slightly lighter shade of the new opaque base — same hue, "wakes up"
-     without changing visual character. The translateY + ring are the
-     primary hover signals; bg shift is a quiet supporting cue. */
-  background-color: rgba(60, 60, 80, 0.78);
-  /* v0.1.5: ONLY the inner 1px ring. The 5b-3 outer drop glow
-     (`0 6px 20px rgba(91,141,239,0.15)`) extended ~26px past the card's
-     edge with its 20px blur radius, landing inside the parent
-     .home-group's `backdrop-filter: blur(6px)` region — which forced
-     re-sampling that backdrop on every animated hover frame. Frames
-     went all-red. The ring stays inside (or hugs) the card box and
-     paints cheap. translateY + bg shift carry the rest of the
-     "wakes up" feel. */
-  box-shadow: 0 0 0 1px rgba(135, 165, 240, 0.3);
+  /* v0.2.2: hover bg + ring routed through theme tokens. The moon ring
+     is the same brand-blue as before (135,165,240,0.3); risen swaps to
+     a golden ring (212,175,122,0.4). The 1px-only constraint from
+     v0.1.5 still applies — no out-of-box shadow that would re-trigger
+     parent backdrop sampling. */
+  background-color: var(--mp-card-bg-hover);
+  box-shadow: 0 0 0 1px var(--mp-card-hover-ring);
   transform: translateY(-1px);
 }
 .card-item--disabled {
@@ -368,7 +363,7 @@ const tooltipText = computed(() => {
   cursor: not-allowed;
 }
 .card-item--disabled:hover {
-  background-color: rgba(40, 40, 60, 0.65);
+  background-color: var(--mp-card-bg);
   transform: none;
   box-shadow: none;
 }
@@ -441,8 +436,8 @@ const tooltipText = computed(() => {
   font-size: 0.65rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.55);
+  background: var(--mp-badge-bg);
+  color: var(--mp-badge-text);
   white-space: nowrap;
 }
 .card-item__badge--internal {
@@ -455,14 +450,14 @@ const tooltipText = computed(() => {
   flex: 1 1 auto;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--mp-card-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .card-item__desc {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--mp-text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
