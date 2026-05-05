@@ -243,6 +243,13 @@ function handleUserMenu(key: string) {
     gap: 0.75rem;
     padding: 0 1rem;
   }
+  /* v0.2.5: scoped scoped-CSS @media takes precedence over the desktop
+     `.admin-header__title` rule above (same specificity, later in source).
+     The token --mp-brand-font-size-mobile is theme-aware: moon → 1.0rem,
+     risen → 1.15rem, both defined in main.css's :root[data-theme] blocks. */
+  .admin-header__title {
+    font-size: var(--mp-brand-font-size-mobile);
+  }
   .admin-header__menu.admin-nav-desktop {
     display: none;
   }

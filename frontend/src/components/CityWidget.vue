@@ -138,7 +138,11 @@ const cityLabel = computed(() => props.city.name_cn || props.city.name_en)
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(91, 141, 239, 0.6), transparent);
+  /* v0.2.5: theme-aware loading pulse. Moon resolves --mp-brand-accent to
+     the previous brand-blue (#5b8def equivalent); risen resolves to
+     warm golden, keeping the loading pulse visually consistent with the
+     active theme rather than flashing blue under the golden palette. */
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mp-brand-accent) 60%, transparent), transparent);
   background-size: 200% 100%;
   opacity: 0;
   transition: opacity 200ms ease;

@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-05-05
+
+Mobile polish: the admin header title overflowed the 56 px header on
+phones — a problem under risen's serif 1.55 rem in particular. Plus a
+small loose-end on the weather-card loading pulse so it follows the
+active theme's accent instead of flashing brand-blue under risen.
+
+### Added
+
+- `--mp-brand-font-size-mobile` CSS token in both `:root[data-theme]`
+  blocks: moon = `1.0rem`, risen = `1.15rem`. Maintains the moon < risen
+  visual hierarchy on phones (15% gap) while bringing both inside the
+  56 px header. Picked up by a new `@media (max-width: 768px)` rule on
+  `.admin-header__title` in `Layout.vue` scoped style.
+
+### Changed
+
+- `CityWidget.vue` weather-card loading-pulse gradient stops swapped
+  from hardcoded `rgba(91, 141, 239, 0.6)` to
+  `color-mix(in srgb, var(--mp-brand-accent) 60%, transparent)`. Moon
+  resolves to the same brand-blue as before; risen resolves to warm
+  golden, so the loading pulse now matches whichever theme is active.
+
 ## [0.2.4] - 2026-05-05
 
 Mobile usability hotfix. v0.2.3 left `/admin` unreachable below the
@@ -499,7 +522,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.1...v0.2.2
