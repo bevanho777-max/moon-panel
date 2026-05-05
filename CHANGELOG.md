@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-05-05
+
+Mobile usability hotfix. v0.2.3 left `/admin` unreachable below the
+default desktop overview on phones — the horizontal NMenu's
+`responsive` prop collapsed the entire 6-item bar at narrow widths
+and offered no replacement, so phone users could not switch to
+分组 / 卡片 / 站点设置 / 审计日志 / 安全管理. v0.2.4 swaps that menu
+for a hand-rolled desktop nav at >=769px and a hamburger-driven
+dropdown at <=768px.
+
+### Fixed
+
+- `views/admin/Layout.vue`: dropped `NMenu mode="horizontal" responsive`
+  in favour of a `<nav class="admin-header__menu admin-nav-desktop">`
+  containing direct `RouterLink`s. The `.admin-header__menu` class is
+  preserved so the existing `phase-3d-2` e2e selector still anchors.
+  Below 768px the desktop nav hides and a 44×44 hamburger button (using
+  `lucide-vue-next`'s `Menu` icon) reveals a fixed-position dropdown
+  pinned under the 56px header. Each menu row is ≥44px tall for thumb
+  targets, the current route highlights via `--mp-brand-primary`, and
+  the menu auto-closes on (a) selecting an item, (b) route change,
+  (c) a click anywhere outside the menu/button, and (d) crossing the
+  769px breakpoint upward (rotating tablet case).
+- All hamburger / mobile-menu colours bind to `--mp-*` tokens, so moon
+  reads cool-blue and risen reads warm golden without a second pass.
+
+### Notes
+
+- Pixel-equivalent on PC (>=769px): the new desktop nav uses the same
+  flex/gap/height rhythm as the v0.2.3 horizontal NMenu, so a desktop
+  user sees no diff.
+- Other mobile-responsiveness gaps (天气卡布局, 色调微调, loading-bar)
+  are intentionally out of scope and will land in v0.2.5.
+
 ## [0.2.3] - 2026-05-05
 
 Risen-theme follow-up: 5 new starry / luxurious wallpapers tuned for the
@@ -465,7 +499,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.0...v0.2.1

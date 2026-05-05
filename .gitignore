@@ -113,3 +113,12 @@ docker-compose.yml
 # Local diagnostic output (not for repo)
 git-add-preview*.txt
 
+ 
+# ���˿����ű� (���� git) 
+setup.bat 
+dev-backend.bat 
+dev-frontend.bat
+
+# Claude Code 本地配置 (含 permission allow-list)
+.claude/
+
