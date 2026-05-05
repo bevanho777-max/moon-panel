@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-05-05
+
+Mobile polish round 2. Real-phone testing of v0.2.5 surfaced three admin
+sub-pages that were still cramped or unusable below 769 px:
+1) the right-side header actions (查看主页 + admin▾) wrapped under the
+hamburger and consumed two rows on phones; 2) the audit-log
+`NDataTable` overflowed horizontally with key fields clipped; 3) the
+站点设置 cities row pushed the 移除 button off-screen because en + tz
++ coords occupied the full row width. v0.2.6 absorbs the header
+actions into the hamburger menu, swaps the audit table for a card list
+≤768 px, and re-lays the cities row as a 2-row CSS Grid. Plus a
+theme-aware bottom-pad token so the risen StatusBar stops overlapping
+the last NCard on mobile.
+
+### Added
+
+- `--mp-content-bottom-pad-mobile` CSS token in both `:root[data-theme]`
+  blocks: moon = `24 px` (StatusBar hidden, normal breathing room),
+  risen = `70 px` (clears the ~30-34 px StatusBar plus a 12-14 px
+  margin so the last NCard isn't clipped). Consumed by the
+  `@media (max-width: 768px)` rule on `.admin-content` in
+  `Layout.vue` scoped style.
+
+### Changed
+
+- `views/admin/Layout.vue`: desktop right-side `NButton` ("查看主页")
+  + `NDropdown` ("admin▾") are wrapped in
+  `.admin-header__actions-desktop`, hidden via `display: none` below
+  769 px. The hamburger dropdown gains a divider plus three new
+  hand-rolled `<button>` rows — 查看主页 / 修改密码 / 退出登录 —
+  styled to read pixel-equivalent to the existing nav-link rows.
+  `NDropdown`-inside-mobile-menu would have teleported out of the
+  click-outside scope, so the action items are flat buttons with
+  inline `closeMobileMenu()` handlers. Desktop ≥769 px is unchanged.
+- `views/admin/AuditLog.vue`: `NDataTable` is hidden ≤768 px and
+  replaced by a vertical card list — five rows per entry (timestamp +
+  status `NTag` / 友好动作名 + monospace key / 操作者 + IP /
+  ellipsis-clipped UA / 查看详情 button). Card chrome uses
+  `--mp-card-bg` + `--mp-card-border` so risen automatically inherits
+  warm-brown surfaces. Pagination row stacks vertically on mobile.
+- `views/admin/SiteSettings.vue`: cities list `.ws__city` swaps from a
+  single-line flex to a `display: grid` 2-row layout below 769 px —
+  `grid-template-areas` puts the drag handle and 移除 button as
+  vertically-centred bookends spanning both rows, with 中文名 / 拼接的
+  detail (en · tz · lat,lon) stacked between them. The desktop spans
+  (`.ws__en`, `.ws__tz`, `.ws__coords`) hide on mobile; a new
+  `.ws__detail` mobile-only span carries the merged ellipsis-clipped
+  text. Desktop ≥769 px is byte-identical (NPopconfirm wrapped in a
+  `.ws__remove` span as a stable grid-area target — flex-child width
+  unchanged).
+
+### Notes
+
+- Desktop layouts (≥769 px) for all four touched files are pixel-equal
+  to v0.2.5. Every visual change rides a `@media (max-width: 768px)`
+  block.
+- The bottom-pad token only applies on `<= 768px`; desktop continues
+  to use the existing `padding: 2rem 1.5rem` rule, so the moon = risen
+  desktop fingerprint is untouched.
+
 ## [0.2.5] - 2026-05-05
 
 Mobile polish: the admin header title overflowed the 56 px header on

@@ -102,6 +102,21 @@ function handleUserMenu(key: string) {
     handleLogout()
   }
 }
+
+// v0.2.6: mobile-only action handlers. Each closes the mobile dropdown after
+// firing so the menu does not stay open over the destination view.
+function handleMobileViewHome() {
+  closeMobileMenu()
+  router.push('/')
+}
+function handleMobileChangePassword() {
+  closeMobileMenu()
+  showPasswordModal.value = true
+}
+function handleMobileLogout() {
+  closeMobileMenu()
+  handleLogout()
+}
 </script>
 
 <template>
@@ -131,16 +146,20 @@ function handleUserMenu(key: string) {
         >
           <MenuIcon :size="20" />
         </button>
-        <NButton size="small" @click="router.push('/')">查看主页</NButton>
-        <NDropdown
-          trigger="click"
-          :options="userMenuOptions"
-          @select="handleUserMenu"
-        >
-          <NButton size="small" data-testid="admin-user-menu">
-            {{ auth.username || 'admin' }} ▾
-          </NButton>
-        </NDropdown>
+        <div class="admin-header__actions-desktop">
+          <NSpace>
+            <NButton size="small" @click="router.push('/')">查看主页</NButton>
+            <NDropdown
+              trigger="click"
+              :options="userMenuOptions"
+              @select="handleUserMenu"
+            >
+              <NButton size="small" data-testid="admin-user-menu">
+                {{ auth.username || 'admin' }} ▾
+              </NButton>
+            </NDropdown>
+          </NSpace>
+        </div>
       </NSpace>
     </NLayoutHeader>
     <Transition name="mp-mobile-menu">
@@ -161,6 +180,36 @@ function handleUserMenu(key: string) {
         >
           {{ item.label }}
         </RouterLink>
+        <!-- v0.2.6: actions absorbed from the right-side desktop NButton/NDropdown
+             which are display:none on mobile. Hand-rolled <button> rather than
+             nesting NDropdown-inside-mobile-menu (NDropdown's portal teleports
+             out of .admin-nav-mobile-menu and breaks the click-outside logic). -->
+        <div class="admin-nav-mobile-divider" role="separator" aria-hidden="true" />
+        <button
+          type="button"
+          class="admin-nav-mobile-item admin-nav-mobile-action"
+          role="menuitem"
+          @click="handleMobileViewHome"
+        >
+          查看主页
+        </button>
+        <div class="admin-nav-mobile-divider" role="separator" aria-hidden="true" />
+        <button
+          type="button"
+          class="admin-nav-mobile-item admin-nav-mobile-action"
+          role="menuitem"
+          @click="handleMobileChangePassword"
+        >
+          修改密码
+        </button>
+        <button
+          type="button"
+          class="admin-nav-mobile-item admin-nav-mobile-action"
+          role="menuitem"
+          @click="handleMobileLogout"
+        >
+          退出登录
+        </button>
       </div>
     </Transition>
     <NLayoutContent class="admin-content">
@@ -303,8 +352,36 @@ function handleUserMenu(key: string) {
     color: var(--mp-brand-primary);
     font-weight: 600;
   }
+  /* v0.2.6: desktop right-side NButton ("查看主页") + NDropdown ("admin▾") are
+     wrapped in this div on mobile so a single rule hides both — their
+     equivalents are absorbed into the hamburger menu below. The hamburger
+     <button> sits as a sibling outside this wrapper and stays visible. */
+  .admin-header__actions-desktop {
+    display: none;
+  }
+  /* v0.2.6: action items in mobile dropdown (查看主页 / 修改密码 / 退出登录).
+     Reuses .admin-nav-mobile-item base style; overrides only the <button>
+     resets so they read pixel-equivalent to the RouterLink rows above. */
+  .admin-nav-mobile-action {
+    width: calc(100% - 16px);
+    text-align: left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+  }
+  .admin-nav-mobile-divider {
+    height: 1px;
+    margin: 6px 12px;
+    background: var(--mp-card-border);
+  }
   .admin-content {
     padding: 1.5rem 1rem;
+    /* v0.2.6: bottom-pad is theme-aware. Moon hides StatusBar (24px breathing
+       room only); risen shows StatusBar (~30-34px on mobile) so we add ~46px
+       extra to keep the last NCard from being clipped/overlapped. Token
+       defined in main.css's :root[data-theme] blocks. */
+    padding-bottom: var(--mp-content-bottom-pad-mobile);
   }
 }
 

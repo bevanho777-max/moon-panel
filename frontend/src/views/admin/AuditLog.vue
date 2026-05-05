@@ -250,8 +250,35 @@ onMounted(load)
         :loading="loading"
         :bordered="false"
         size="small"
-        class="al__table"
+        class="al__table al__table--desktop"
       />
+
+      <!-- v0.2.6: mobile card list. NDataTable's horizontal columns don't fit
+           a phone — five rows per entry surface the same info via vertical
+           stacking. Visibility toggled by @media in scoped style. -->
+      <div class="al__cards al__cards--mobile" :data-loading="loading">
+        <div v-if="!items.length && !loading" class="al__empty">暂无记录</div>
+        <div v-for="row in items" :key="row.id" class="al__card-item">
+          <div class="al__card-row al__card-row--head">
+            <span class="al__card-time">{{ new Date(row.timestamp).toLocaleString('zh-CN', { hour12: false }) }}</span>
+            <NTag :type="statusColor(row.status)" size="small">{{ row.status }}</NTag>
+          </div>
+          <div class="al__card-row al__card-row--action">
+            <span class="al__card-action-label">{{ friendlyAction(row.action) }}</span>
+            <code class="al__card-action-key">{{ row.action }}</code>
+          </div>
+          <div class="al__card-row al__card-row--meta">
+            <span class="al__card-actor">{{ row.actor || '—' }}</span>
+            <span class="al__card-ip">{{ row.ip || '—' }}</span>
+          </div>
+          <div class="al__card-row al__card-row--ua">
+            <span class="al__card-ua" :title="row.user_agent || ''">{{ row.user_agent || '—' }}</span>
+          </div>
+          <div class="al__card-row al__card-row--actions">
+            <NButton size="small" @click="detailEntry = row">查看详情</NButton>
+          </div>
+        </div>
+      </div>
 
       <div class="al__pagination">
         <NPagination
@@ -339,5 +366,95 @@ onMounted(load)
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* v0.2.6: mobile card list. Hidden on desktop (NDataTable handles ≥769px). */
+.al__cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .al__table--desktop {
+    display: none;
+  }
+  .al__cards--mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .al__empty {
+    padding: 24px 12px;
+    text-align: center;
+    opacity: 0.5;
+    font-size: 0.85rem;
+  }
+  .al__card-item {
+    padding: 12px;
+    background: var(--mp-card-bg);
+    border: 1px solid var(--mp-card-border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .al__card-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .al__card-row--head {
+    justify-content: space-between;
+  }
+  .al__card-time {
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+  }
+  .al__card-row--action {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .al__card-action-label {
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: var(--mp-text-primary);
+  }
+  .al__card-action-key {
+    font-family: monospace;
+    font-size: 0.72rem;
+    opacity: 0.55;
+    word-break: break-all;
+  }
+  .al__card-row--meta {
+    justify-content: space-between;
+    font-size: 0.82rem;
+    opacity: 0.75;
+  }
+  .al__card-actor,
+  .al__card-ip {
+    font-variant-numeric: tabular-nums;
+  }
+  .al__card-row--ua {
+    font-size: 0.75rem;
+    opacity: 0.55;
+  }
+  .al__card-ua {
+    display: block;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .al__card-row--actions {
+    justify-content: flex-end;
+  }
+  .al__pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
 }
 </style>

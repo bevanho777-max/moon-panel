@@ -73,6 +73,14 @@
 
   /* Status bar visibility */
   --mp-status-bar-display: none;
+
+  /* v0.2.6: admin-content padding-bottom (mobile only). Moon hides the
+     StatusBar (--mp-status-bar-display: none above) so 24px is just normal
+     breathing room. Risen surfaces the StatusBar at the bottom of the
+     viewport, so we widen the gap to 70px below to keep the last NCard
+     from being clipped/overlapped. Consumed by admin Layout.vue's @media
+     (max-width: 768px) block. */
+  --mp-content-bottom-pad-mobile: 24px;
 }
 
 :root[data-theme="risen"] {
@@ -126,6 +134,12 @@
 
   /* Status bar */
   --mp-status-bar-display: flex;
+
+  /* v0.2.6: admin-content padding-bottom on mobile. Risen shows the
+     StatusBar (~30-34px tall, fixed at bottom: 16px) so the last NCard
+     would be clipped/overlapped at 24px. 70px clears the bar plus a
+     12-14px breathing margin. */
+  --mp-content-bottom-pad-mobile: 70px;
 }
 
 * {

@@ -505,16 +505,25 @@ onMounted(() => {
                   <span class="ws__en">{{ c.name_en }}</span>
                   <span class="ws__tz">{{ c.tz }}</span>
                   <span class="ws__coords">{{ c.lat.toFixed(2) }}, {{ c.lon.toFixed(2) }}</span>
-                  <NPopconfirm
-                    :positive-text="'移除'"
-                    :negative-text="'取消'"
-                    @positive-click="removeCity(idx)"
-                  >
-                    <template #trigger>
-                      <NButton size="tiny" type="error" tertiary>移除</NButton>
-                    </template>
-                    移除「{{ c.name_cn }}」？
-                  </NPopconfirm>
+                  <!-- v0.2.6: combined detail line for the mobile grid layout
+                       (en + tz + coords on one ellipsis-clipped row). The
+                       three desktop-only spans above stay rendered for ≥769px;
+                       @media in scoped style toggles display per breakpoint. -->
+                  <span class="ws__detail">
+                    {{ c.name_en }} · {{ c.tz }} · {{ c.lat.toFixed(2) }}, {{ c.lon.toFixed(2) }}
+                  </span>
+                  <span class="ws__remove">
+                    <NPopconfirm
+                      :positive-text="'移除'"
+                      :negative-text="'取消'"
+                      @positive-click="removeCity(idx)"
+                    >
+                      <template #trigger>
+                        <NButton size="tiny" type="error" tertiary>移除</NButton>
+                      </template>
+                      移除「{{ c.name_cn }}」？
+                    </NPopconfirm>
+                  </span>
                 </div>
               </template>
             </draggable>
@@ -801,11 +810,63 @@ onMounted(() => {
   font-size: 0.75rem;
   opacity: 0.4;
 }
+/* v0.2.6: combined "en · tz · lat,lon" detail line — mobile-only via @media. */
+.ws__detail {
+  display: none;
+}
 .ws__temp-unit {
   display: flex;
   align-items: center;
   gap: 8px;
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* v0.2.6: cities row swaps from a single-line flex to a 2-row CSS Grid on
+   phones. Drag handle + remove button span both rows (vertically centered),
+   while name + detail stack between them. The 14px gap on desktop is kept
+   intact — only the @media block below redefines layout for ≤768px. */
+@media (max-width: 768px) {
+  .ws__city {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    grid-template-areas:
+      "drag name remove"
+      "drag detail remove";
+    column-gap: 10px;
+    row-gap: 2px;
+    padding: 10px 12px;
+  }
+  .ws__drag {
+    grid-area: drag;
+    align-self: center;
+  }
+  .ws__cn {
+    grid-area: name;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ws__en,
+  .ws__tz,
+  .ws__coords {
+    display: none;
+  }
+  .ws__detail {
+    grid-area: detail;
+    display: block;
+    min-width: 0;
+    font-size: 0.72rem;
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: monospace;
+  }
+  .ws__remove {
+    grid-area: remove;
+    align-self: center;
+  }
 }
 </style>
