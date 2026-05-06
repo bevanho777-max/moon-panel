@@ -456,5 +456,37 @@ onMounted(load)
     align-items: stretch;
     gap: 8px;
   }
+  /* v0.2.7: NCard header (NaiveUI internal flex row at desktop) stacks
+     vertically on phones — title row separates from filter row, so the
+     "查询/重置" buttons no longer overlap the "审计日志" title.
+     :deep() reaches into NaiveUI's stable internal BEM (n-card-header,
+     __main, __extra). NSpace v2 children have no fixed wrapper class
+     (Space.mjs:128 renders `class: itemClass`, default undefined; in
+     useGap mode the wrapper div is omitted entirely), so `> *` is the
+     only reliable selector — covers both wrapper-div and direct-child
+     modes. */
+  .al__card :deep(.n-card-header) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .al__card :deep(.n-card-header__main) {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .al__card :deep(.n-card-header__extra) {
+    width: 100%;
+    margin-left: 0;
+  }
+  .al__card :deep(.n-card-header__extra .n-space) {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .al__card :deep(.n-card-header__extra .n-space > *) {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 140px;
+  }
 }
 </style>
