@@ -6,8 +6,16 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'memory/**'
+      - '**/*.md'
+      - 'docs/**'
   push:
     branches: [main]
+    paths-ignore:
+      - 'memory/**'
+      - '**/*.md'
+      - 'docs/**'
 
 # No write permissions needed — CI only reads and reports.
 permissions:

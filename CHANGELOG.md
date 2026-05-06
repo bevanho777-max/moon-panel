@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-05-06
+
+### Fixed
+
+- **PC desktop (≥769px) weather card layout**: City weather cards
+  (Xiamen / New York / Tokyo) now display at fixed 280px base width
+  and center-aligned on desktop instead of stretching across the full
+  1500px container with large empty middle areas. Uses `:deep(.cw)`
+  in HomeHero scoped CSS to target CityWidget root via Vue scoped
+  boundary (same pattern as v0.2.7 AuditLog NCard fix). Mobile
+  (≤720px) and intermediate (721-768px gray zone) layouts unchanged.
+
+### Chore
+
+- Add `paths-ignore` to `.github/workflows/ci.yml` for `memory/**`,
+  `**/*.md`, and `docs/**` paths. Markdown-only commits (memory chore,
+  docs updates, CHANGELOG fixes) no longer trigger full backend +
+  frontend CI build, saving ~3 min per such commit. Discovered during
+  v0.2.7+chore(memory) ship cycle when memory chore commit triggered
+  full CI despite being markdown-only.
+
 ## [0.2.7] - 2026-05-06
 
 ### Fixed

@@ -127,4 +127,18 @@ onBeforeUnmount(() => {
     flex: 1 1 100%;
   }
 }
+
+/* v0.2.8: PC desktop (≥769px) — center weather cards at fixed width
+   instead of stretching across the container. Mobile (≤720px) and
+   intermediate (721-768px) layouts unchanged.
+   :deep(.cw) targets the CityWidget root class via Vue scoped CSS
+   boundary penetration (same pattern as v0.2.7 AuditLog NCard fix). */
+@media (min-width: 769px) {
+  .hero {
+    justify-content: center;
+  }
+  .hero :deep(.cw) {
+    flex: 0 1 280px;
+  }
+}
 </style>
