@@ -1,6 +1,6 @@
 ---
 name: 子阶段交付前必跑的本地验证 checklist
-description: 后端 vet+build、前端在 C:\moon-build\frontend 跑 npm run build、shell sh -n，三步缺一不可
+description: 后端 vet+build、前端 npm run build（本地 NTFS 直跑 / SMB 走 F-lite 副本）、shell sh -n，三步缺一不可
 type: feedback
 ---
 
@@ -8,12 +8,17 @@ type: feedback
 
 1. **后端**：
    ```
-   cd P:\moon-panel\backend && go vet ./... && go build ./cmd/server
+   cd c:\moon-panel-dev\backend && go vet ./... && go build ./cmd/server
    ```
-   再用便携 Go (D:\Projects\moon-panel\tools\go) 启二进制 + curl 把所有改动端点对一遍预期。
+   Go 用系统 PATH（PC HOMENET 已装）启二进制 + curl 把所有改动端点对一遍预期。便携 Go（`D:\Projects\moon-panel\tools\go`）路径已废弃。
 
-2. **前端**（必须走 F-lite 验证副本）：
+2. **前端**（v0.2.7+ 默认本地 NTFS 直跑；源码若位于 SMB 则走 F-lite 副本）：
    ```
+   # 默认（c:\moon-panel-dev 本地 NTFS，v0.2.5+ 起）：
+   cd c:\moon-panel-dev\frontend
+   npm run build
+
+   # 仅当源码在 SMB（P:\moon-panel\）时走 F-lite，理由见下文：
    robocopy P:\moon-panel\frontend C:\moon-build\frontend /MIR /XD node_modules /XF *.log
    cd C:\moon-build\frontend
    npm run build
@@ -22,20 +27,23 @@ type: feedback
 
 3. **Shell 脚本**：
    ```
-   sh -n P:\moon-panel\docker\entrypoint.sh
+   sh -n c:\moon-panel-dev\docker\entrypoint.sh
    ```
 
 ---
 
-## F-lite 验证副本工作流（重要）
+## F-lite 验证副本工作流（★ 仅当源码在 SMB 时适用 ★）
 
-**为什么要这个**：P:\moon-panel\ 是群晖 SMB 共享。esbuild native 在 SMB drive-letter 上解析 node_modules 会失败（实测：`Failed to resolve entry for package "@vitejs/plugin-vue"`）。Windows junction (`mklink /J`) 也走不通——SMB 卷不支持 reparse point（内核硬约束）。
+**为什么要这个**：当源码位于群晖 SMB 共享 `P:\moon-panel\` 时，esbuild native 在 SMB drive-letter 上解析 node_modules 会失败（实测：`Failed to resolve entry for package "@vitejs/plugin-vue"`）。Windows junction (`mklink /J`) 也走不通——SMB 卷不支持 reparse point（内核硬约束）。
 
-**F-lite 解法**：用本地 NTFS 路径 `C:\moon-build\frontend` 做**只读验证副本**，源码权威永远在 P:\。
+**v0.2.5+ 实际上**：源码已迁到 `c:\moon-panel-dev\`（本地 NTFS），F-lite **不需要**——`cd c:\moon-panel-dev\frontend && npm run dev / build / type-check` 直接通（v0.2.7 实战验证）。本节保留为 SMB 场景兜底，不再是首选。详见 [feedback_workdir_authority.md](feedback_workdir_authority.md)。
 
-**固定原则**：
-- `P:\moon-panel\` 永远是源码权威（写代码、群晖 build、git 推全基于它）
-- `C:\moon-build\frontend\` 是**只读验证副本**（不进 git、不写代码）
+**F-lite 解法（SMB 场景）**：用本地 NTFS 路径 `C:\moon-build\frontend` 做**只读验证副本**，源码权威**当时**在 P:\。
+
+**固定原则（仅 SMB 场景）**：
+- `c:\moon-panel-dev\` 是**当前**源码权威（本地 NTFS git repo，remote = GitHub origin）；v0.2.5/2.6/2.7 全部 commit + push 都直接在 c:\moon-panel-dev\ 操作（reflog 反推证据见 [feedback_workdir_authority.md](feedback_workdir_authority.md)）
+- 历史 SMB 场景下 `P:\moon-panel\` 曾是源码权威；现已废弃，仅 legacy 备份
+- `C:\moon-build\frontend\` 是 SMB 场景下的**只读验证副本**（不进 git、不写代码）
 - `node_modules` 永远只装在 C:，不污染 P:
 - robocopy `/MIR` 单向同步，C 永远是 P 的纯净镜像（无 D/P 漂移可能）
 

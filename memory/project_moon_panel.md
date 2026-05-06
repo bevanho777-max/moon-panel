@@ -5,7 +5,7 @@ type: project
 originSessionId: 2bf565ba-ceec-48ee-9795-2d8ca3d79e24
 ---
 
-用户在 **P:\moon-panel**（Windows 上的群晖 SMB 共享，NAS 本地路径 `/volume5/code/moon-panel`）自建导航面板项目 "Moon Panel"，定位为 Sun-Panel 的轻量替代品。原始路径 `d:\Projects\moon-panel` 已弃用，所有读写走 P:\。
+用户在 **c:\moon-panel-dev**（PC HOMENET，本地 NTFS）自建导航面板项目 "Moon Panel"，定位为 Sun-Panel 的轻量替代品。原始路径 `d:\Projects\moon-panel` 和 SMB 副本 `P:\moon-panel\` 都已废弃，所有 git 操作走 `c:\moon-panel-dev\`。源码权威 = `c:\moon-panel-dev\`，GitHub remote = https://github.com/bevanho777-max/moon-panel.git。
 
 **Why:** Sun-Panel 经常要求重新登录、近期开始收费，用户想自己掌握。
 

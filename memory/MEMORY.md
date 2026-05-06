@@ -5,7 +5,7 @@
 ## Entries
 
 - [Moon Panel 项目背景](project_moon_panel.md) — 自托管导航面板，替代 Sun-Panel，单密码 + 内外网切换 + 单文件部署
-- [Memory 写入位置](feedback_memory_location.md) — 新 memory 只写 P:\moon-panel\memory\，不要写自动 memory 目录
+- [Memory 写入位置规则](feedback_memory_location.md) — 唯一权威 c:\moon-panel-dev\memory\(git tracked), P:\ 已废弃为 legacy 备份
 - [状态变更操作前必须征求确认](feedback_state_changes.md) — push/rebase/删文件/装依赖等先问，代码改动直接做
 - [子阶段交付前必跑的本地验证 checklist](feedback_delivery_routine.md) — 后端 vet+build、前端走 F-lite C:\moon-build 副本跑 npm run build、shell sh -n
 - [D 盘 moon-panel 残留一律不动](feedback_d_drive_residue.md) — D:\Projects\moon-panel、D:\moon-modules-frontend 等永远不删不同步
@@ -17,3 +17,5 @@
 - [外部资源必须有 fallback；Phase 3 icon proxy+cache](feedback_external_resource_fallback.md) — 用户 NAS 翻墙但其他客户端不假设；图片/API/CDN 全 fallback；Phase 3 图标走后端下载缓存
 - [SSRF 防护规则](feedback_ssrf_protection.md) — 用户 URL → 后端 fetch 类端点必须 DNS 解析 + IP 段拒绝 + 复用 IP 防 rebinding；Phase 2.5b/3 共用
 - [Gin 静态文件路由 + NoRoute 共存](feedback_gin_static_route_order.md) — r.Static() 注册的前缀路由不会被 NoRoute 拦截，遗漏会导致静态 URL 返回 SPA HTML
+- [字面文本替换前必先征询](feedback_no_unilateral_substitution.md) — spec 里 user 给的字面字符任何替换都要先停下问，不擅自决定
+- [工作目录权威性核对](feedback_workdir_authority.md) — 三件证据法（remote/HEAD/reflog）核对 git 工作目录是否真权威，防改错副本/推错 repo
