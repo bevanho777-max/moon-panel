@@ -4,7 +4,7 @@ description: spec 里 user 给的字面字符（Unicode/符号/commit msg/tag an
 type: feedback
 ---
 
-任何 spec 里 user 给了字面文本（特殊字符 / Unicode / commit message / tag annotation / 配置值），即使我有合理技术理由（如 PowerShell 5.1 native exe arg encoding 风险）也要**先报告并问 Bevan**，再实施。绝不擅自替换。
+任何 spec 里 user 给了字面文本（特殊字符 / Unicode / commit message / tag annotation / 配置值），即使我有合理技术理由（如 PowerShell 5.1 native exe arg encoding 风险）也要**先报告并问 Bevan**，再实施。绝不擅自替换。(注: PS 5.1 编码风险部分成立 — UTF-8 字符 ≤ ≥ — → 中文 通过 here-string 全过, 但 ASCII " 字符通过 here-string 传 native exe 不可靠. 详见 feedback_ps_native_arg_quoting.md.)
 
 **Why:** v0.2.7 tag annotation 里 spec 写 `phones (≤768px)`，我担心 PS 5.1 OEM codepage 把 `≤` mangle，**未先确认就替换为 `<=`** 推到 origin。但 v0.2.5/2.6 commit body 含中文字符顺利落库——证明编码链路其实通的，根本不必替换。Bevan ship 后才发现偏离，虽接受 `<=`（数学等价、tag 是元数据、重 tag 代价大）但明确说："你主动 flag 偏离对，但字符替换应先报告再实施。即使技术原因合理，决策权属于 Bevan。"
 
