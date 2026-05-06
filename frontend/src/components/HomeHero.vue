@@ -2,18 +2,20 @@
 // Home page hero band: 3-5 city widgets in a row showing time + date + weather.
 //
 // Lifecycle:
-//   - One shared minute-aligned timer ticks `now` (so all widgets re-render in
-//     lockstep and we don't drift). Aligns to the next minute boundary on mount.
+//   - One shared 1Hz tick timer updates `now` so all widgets re-render in
+//     lockstep (column-clock effect). v0.2.9 increased rate from 1/min to
+//     1/sec to support HH:MM:SS time display on PC. Mobile hides time via
+//     CSS so the per-second reactivity has no visual cost there.
 //   - Weather fetched once per city on mount, then refreshed every 10 min via
 //     setInterval. `cities` prop changes (admin updates list) re-trigger the
 //     full fetch.
 //   - On unmount, both timers are cleared.
 //
 // Why one shared timer instead of one per widget: with N widgets, N independent
-// setInterval(..., 60000) would drift apart and re-render at slightly different
-// times. One timer keeps the column-clock effect visually aligned.
+// setInterval would drift apart and re-render at slightly different times.
+// One timer keeps the column-clock effect visually aligned.
 
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { City } from '@/utils/citySearch'
 import type { TempUnit } from '@/api/panel'
 import { getWeather } from '@/api/weather'
@@ -27,8 +29,7 @@ const props = defineProps<{
 const now = ref(Date.now())
 const weatherMap = ref<Record<string, { temperature_2m: number; weather_code: number; is_day: 0 | 1 } | null>>({})
 
-let minuteTimer: number | null = null
-let alignTimer: number | null = null
+let tickTimer: ReturnType<typeof setInterval> | null = null
 let weatherTimer: number | null = null
 
 const visibleCities = computed(() => props.cities.slice(0, 5))
@@ -57,23 +58,18 @@ async function fetchAll() {
   await Promise.all(visibleCities.value.map(fetchOne))
 }
 
-function scheduleMinuteTick() {
-  // Align first tick to the next wall-clock minute, then every 60s.
-  const msToNextMinute = 60_000 - (Date.now() % 60_000)
-  alignTimer = window.setTimeout(() => {
-    now.value = Date.now()
-    minuteTimer = window.setInterval(() => {
-      now.value = Date.now()
-    }, 60_000)
-  }, msToNextMinute)
-}
-
 function startWeatherRefresh() {
   weatherTimer = window.setInterval(fetchAll, 10 * 60 * 1000)
 }
 
-// First-mount setup: tick + initial fetch + 10-min refresh.
-scheduleMinuteTick()
+// First-mount setup: 1Hz tick + initial fetch + 10-min refresh. tick uses
+// onMounted because it lazy-binds the timer; fetchAll/startWeatherRefresh are
+// fire-and-forget at setup-script top level.
+onMounted(() => {
+  tickTimer = setInterval(() => {
+    now.value = Date.now()
+  }, 1000)
+})
 fetchAll()
 startWeatherRefresh()
 
@@ -86,8 +82,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
-  if (alignTimer !== null) clearTimeout(alignTimer)
-  if (minuteTimer !== null) clearInterval(minuteTimer)
+  if (tickTimer !== null) clearInterval(tickTimer)
   if (weatherTimer !== null) clearInterval(weatherTimer)
 })
 </script>
@@ -113,18 +108,18 @@ onBeforeUnmount(() => {
   gap: 12px;
   margin-bottom: 24px;
 }
-@media (max-width: 720px) {
+/* v0.2.9: Mobile/tablet (≤768px) — 3 cards per row, evenly distributed.
+   Replaces v0.2.8's 720/420 split AND v0.2.9 first attempt's single-column
+   stacking. Single row keeps weather widgets compact rather than dominating
+   mobile screen. Cards inside use single-line 4-element layout (city/temp/
+   date/time) so 33% width per card is sufficient. */
+@media (max-width: 768px) {
   .hero {
-    gap: 8px;
+    gap: 6px;
   }
   .hero > * {
-    flex: 1 1 calc(50% - 8px);
+    flex: 0 1 calc(33.333% - 4px);
     min-width: 0;
-  }
-}
-@media (max-width: 420px) {
-  .hero > * {
-    flex: 1 1 100%;
   }
 }
 

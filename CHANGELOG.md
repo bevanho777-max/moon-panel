@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-05-06
+
+### Fixed
+
+- **Mobile/tablet (≤768px) weather card layout — 3 cards per row**:
+  City weather cards now display 3 per row at flex 33.333% width,
+  replacing the v0.2.x 2+1 split (two cards at 50% then third card
+  stretching full row). Phone screens shouldn't be dominated by a
+  temperature widget.
+
+- **CityWidget template rebuild — 5-element single-row horizontal**:
+  2-row layout (city/time on top, icon+temp/date on bottom) consolidated
+  to single-row 5-element horizontal layout (city + emoji + temp + date
+  + time). Information density significantly increased — same data in
+  less than half the vertical space.
+
+- **Mobile (≤768px) hides date+time — phone status bar already shows them**:
+  Mobile cards display only city + emoji + temperature (3 elements).
+  Date and time hidden via `display: none` since phone OS already shows
+  them in the status bar — no need to duplicate inside widget.
+
+- **PC desktop (≥769px) time displays seconds (HH:MM:SS)**: Time format
+  extended from `HH:MM` to `HH:MM:SS` for real-time feel matching
+  desktop expectations. HomeHero timer simplified from minute-aligned
+  setTimeout+setInterval combo to a single 1Hz setInterval — net code
+  reduction (~10 lines simpler) plus the seconds feature. Performance
+  impact: ~1ms/sec total across all 5 widgets (negligible).
+
+- **CityWidget typography normalization**: All visible elements share
+  0.95rem font-size on PC with city name slightly bolder (weight 600).
+  Replaces inverted/competing hierarchy where time (1.4rem) dominated
+  visually and city name (0.9rem) was smallest.
+
+- **CityWidget compact spacing**: Card padding tightened from 12px 16px
+  to 8px 12px, enabling the single-row layout to render compactly.
+
+- **Mobile (≤768px) font-size scaled down ~15%**: city/emoji/temp
+  reduced to 0.8rem/0.9rem/0.8rem so 3-element layout fits comfortably
+  in ~120px (375px viewport ÷ 3 cards). Fixes Los Angeles 21°C truncation.
+
+- **City name marquee scroll for long names (mobile only)**: When city
+  name content exceeds 60px container width (e.g., "阿姆斯特丹" 5 chars
+  or "San Francisco" 13 chars), JS adds `--overflow` modifier and inner
+  span scrolls left at adaptive speed (overflow distance × 0.04s,
+  clamped 2-8s). Container-width-triggered detection via ResizeObserver
+  is language-agnostic and naturally PC-disabled (no max-width on PC).
+  PC hover pauses scroll; mobile has no hover so animation runs
+  continuously.
+
+- **HomeHero breakpoint unification**: Replaced split 720px/420px
+  breakpoints with single 768px breakpoint matching v0.2.7 AuditLog,
+  eliminating the 721-768px gray zone left by v0.2.8 PC rule.
+
 ## [0.2.8] - 2026-05-06
 
 ### Fixed
