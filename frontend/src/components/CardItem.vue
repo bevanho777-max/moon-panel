@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, h, nextTick, ref, type VNode } from 'vue'
+import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch, type VNode } from 'vue'
 import { NDropdown, type DropdownOption } from 'naive-ui'
 import type { Card } from '@/api/card'
 import { useNetworkStore } from '@/stores/network'
@@ -155,6 +155,81 @@ const tooltipText = computed(() => {
   parts.push(url.value.url)
   return parts.filter(Boolean).join('\n')
 })
+
+// v0.2.12: Card title overflow detection for mobile marquee scroll.
+// Only active on mobile (≤768px) where .card-item__title-row stacks
+// title + badge as 2 rows and title takes full body width with
+// overflow: hidden. PC has implicit ellipsis (no max-width on title)
+// so scrollWidth always ≤ clientWidth — overflow class never added.
+// Reuses v0.2.9 CityWidget marquee pattern (template ref + ResizeObserver
+// + duration computed) with card-* selectors. v-if/v-else branches are
+// mutually exclusive so single ref binding works.
+const cardTitleRef = ref<HTMLElement | null>(null)
+const cardTitleOverflow = ref(false)
+const cardMarqueeDuration = ref('3s')
+
+function checkCardTitleOverflow() {
+  const el = cardTitleRef.value
+  if (!el) return
+
+  const inner = el.querySelector('.card-item__title__inner') as HTMLElement | null
+  if (!inner) return
+
+  const innerWidth = inner.scrollWidth
+  const containerWidth = el.clientWidth
+  const isOverflow = innerWidth > containerWidth
+
+  cardTitleOverflow.value = isOverflow
+
+  if (isOverflow) {
+    // v0.2.12 patch F: inner has 2 copies of title for seamless loop.
+    // First check (before re-render): only 1 copy exists, use full
+    // (innerWidth - containerWidth). Subsequent checks (after Vue
+    // re-renders the 2nd copy via v-if): use halfWidth = innerWidth / 2
+    // because innerWidth now includes both copies + separator.
+    const textChildren = inner.querySelectorAll('.card-item__title__inner__text')
+    const distance = textChildren.length >= 2
+      ? innerWidth / 2
+      : innerWidth - containerWidth
+    // Scroll duration (target): distance × 0.04, clamp 2-8s
+    const scrollDuration = Math.min(8, Math.max(2, distance * 0.04))
+    // Total includes 25% dwell + 75% scroll. Keyframes 0%-25% is dwell.
+    // To keep scroll speed (75% of total) = scrollDuration:
+    //   total × 0.75 = scrollDuration → total = scrollDuration / 0.75
+    const totalDuration = scrollDuration / 0.75
+    cardMarqueeDuration.value = `${totalDuration.toFixed(2)}s`
+  }
+}
+
+let resizeObs: ResizeObserver | null = null
+
+onMounted(() => {
+  nextTick(checkCardTitleOverflow)
+
+  // v0.2.12 patch (visual gate): re-check after grid auto-fill layout
+  // stabilizes. Initial nextTick may run before container has final
+  // clientWidth (auto-fill is async). 100ms is empirical buffer.
+  setTimeout(checkCardTitleOverflow, 100)
+
+  if (cardTitleRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObs = new ResizeObserver(() => {
+      nextTick(checkCardTitleOverflow)
+    })
+    resizeObs.observe(cardTitleRef.value)
+  }
+})
+
+// Re-check when card title changes (admin edits propagate via props.card.title).
+watch(() => props.card.title, () => {
+  nextTick(checkCardTitleOverflow)
+})
+
+onBeforeUnmount(() => {
+  if (resizeObs) {
+    resizeObs.disconnect()
+    resizeObs = null
+  }
+})
 </script>
 
 <template>
@@ -219,7 +294,27 @@ const tooltipText = computed(() => {
     </span>
     <div class="card-item__body">
       <div class="card-item__title-row">
-        <span class="card-item__title">{{ card.title }}</span>
+        <span
+          ref="cardTitleRef"
+          class="card-item__title"
+          :class="{ 'card-item__title--overflow': cardTitleOverflow }"
+          :style="{ '--card-marquee-duration': cardMarqueeDuration }"
+          :title="card.title"
+        >
+          <span class="card-item__title__inner">
+            <span class="card-item__title__inner__text">{{ card.title }}</span>
+            <span
+              v-if="cardTitleOverflow"
+              class="card-item__title__inner__sep"
+              aria-hidden="true"
+            >&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span
+              v-if="cardTitleOverflow"
+              class="card-item__title__inner__text"
+              aria-hidden="true"
+            >{{ card.title }}</span>
+          </span>
+        </span>
         <span
           v-if="networkBadge === 'internal-only'"
           class="card-item__badge card-item__badge--internal"
@@ -295,7 +390,27 @@ const tooltipText = computed(() => {
     </span>
     <div class="card-item__body">
       <div class="card-item__title-row">
-        <span class="card-item__title">{{ card.title }}</span>
+        <span
+          ref="cardTitleRef"
+          class="card-item__title"
+          :class="{ 'card-item__title--overflow': cardTitleOverflow }"
+          :style="{ '--card-marquee-duration': cardMarqueeDuration }"
+          :title="card.title"
+        >
+          <span class="card-item__title__inner">
+            <span class="card-item__title__inner__text">{{ card.title }}</span>
+            <span
+              v-if="cardTitleOverflow"
+              class="card-item__title__inner__sep"
+              aria-hidden="true"
+            >&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span
+              v-if="cardTitleOverflow"
+              class="card-item__title__inner__text"
+              aria-hidden="true"
+            >{{ card.title }}</span>
+          </span>
+        </span>
       </div>
       <div class="card-item__desc">未设置链接</div>
     </div>
@@ -466,6 +581,62 @@ const tooltipText = computed(() => {
   font-size: 0.7rem;
   opacity: 0.5;
   flex-shrink: 0;
+}
+
+/* v0.2.12: Mobile (≤768px) layout — title + badge stack as 2 rows so
+   long card titles don't squeeze the badge to ~5px width. Combined with
+   marquee scroll on overflow. Co-exists with existing 480px small-mobile
+   block (component-level extreme), keeping the cascade simple. */
+@media (max-width: 768px) {
+  .card-item__title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .card-item__title {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  /* v0.2.12 patch (visual gate): inner span needs explicit display +
+     nowrap so its scrollWidth measures the full unwrapped string
+     (default span without these may collapse to wrap or to parent
+     width when ancestor has text-overflow:ellipsis behaviour). */
+  .card-item__title__inner {
+    display: inline-block;
+    white-space: nowrap;
+  }
+  /* v0.2.12 P0 b: When card title content overflows the container width
+     (long names like "Open WebUI Server"), JS adds --overflow modifier
+     and inner span scrolls. Speed adapts to length via CSS variable.
+     v0.2.12 patch E: keyframes 0%-25% is dwell phase (static), 25%-100%
+     is scroll phase. Total duration computed as scroll_time / 0.75 so
+     that scroll speed remains distance×0.04. Each loop dwells before
+     scrolling — per Bevan UX feedback.
+     v0.2.12 patch F: inner span has 2 copies of title separated by
+     nbsp gap. Keyframes scroll to -50% (start of 2nd copy), then loop
+     resets to 0%. Visually seamless because both copies are identical
+     — no jump-back artifact (per Bevan UX feedback). */
+  .card-item__title--overflow .card-item__title__inner {
+    display: inline-block;
+    animation: card-marquee var(--card-marquee-duration, 3s) linear infinite;
+    padding-right: 16px;
+  }
+  .card-item__title__inner__sep {
+    display: inline-block;
+  }
+  .card-item:hover .card-item__title--overflow .card-item__title__inner {
+    animation-play-state: paused;
+  }
+}
+
+/* v0.2.12: marquee keyframes — only used by .card-item__title__inner
+   when --overflow modifier is present (mobile only). Translate is
+   approximate since CardItem container width varies (100-200px in
+   grid auto-fill); padding-right covers the trailing visual gap. */
+@keyframes card-marquee {
+  0%, 25%  { transform: translateX(0); }
+  100%     { transform: translateX(-50%); }
 }
 
 @media (max-width: 480px) {

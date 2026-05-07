@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.12] - 2026-05-06
+
+### Fixed
+
+- **Mobile CardItem 2-row layout for compact card discrimination**:
+  Card name and "仅内网" (internal-only) badge now stack vertically
+  on mobile (≤768px) — name on row 1 (claiming full row width),
+  badge on row 2 left-aligned. Previously names competed inline with
+  badge causing aggressive truncation on small viewports. Bevan's
+  real-device feedback: long names like "Open WebUI Server" were
+  indistinguishable as "Ope..." across many cards. PC default
+  (≥769px) keeps inline layout — wider cards have room for both.
+
+- **Mobile CardItem long-name seamless marquee scroll**: Names that
+  overflow the mobile container width now scroll horizontally in a
+  seamless infinite loop. Implementation reuses v0.2.9 CityWidget's
+  JS detection pattern (~80% logic reuse: ResizeObserver +
+  scrollWidth detection + ref binding + cleanup) but upgrades two
+  UX dimensions: (1) per-loop dwell phase (CSS keyframes 0%-25%
+  static, 25%-100% scroll) lets users read the static name comfortably
+  each cycle; (2) doubled inner content with nbsp separator and
+  translateX(-50%) endpoint creates seamless visual loop without the
+  jump-back artifact common to single-copy marquees. Total duration
+  auto-scales: scroll_time = clamp(2s, distance × 0.04, 8s); total =
+  scroll_time / 0.75 (the 25% dwell ratio). Speed remains constant
+  distance × 0.04 px per second regardless of loop overhead.
+
+- **PC CardItem long-name tooltip via title attribute**: Names that
+  are CSS-truncated with ellipsis on PC now show the full string on
+  ~500ms hover via the HTML title attribute. Lightweight (no NTooltip
+  component overhead), browser-native rendering, zero runtime cost.
+
+### Engineering Lessons Applied
+
+- **NaiveUI :deep() override safety (memory feedback v0.2.10 chore)**:
+  All marquee-related styling targets component-owned classes
+  (.card-item__title, .card-item__title__inner) — no :deep() override
+  of NaiveUI internal BEM. Avoids the v0.2.10 Task 2.13 wrap regression
+  pattern from modifying internal box calculations.
+
+- **Mobile total width pre-implementation audit (memory feedback
+  v0.2.10 chore)**: Spec phase quantified single-card widths at
+  480px (~151px) and 768px (~160-200px) viewport widths to validate
+  2-row layout before implementation. Prevents v0.2.10 Task 2.13
+  style wrap-as-alignment misdiagnosis.
+
+- **v0.2.9 CityWidget marquee pattern reuse**: ResizeObserver +
+  scrollWidth detection + watch + cleanup logic reused ~80%. Marquee
+  is becoming a reusable UX primitive — v0.2.13 backlog includes
+  upgrading v0.2.9 CityWidget itself to match v0.2.12's seamless
+  + dwell standard (reverse direction reuse).
+
+### Visual Gate Iteration
+
+Six patch iterations during visual gate, all UX-driven (vs v0.2.10's
+mix of UX and misdiagnosis-driven):
+- Task 2: Initial implementation (template + JS + CSS)
+- Patch A: inner span display: inline-block + white-space: nowrap
+  (root cause for marquee not triggering — inline scrollWidth doesn't
+  measure overflow content)
+- Patch B: .card-item__title explicit white-space: nowrap (defensive)
+- Patch C: onMounted setTimeout 100ms re-check (grid auto-fill timing)
+- Patch D: animation-delay 1.5s initial (reverted — only first iteration)
+- Patch E: keyframes 0%-25% dwell phase (each loop dwells)
+- Patch F: doubled content + translateX(-50%) (seamless infinite loop)
+
+No regressions, no misdiagnosis-driven reverts (only Patch D revert
+was a UX upgrade, not a fix).
+
 ## [0.2.11] - 2026-05-06
 
 ### Fixed
