@@ -20,3 +20,5 @@
 - [字面文本替换前必先征询](feedback_no_unilateral_substitution.md) — spec 里 user 给的字面字符任何替换都要先停下问，不擅自决定
 - [工作目录权威性核对](feedback_workdir_authority.md) — 三件证据法（remote/HEAD/reflog）核对 git 工作目录是否真权威，防改错副本/推错 repo
 - [PowerShell 5.1 native exe arg quoting 不可靠](feedback_ps_native_arg_quoting.md) — UTF-8 过 / ASCII " 丢; commit msg + tag annotation 必走 -F file 模式
+- [NaiveUI :deep() override 改组件内部 BEM 的副作用](feedback_naiveui_deep_override.md) — 改 .n-button__content 等内部 box 属性会改变 outer width, 在 flex 父容器中触发 wrap; 安全做法在组件根类加 align
+- [Mobile flex 容器多元素 wrap 诊断要量化总宽](feedback_mobile_layout_total_width_audit.md) — wrap 类问题先量化元素总宽 vs viewport, 别只看截图局部; v0.2.10 Task 2.13 误诊教训
