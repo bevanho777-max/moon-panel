@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.10] - 2026-05-06
+
+### Fixed
+
+- **Mobile Home page header — admin button overlap eliminated**:
+  "管理后台" text button replaced with Settings circle icon
+  (lucide-vue-next), saving horizontal space on mobile (≤768px).
+  Tooltip + aria-label preserve "管理后台" semantic.
+
+- **Mobile Home page header — brand title hidden to fit controls**:
+  "Moon Panel" text (.home-header__title) hidden in mobile (≤768px),
+  keeping only the moon/sun logo (.home-header__logo) for brand
+  identity. Frees ~100px horizontal space — combined with the admin
+  icon shrink (above), all 4 top bar elements (logo + search +
+  network + admin) now fit in the mobile 375px viewport without
+  NSpace wrap. PC keeps full "Moon Panel" text (zero regression).
+
+- **Mobile Admin page top bar — quick "view home" relocation**:
+  "查看主页" moved out of hamburger dropdown back to the top bar,
+  placed right of ☰ as a Home icon button mirroring hamburger style
+  (44x44 + same border + theme-aware hover background) for visual
+  consistency. Reverses v0.2.6 absorption: daily mobile use proved
+  single-tap access > 2-tap (open dropdown + select).
+
+- **Mobile Home page header — element vertical alignment**: NSpace
+  items now inline-flex with center alignment in mobile (≤768px).
+  Fixes NaiveUI NSpace v2's default n-space-item baseline alignment
+  that misaligned rectangular NInput against circle buttons. Same
+  pattern as v0.2.7 AuditLog NSpace fix.
+
+- **Mobile Home page header — search box compact sizing**: NInput
+  height 24px + font 12px in mobile (≤768px), reducing search box
+  visual weight to match circle buttons. PC keeps default sizing
+  (zero regression).
+
+- **StatusBar breakpoint unification**: 720→768 to match v0.2.9
+  HomeHero + v0.2.7 AuditLog. All layout breakpoints now 100%
+  unified at 768/769 across the codebase (component-level 480 and
+  NModal max-width values intentionally distinct).
+
+### Known Issues
+
+- **Mobile Home Settings icon visual baseline**: Settings circle
+  button sits ~5px below SearchBox/NetworkSwitcher visual center on
+  mobile. NaiveUI NButton circle's internal icon alignment requires
+  deeper layout rework. Tracked for v0.2.11 mobile Home header
+  redesign.
+
 ## [0.2.9] - 2026-05-06
 
 ### Fixed

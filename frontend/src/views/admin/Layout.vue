@@ -10,7 +10,7 @@ import {
   useMessage,
   type DropdownOption,
 } from 'naive-ui'
-import { Menu as MenuIcon } from 'lucide-vue-next'
+import { Home, Menu as MenuIcon } from 'lucide-vue-next'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
@@ -105,10 +105,6 @@ function handleUserMenu(key: string) {
 
 // v0.2.6: mobile-only action handlers. Each closes the mobile dropdown after
 // firing so the menu does not stay open over the destination view.
-function handleMobileViewHome() {
-  closeMobileMenu()
-  router.push('/')
-}
 function handleMobileChangePassword() {
   closeMobileMenu()
   showPasswordModal.value = true
@@ -145,6 +141,18 @@ function handleMobileLogout() {
           @click="toggleMobileMenu"
         >
           <MenuIcon :size="20" />
+        </button>
+        <!-- v0.2.10: mobile-only 顶栏快捷入口 "查看主页", 搬出 dropdown.
+             Desktop 端隐藏 (default style display: none; mobile @media flips
+             to inline-flex). Replaces the v0.2.6 dropdown-internal entry. -->
+        <button
+          type="button"
+          class="admin-nav-mobile-home"
+          title="查看主页"
+          aria-label="查看主页"
+          @click="router.push('/')"
+        >
+          <Home :size="18" />
         </button>
         <div class="admin-header__actions-desktop">
           <NSpace>
@@ -184,15 +192,6 @@ function handleMobileLogout() {
              which are display:none on mobile. Hand-rolled <button> rather than
              nesting NDropdown-inside-mobile-menu (NDropdown's portal teleports
              out of .admin-nav-mobile-menu and breaks the click-outside logic). -->
-        <div class="admin-nav-mobile-divider" role="separator" aria-hidden="true" />
-        <button
-          type="button"
-          class="admin-nav-mobile-item admin-nav-mobile-action"
-          role="menuitem"
-          @click="handleMobileViewHome"
-        >
-          查看主页
-        </button>
         <div class="admin-nav-mobile-divider" role="separator" aria-hidden="true" />
         <button
           type="button"
@@ -277,6 +276,30 @@ function handleMobileLogout() {
 .admin-nav-hamburger {
   display: none;
 }
+/* v0.2.10: Mobile-only "查看主页" icon button, sits right of hamburger.
+   Desktop hides this (admin-header__actions-desktop has the labeled
+   "查看主页" button instead). Box style mirrors .admin-nav-hamburger
+   (44x44, --mp-card-border, --mp-card-bg-hover) so the two icons read
+   as a paired left-side action group — visual gate patch from initial
+   "lighter style" mismatch. */
+.admin-nav-mobile-home {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 8px;
+  color: var(--mp-text-primary);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+.admin-nav-mobile-home:hover,
+.admin-nav-mobile-home:active {
+  background: var(--mp-card-bg-hover);
+}
 .admin-nav-mobile-menu {
   display: none;
 }
@@ -318,6 +341,12 @@ function handleMobileLogout() {
   .admin-nav-hamburger:hover,
   .admin-nav-hamburger:active {
     background: var(--mp-card-bg-hover);
+  }
+  /* v0.2.10 mobile-home: surface as inline-flex so it sits next to the
+     hamburger button. Box style (44x44 / border / hover) is in the
+     default rule above, mirroring .admin-nav-hamburger. */
+  .admin-nav-mobile-home {
+    display: inline-flex;
   }
   .admin-nav-mobile-menu {
     display: block;

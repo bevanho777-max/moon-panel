@@ -11,6 +11,7 @@ import {
   useMessage,
 } from 'naive-ui'
 import { useRouter } from 'vue-router'
+import { Settings } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import { getPanel, type PanelData } from '@/api/panel'
 import NetworkSwitcher from '@/components/NetworkSwitcher.vue'
@@ -132,7 +133,17 @@ onMounted(load)
           @update:query="searchQuery = $event"
         />
         <NetworkSwitcher />
-        <NButton size="small" @click="router.push('/admin')">管理后台</NButton>
+        <NButton
+          size="small"
+          circle
+          title="管理后台"
+          aria-label="管理后台"
+          @click="router.push('/admin')"
+        >
+          <template #icon>
+            <Settings :size="16" />
+          </template>
+        </NButton>
       </NSpace>
     </NLayoutHeader>
 
@@ -335,6 +346,24 @@ onMounted(load)
   .home-header {
     padding: 0 1rem;
     gap: 0.5rem;
+  }
+  /* v0.2.10: Hide brand title text on mobile to free ~100px horizontal
+     space for top bar controls (search + network + admin Settings icon).
+     Logo (🌙 / sun emoji per theme) stays for brand identity.
+     Without this rule, NSpace wraps the rightmost button (Settings) to
+     a second row because total content width exceeds 375px viewport. */
+  .home-header__title {
+    display: none;
+  }
+  /* v0.2.10: Force NSpace items to inline-flex with center alignment.
+     NSpace v2 in useGap mode renders no .n-space-item wrapper (Space.mjs:128
+     itemClass undefined; wrapper div omitted). Direct-child selector > * is
+     the reliable target — same pattern as v0.2.7 AuditLog. Fixes rectangular
+     NInput (HeaderSearchBox) misaligning with circle buttons (NetworkSwitcher
+     + Settings) in cramped mobile header. */
+  .home-header :deep(.n-space > *) {
+    display: inline-flex;
+    align-items: center;
   }
   .home-content {
     padding: 1.25rem 1rem 2rem;

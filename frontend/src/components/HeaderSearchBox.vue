@@ -137,6 +137,16 @@ const triggerTitle = computed(() => {
   .header-search__input {
     width: 160px;
   }
+  /* v0.2.10: Mobile shrinks NInput height + font to match circle buttons
+     (~28px) and reduce visual weight in cramped header. --n-height is
+     NaiveUI's internal CSS var pairing with height to scale NInput overall. */
+  .header-search :deep(.n-input__input-el) {
+    height: 24px;
+    font-size: 12px;
+  }
+  .header-search :deep(.n-input) {
+    --n-height: 24px;
+  }
 }
 @media (max-width: 480px) {
   .header-search__input {

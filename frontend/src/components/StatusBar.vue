@@ -110,7 +110,7 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .status-bar {
     gap: 24px;
     padding: 10px 16px;
