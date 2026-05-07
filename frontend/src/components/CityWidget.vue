@@ -6,24 +6,25 @@ import type { TempUnit } from '@/api/panel'
 
 const props = defineProps<{
   city: City
-  /** ISO ms timestamp the parent re-emits each second (for HH:MM:SS display).
+  /** ISO ms timestamp the parent re-emits each minute (for HH:MM display).
    *  We don't keep our own timer — one shared timer in HomeHero re-renders
-   *  all widgets in lockstep. Mobile (≤768px) hides time/date via CSS so the
-   *  per-second reactivity has no visual cost on small screens. */
+   *  all widgets in lockstep. v0.2.13 reverted v0.2.9's per-second tick back
+   *  to per-minute (Bevan feedback: seconds visual noise unwarranted for
+   *  navigation panel). Mobile (≤768px) hides time/date via CSS regardless. */
   now: number
   /** Open-Meteo "current" payload (or null while loading / on error). */
   weather: { temperature_2m: number; weather_code: number; is_day: 0 | 1 } | null
   unit: TempUnit
 }>()
 
-// Format HH:MM:SS and MM/DD in the city's IANA timezone using Intl. PC keeps
-// all elements; mobile hides time/date via @media. Per-tick (1Hz) reformat
-// cost is < 1ms total across all widgets — negligible.
+// Format HH:MM and MM/DD in the city's IANA timezone using Intl. PC keeps
+// all elements; mobile hides time/date via @media. v0.2.13: reverted seconds
+// (was '2-digit' since v0.2.9) — panel does not need timer precision; minute
+// resolution matches the parent's 1/min tick.
 const timeStr = computed(() =>
   new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false,
     timeZone: props.city.tz,
   }).format(new Date(props.now)),

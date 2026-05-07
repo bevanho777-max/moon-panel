@@ -2,10 +2,11 @@
 // Home page hero band: 3-5 city widgets in a row showing time + date + weather.
 //
 // Lifecycle:
-//   - One shared 1Hz tick timer updates `now` so all widgets re-render in
-//     lockstep (column-clock effect). v0.2.9 increased rate from 1/min to
-//     1/sec to support HH:MM:SS time display on PC. Mobile hides time via
-//     CSS so the per-second reactivity has no visual cost there.
+//   - One shared 1/min tick timer updates `now` so all widgets re-render in
+//     lockstep (column-clock effect). v0.2.13 reverts v0.2.9's 1/sec rate back
+//     to 1/min for HH:MM time display on PC (Bevan daily-use feedback: seconds
+//     create visual noise, panel does not need timer-grade precision). Mobile
+//     hides time via CSS regardless.
 //   - Weather fetched once per city on mount, then refreshed every 10 min via
 //     setInterval. `cities` prop changes (admin updates list) re-trigger the
 //     full fetch.
@@ -62,13 +63,13 @@ function startWeatherRefresh() {
   weatherTimer = window.setInterval(fetchAll, 10 * 60 * 1000)
 }
 
-// First-mount setup: 1Hz tick + initial fetch + 10-min refresh. tick uses
+// First-mount setup: 1/min tick + initial fetch + 10-min refresh. tick uses
 // onMounted because it lazy-binds the timer; fetchAll/startWeatherRefresh are
 // fire-and-forget at setup-script top level.
 onMounted(() => {
   tickTimer = setInterval(() => {
     now.value = Date.now()
-  }, 1000)
+  }, 60000)
 })
 fetchAll()
 startWeatherRefresh()

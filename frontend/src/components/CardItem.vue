@@ -434,7 +434,9 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px;
+  /* v0.2.13 Patch 1: 扁平化 (Bevan: "上下空白太多"). 上下 10 / 左右 14:
+     纵向省 8px (4×2), 横向不变以维持文本/icon 呼吸感. */
+  padding: 10px 14px;
   border-radius: 12px;
   /* 5b-4 + v0.2.2: opaque dark base instead of acrylic. Color values now
      resolve from --mp-card-* tokens so the risen theme can swap in warm
@@ -565,6 +567,10 @@ onBeforeUnmount(() => {
   flex: 1 1 auto;
   font-size: 14px;
   font-weight: 500;
+  /* v0.2.13 Patch 1: 显式 line-height 1.3 (默认 ~1.5). 单行高度 14×1.3=18.2px
+     (vs 14×1.5=21px), 单卡省 ~3px. marquee 动画用 translateX (横向) + inner
+     padding-right (横向), 不依赖 line-height, 安全改. */
+  line-height: 1.3;
   color: var(--mp-card-text);
   white-space: nowrap;
   overflow: hidden;
@@ -641,7 +647,9 @@ onBeforeUnmount(() => {
 
 @media (max-width: 480px) {
   .card-item {
-    padding: 10px;
+    /* v0.2.13 Patch 1: 跟 PC 默认 (10px 14px) 统一. 之前是 10px 4 边,
+       现在保留 10 上下 + 14 左右 — 与默认一致, Bevan "PC + Mobile 同步"决策. */
+    padding: 10px 14px;
     gap: 10px;
     border-radius: 10px;
   }

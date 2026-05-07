@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.13] - 2026-05-08
+
+### Changed
+
+- **Admin Cards 移动端**: 新增 mobile-only 卡片列表 (mirror v0.2.6 AuditLog 模式).
+  PC ≥769px 保持 NDataTable 5 列 (标题/分组/内外网/排序/操作); ≤768px 切换为
+  极致紧凑 1 行卡片. **Patch 1+2+3 (Bevan 三轮迭代)**: 从 3 行布局逐步压缩到
+  1 行 flex (icon 22 + title 0.85rem + 内外网 + 编辑+删除), 删除 mobile 分组 NTag
+  显示, padding 6 上下 / 10 左右, line-height 1.2. 高度 ~40-42px (vs 原 3 行
+  ~150-180px, **-75%**), 一屏可见 ~13-15 张卡片. NButton small (28px) +
+  dual-URL (28×28) 是高度物理天花板. PC NDataTable + getGroupName + NTag
+  import 全保留, renderIconThumb 加 size 参数 (PC 默认 28, mobile 22), 零回归.
+
+- **Admin Cards 编辑表单**: 删除"排序权重" NInputNumber 字段. CardsSortModal 已
+  通过 vuedraggable 提供拖拽排序, 数字输入是 10 年前的过时方案. editorForm.sort
+  保留在 reactive 定义中维持 backend 协议向后兼容.
+
+- **PC + Mobile HomeCard 扁平化** (CardItem.vue, Patch 1): padding 14px →
+  10px 14px (上下省 8px), .card-item__title line-height 1.3 (默认 ~1.5).
+  marquee 动画 translateX 横向不依赖, 完整保留 v0.2.12 Patch F 无缝循环.
+  ≤480px @media padding override 同步统一.
+
+- **PC 首页天气卡片**: 撤销 v0.2.9 的 1Hz 秒级时钟, 回到 1/min HH:MM 显示
+  (Bevan: 秒变化制造视觉噪音). HomeHero tick 1000→60000ms; CityWidget Intl
+  删除 second: '2-digit'. 未还原 minute-aligned setTimeout (保留 v0.2.9 简化).
+
 ## [0.2.12] - 2026-05-06
 
 ### Fixed

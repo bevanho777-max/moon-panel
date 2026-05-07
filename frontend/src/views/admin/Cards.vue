@@ -8,7 +8,6 @@ import {
   NForm,
   NFormItem,
   NInput,
-  NInputNumber,
   NModal,
   NPopconfirm,
   NRadio,
@@ -283,8 +282,13 @@ async function handleDelete(c: Card) {
 // Icon thumbnail in title cell. URL → <img>; lucide:/upload: → placeholder
 // box with letter; empty → muted box. Phase 3 will swap lucide/upload to real
 // icon rendering.
-function renderIconThumb(icon: string): VNode {
-  const baseStyle = 'width:28px;height:28px;border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600'
+// v0.2.13 Patch 3: size 参数化 — PC NDataTable 默认 28, mobile 1-行卡片 22
+// (Bevan: "图标可以再缩小一些"). LucideIcon 内 size 按 ~0.65 比例缩 (18/28),
+// mobile 22 box 内 lucide 14, 视觉留边一致.
+function renderIconThumb(icon: string, size = 28): VNode {
+  const dim = `${size}px`
+  const lucideSize = Math.round(size * 0.65)
+  const baseStyle = `width:${dim};height:${dim};border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600`
   if (!icon) {
     return h('div', {
       style: `${baseStyle};background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3)`,
@@ -307,7 +311,7 @@ function renderIconThumb(icon: string): VNode {
         style: `${baseStyle};background:rgba(91,141,239,0.15);color:#5b8def`,
         title: icon,
       },
-      h(LucideIcon, { name: icon.slice('lucide:'.length), size: 18 }),
+      h(LucideIcon, { name: icon.slice('lucide:'.length), size: lucideSize }),
     )
   }
   if (icon.startsWith('upload:')) {
@@ -474,7 +478,39 @@ onMounted(refresh)
           :data="filteredCards"
           :row-key="(row: Card) => row.id"
           :bordered="false"
+          class="cards-table-pc"
         />
+
+        <!-- v0.2.13: mobile card list. NDataTable 5 列 (标题/分组/内外网/排序/操作)
+             横向放不下手机宽度, 改为竖向单卡片堆叠. PC (≥769px) 由 .cards-table-pc
+             显示 NDataTable, 手机由 @media 隐藏 NDataTable + 显示此列表.
+             Pattern mirrors v0.2.6 AuditLog mobile card list. -->
+        <div v-if="filteredCards.length > 0" class="cards-mobile-list">
+          <div v-for="c in filteredCards" :key="c.id" class="cards-mobile-list__item">
+            <!-- v0.2.13 Patch 2+3: 1 行 flex (Bevan "可以直接一行吗?" → "图标和字
+                 可以再缩小"). 删除 mobile 分组 NTag 显示 (PC NDataTable 仍显示).
+                 icon 22px (PC 默认 28), 高度 ~40-42px (NButton small 28 锁定). -->
+            <component :is="renderIconThumb(c.icon, 22)" />
+            <span class="cards-mobile-list__title">{{ c.title }}</span>
+            <span class="cards-mobile-list__icons">
+              <component :is="renderDualURL(c)" />
+            </span>
+            <div class="cards-mobile-list__actions">
+              <NButton size="small" @click="openEdit(c)">编辑</NButton>
+              <NPopconfirm
+                :positive-text="'删除'"
+                :negative-text="'取消'"
+                @positive-click="handleDelete(c)"
+              >
+                <template #trigger>
+                  <NButton size="small" type="error" ghost>删除</NButton>
+                </template>
+                删除卡片"{{ c.title }}"？
+              </NPopconfirm>
+            </div>
+          </div>
+        </div>
+
         <NEmpty
           v-else-if="groupsStore.items.length === 0"
           description="还没有分组。请先到「分组」页面创建一个分组，再回来添加卡片。"
@@ -567,14 +603,10 @@ onMounted(refresh)
       <NFormItem label="新标签页打开">
         <NSwitch v-model:value="editorForm.open_in_new_tab" :disabled="submitting" />
       </NFormItem>
-      <NFormItem label="排序权重">
-        <NInputNumber
-          v-model:value="editorForm.sort"
-          :step="10"
-          :disabled="submitting"
-          style="width: 100%"
-        />
-      </NFormItem>
+      <!-- v0.2.13: 排序权重 NInputNumber 移除. CardsSortModal 已通过 vuedraggable
+           提供拖拽排序, NInputNumber 数字编辑属于 10 年前过时方案. editorForm.sort
+           保留在 reactive 定义中以维持 backend 协议向后兼容 (默认 0, 拖拽时由
+           CardsSortModal 重写). -->
       <NSpace justify="end">
         <NButton @click="editorOpen = false" :disabled="submitting">取消</NButton>
         <NButton type="primary" :loading="submitting" @click="submit">
@@ -586,3 +618,58 @@ onMounted(refresh)
 
   <CardsSortModal v-model:show="sortOpen" @saved="refresh" />
 </template>
+
+<style scoped>
+/* v0.2.13 P0 a + Patch 1+2: Mobile-only card list, 1-row 极致紧凑.
+   PC NDataTable hidden ≤768px. Patch 2 (Bevan: "可以直接一行吗?"): 2 行合并
+   为 1 行, 删 NTag 分组显示, 高度 ~50px (vs Patch 1 ~82px, vs 原 3 行 ~150-180px).
+   Trade-off: 长卡片名 (>65px) mobile ellipsis; PC NDataTable 仍完整可见. */
+.cards-mobile-list {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .cards-table-pc {
+    display: none;
+  }
+  .cards-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  /* Item 直接成 flex row container: icon + title (flex 1, ellipsis) + 内外网 + actions */
+  .cards-mobile-list__item {
+    /* v0.2.13 Patch 3: padding 8→6 上下 (省 4px), 横向 10 维持呼吸感 */
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--mp-card-bg);
+    border: 1px solid var(--mp-card-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cards-mobile-list__title {
+    /* v0.2.13 Patch 3: font 0.95→0.85rem + line-height 1.3→1.2 */
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--mp-text-primary);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .cards-mobile-list__icons {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .cards-mobile-list__actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+}
+</style>
