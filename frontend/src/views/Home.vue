@@ -134,6 +134,7 @@ onMounted(load)
         />
         <NetworkSwitcher />
         <NButton
+          class="hh-icon-button"
           size="small"
           circle
           title="管理后台"
@@ -141,7 +142,7 @@ onMounted(load)
           @click="router.push('/admin')"
         >
           <template #icon>
-            <Settings :size="16" />
+            <Settings :size="18" />
           </template>
         </NButton>
       </NSpace>
@@ -342,18 +343,40 @@ onMounted(load)
   opacity: 0;
 }
 
+/* v0.2.11: Mobile-only 44x44 box mirror admin/Layout.vue
+   .admin-nav-mobile-home style. PC keeps NaiveUI default (small circle,
+   ~28x28). Same border + theme tokens + hover for visual unity with
+   admin's hamburger + view-home buttons. */
+
+.hh-icon-button {
+  /* PC default: don't override NaiveUI small circle (28x28) */
+}
+
+@media (max-width: 768px) {
+  .hh-icon-button {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--mp-card-border);
+    border-radius: 8px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .hh-icon-button:hover {
+    background: var(--mp-card-bg-hover);
+  }
+}
+
 @media (max-width: 768px) {
   .home-header {
     padding: 0 1rem;
     gap: 0.5rem;
   }
-  /* v0.2.10: Hide brand title text on mobile to free ~100px horizontal
-     space for top bar controls (search + network + admin Settings icon).
-     Logo (🌙 / sun emoji per theme) stays for brand identity.
-     Without this rule, NSpace wraps the rightmost button (Settings) to
-     a second row because total content width exceeds 375px viewport. */
+  /* v0.2.11: Mobile brand title displayed at 12px (was display: none in
+     v0.2.10). Combined with v0.2.11 P0 c (44x44 icon buttons) + P0 d
+     (SearchBox 100px), total mobile top bar width ~346px < 375 viewport,
+     no wrap. Reverses v0.2.10 Task 2.16 brand-hide. */
   .home-header__title {
-    display: none;
+    font-size: 12px;
   }
   /* v0.2.10: Force NSpace items to inline-flex with center alignment.
      NSpace v2 in useGap mode renders no .n-space-item wrapper (Space.mjs:128

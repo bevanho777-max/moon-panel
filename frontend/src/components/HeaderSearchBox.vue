@@ -135,7 +135,7 @@ const triggerTitle = computed(() => {
 }
 @media (max-width: 768px) {
   .header-search__input {
-    width: 160px;
+    width: 100px;
   }
   /* v0.2.10: Mobile shrinks NInput height + font to match circle buttons
      (~28px) and reduce visual weight in cramped header. --n-height is
@@ -150,7 +150,7 @@ const triggerTitle = computed(() => {
 }
 @media (max-width: 480px) {
   .header-search__input {
-    width: 120px;
+    width: 80px;
   }
 }
 </style>

@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.11] - 2026-05-06
+
+### Fixed
+
+- **Mobile Home page header — brand title visible at compact size**:
+  "Moon Panel" text (.home-header__title) restored to mobile (≤768px)
+  at font-size 12px (was hidden in v0.2.10 to free horizontal space).
+  Combined with v0.2.11's button size unification, 4 elements now fit
+  comfortably in 375px viewport with brand identity preserved.
+  Quantified total width: ~346px < 375px (49px buffer, 17% safe margin).
+
+- **Mobile Home page header — Network + Settings buttons unified to
+  44x44 box style**: Both buttons now mirror admin/Layout.vue's
+  hamburger + view-home buttons (44x44 + 1px solid var(--mp-card-border)
+  + border-radius 8px + theme-aware hover via var(--mp-card-bg-hover)).
+  Settings NButton tagged with .hh-icon-button component class,
+  NetworkSwitcher's .network-switcher--narrow root class extended.
+  Cross-page visual unity: all mobile top bar icon buttons now share
+  the same box style across Home + Admin pages.
+
+- **Mobile Home page header — SearchBox compact width**: NInput width
+  reduced 160→100px in mobile (≤768px) and 120→80px in small mobile
+  (≤480px), proportional ~62%/67% scaling. Combined with brand text
+  restoration and button enlargement, total mobile top bar fits within
+  viewport without NSpace wrap.
+
+- **Mobile Settings icon vertical baseline (resolves v0.2.10 Known
+  Issue)**: Settings circle button no longer offset ~5px below other
+  elements. Resolved as side-effect of v0.2.11's button unification —
+  all icon buttons now share 44x44 box dimensions, naturally aligning
+  via NSpace's `align="center"` flex behavior.
+
+### Engineering Lessons Applied
+
+- **NaiveUI :deep() override safety**: All Task 2 button size changes
+  use component root class CSS (`.hh-icon-button`,
+  `.network-switcher--narrow`) instead of `:deep(.n-button__content)`
+  overrides. Applies feedback_naiveui_deep_override.md (v0.2.10 chore
+  memory) — avoids the v0.2.10 Task 2.13 wrap regression that occurred
+  when modifying NaiveUI internal BEM box properties.
+
+- **Mobile total width pre-implementation audit**: Spec phase
+  quantified 346 < 375 (768) and 326 < 480 (480) before implementation.
+  Applies feedback_mobile_layout_total_width_audit.md (v0.2.10 chore
+  memory) — prevents the v0.2.10 Task 2.13 wrap-vs-alignment misdiagnosis.
+
 ## [0.2.10] - 2026-05-06
 
 ### Fixed

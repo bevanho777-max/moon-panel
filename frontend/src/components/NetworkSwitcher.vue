@@ -94,8 +94,19 @@ function globeIcon(): VNode {
   .network-switcher--wide {
     display: none !important;
   }
+  /* v0.2.11: Mobile 44x44 box mirror admin/Layout.vue + Home Settings.
+     Visual unity across all mobile top bar icon buttons. */
   .network-switcher--narrow {
     display: inline-flex !important;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--mp-card-border);
+    border-radius: 8px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .network-switcher--narrow:hover {
+    background: var(--mp-card-bg-hover);
   }
 }
 </style>
