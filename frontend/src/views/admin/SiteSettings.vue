@@ -19,6 +19,7 @@ import {
   type DataTableColumns,
 } from 'naive-ui'
 import { RouterLink } from 'vue-router'
+import { Star } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import {
   type SearchEngine,
@@ -184,8 +185,12 @@ async function handleDelete(engine: SearchEngine) {
 // upload / lucide / empty), trims input defensively (DB rows occasionally have
 // trailing whitespace), and falls through to a clear "?" placeholder for
 // unknown formats rather than silently failing.
-function renderEngineIcon(rawIcon: string): VNode {
-  const baseStyle = 'width:24px;height:24px;border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05)'
+// v0.2.14 P0 b: size 参数化 — PC NDataTable 默认 24, mobile 1 行卡片 22.
+// LucideIcon 内 size 按比例 (~0.58 = 14/24) 缩, 跟 v0.2.13 renderIconThumb 同套路.
+function renderEngineIcon(rawIcon: string, size = 24): VNode {
+  const dim = `${size}px`
+  const lucideSize = Math.round(size * 0.58)
+  const baseStyle = `width:${dim};height:${dim};border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05)`
   const icon = (rawIcon ?? '').trim()
   if (!icon) {
     return h('div', { style: `${baseStyle};color:rgba(255,255,255,0.3)` }, '—')
@@ -214,7 +219,7 @@ function renderEngineIcon(rawIcon: string): VNode {
     return h(
       'div',
       { style: `${baseStyle};color:#5b8def;background:rgba(91,141,239,0.15)`, title: icon },
-      h(LucideIcon, { name: icon.slice('lucide:'.length), size: 14 }),
+      h(LucideIcon, { name: icon.slice('lucide:'.length), size: lucideSize }),
     )
   }
   return h('div', { style: `${baseStyle};color:rgba(255,193,77,0.7);font-size:11px`, title: icon }, '?')
@@ -460,8 +465,48 @@ onMounted(() => {
           :data="engines"
           :row-key="(row: SearchEngine) => row.id"
           :bordered="false"
+          class="engines-table-pc"
         />
-        <NEmpty v-else description="还没有搜索引擎" />
+
+        <!-- v0.2.14 P0 b: Mobile-only 搜索引擎 1 行卡片列表 (mirror v0.2.13 admin
+             Cards Patch 2/3 pattern). PC NDataTable 6 列 ~810px 不 fit 375 viewport.
+             "默认" 列改 lucide Star icon (实心金色 = is_default) 节省横向 ~66px,
+             URL 模板 + 排序数字 mobile 不显示 (进编辑表单看). -->
+        <div v-if="engines.length > 0" class="engines-mobile-list">
+          <div
+            v-for="engine in engines"
+            :key="engine.id"
+            class="engines-mobile-list__item"
+          >
+            <component :is="renderEngineIcon(engine.icon, 22)" />
+            <span class="engines-mobile-list__title">{{ engine.name }}</span>
+            <button
+              type="button"
+              class="engines-mobile-list__star"
+              :class="{ 'engines-mobile-list__star--active': engine.is_default }"
+              :title="engine.is_default ? '默认引擎' : '设为默认'"
+              :disabled="engine.is_default"
+              @click="setAsDefault(engine)"
+            >
+              <Star :size="18" :fill="engine.is_default ? 'currentColor' : 'none'" />
+            </button>
+            <div class="engines-mobile-list__actions">
+              <NButton size="small" @click="openEdit(engine)">编辑</NButton>
+              <NPopconfirm
+                :positive-text="'删除'"
+                :negative-text="'取消'"
+                @positive-click="handleDelete(engine)"
+              >
+                <template #trigger>
+                  <NButton size="small" type="error" ghost>删除</NButton>
+                </template>
+                删除"{{ engine.name }}"？{{ engine.is_default ? '这是当前默认引擎。' : '' }}
+              </NPopconfirm>
+            </div>
+          </div>
+        </div>
+
+        <NEmpty v-if="engines.length === 0" description="还没有搜索引擎" />
       </NSpin>
     </NCard>
 
@@ -822,6 +867,14 @@ onMounted(() => {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* v0.2.14 P0 b: Mobile-only 搜索引擎卡片列表. PC NDataTable hidden ≤768px,
+   mobile 1 行紧凑卡片. Mirror v0.2.13 admin Cards Patch 2/3 (icon 22, font
+   0.85rem, padding 6/10, line-height 1.2). 独立 .engines-mobile-list__* BEM
+   命名 (Vue scoped CSS 不能跨文件复用 .cards-mobile-list__*). */
+.engines-mobile-list {
+  display: none;
+}
+
 /* v0.2.6: cities row swaps from a single-line flex to a 2-row CSS Grid on
    phones. Drag handle + remove button span both rows (vertically centered),
    while name + detail stack between them. The 14px gap on desktop is kept
@@ -867,6 +920,63 @@ onMounted(() => {
   .ws__remove {
     grid-area: remove;
     align-self: center;
+  }
+
+  /* v0.2.14 P0 b: 搜索引擎 mobile 卡片列表规则 (合并到现有 mobile @media) */
+  .engines-table-pc {
+    display: none;
+  }
+  .engines-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .engines-mobile-list__item {
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--mp-card-bg);
+    border: 1px solid var(--mp-card-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .engines-mobile-list__title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--mp-text-primary);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .engines-mobile-list__star {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--mp-text-secondary);
+    flex-shrink: 0;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .engines-mobile-list__star:hover:not(:disabled) {
+    color: var(--mp-brand-primary);
+  }
+  .engines-mobile-list__star--active {
+    color: #f59e0b;
+    cursor: default;
+  }
+  .engines-mobile-list__actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
   }
 }
 </style>

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.14] - 2026-05-08
+
+### Changed
+
+- **Admin 顶栏 mobile 右对齐**: ☰ + 🏠 button 漂到右侧 (vs v0.2.13 紧贴 title 左侧).
+  mobile @media 单 line CSS: .admin-header { justify-content: space-between }.
+  Root cause: PC 用 .admin-header__menu { flex: 1 } 充当 spacer, mobile 隐藏后
+  spacer 消失. PC 端不受影响 (flex:1 占满空间, justify-content 失效). Bevan
+  v0.2.13 真机反馈"☰ + 🏠 mobile 想要在最右边而不是紧贴 title".
+
+- **搜索引擎 mobile 卡片列表**: 复用 v0.2.13 admin Cards Patch 2/3 1 行 pattern.
+  PC ≥769px 保持 NDataTable 6 列 (图标/名称/URL 模板/默认/排序/操作);
+  ≤768px 切换为紧凑 1 行卡片 (icon 22 + name flex + ⭐/☆ 默认 + 编辑/删除).
+  "默认" 列从 NTag/Button 改 lucide Star icon (实心金色 = is_default,
+  空心 = 设为默认), 节省横向 ~52px → name 可用 ~77px (vs naive 复用 25px).
+  renderEngineIcon size 参数化 (PC 24, mobile 22). URL 模板 + 排序数字 mobile
+  不显示 (进编辑表单看). Bevan v0.2.12 真机反馈"搜索引擎 mobile 看不见编辑/删除".
+
 ## [0.2.13] - 2026-05-08
 
 ### Changed

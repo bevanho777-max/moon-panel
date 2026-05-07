@@ -314,6 +314,10 @@ function handleMobileLogout() {
   .admin-header {
     gap: 0.75rem;
     padding: 0 1rem;
+    /* v0.2.14 P0 a: mobile ☰+🏠 漂到右侧. PC 用 .admin-header__menu flex:1
+       充当 spacer; mobile 隐藏 nav-desktop 后只剩 [title]+[NSpace] 两 child,
+       space-between 把 NSpace 推到右边 (Bevan v0.2.13 真机反馈). */
+    justify-content: space-between;
   }
   /* v0.2.5: scoped scoped-CSS @media takes precedence over the desktop
      `.admin-header__title` rule above (same specificity, later in source).
