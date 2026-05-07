@@ -22,3 +22,6 @@
 - [PowerShell 5.1 native exe arg quoting 不可靠](feedback_ps_native_arg_quoting.md) — UTF-8 过 / ASCII " 丢; commit msg + tag annotation 必走 -F file 模式
 - [NaiveUI :deep() override 改组件内部 BEM 的副作用](feedback_naiveui_deep_override.md) — 改 .n-button__content 等内部 box 属性会改变 outer width, 在 flex 父容器中触发 wrap; 安全做法在组件根类加 align
 - [Mobile flex 容器多元素 wrap 诊断要量化总宽](feedback_mobile_layout_total_width_audit.md) — wrap 类问题先量化元素总宽 vs viewport, 别只看截图局部; v0.2.10 Task 2.13 误诊教训
+- [Monitor jq 可用性教训](feedback_monitor_jq_availability.md) — bash CI/release Monitor 用外部 jq 必须先验证可用; gh --jq flag 是首选, 否则 polling silent fail 触发 false STUCK_WARNING (v0.2.13 Ship 1)
+- [Spec 重发主动识别](feedback_patch_repeat_detection.md) — 收到 spec 先 grep 验证当前状态, 已实施完整时主动报告等指令, 不擅自重跑 (v0.2.13 Patch 3)
+- [视觉门 patch 迭代健康模式](feedback_visual_gate_iter_healthy.md) — 每个 patch 必须对应 Bevan 真实反馈, 健康范围 1-5, 6+ patches 必有 spec 误判 (v0.2.13 累积)
