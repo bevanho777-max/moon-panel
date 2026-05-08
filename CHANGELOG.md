@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.15] - 2026-05-08
+
+### Changed
+
+- **Admin Cards 主表格直接拖拽** (P0 a, X3 方案, Bevan 反馈"卡片管理排序需要在
+  界面内直接调整, 不要点按钮 → 弹 modal"): 弃 NDataTable, 改 div + vuedraggable
+  统一 PC + mobile 模板 (.cards-list, @media 切 column 显示). PC 主表格行直接
+  拖动 ⋮⋮ handle 调序 (lucide GripVertical icon). ★ 跨分组拖 ★ (B.1b, Bevan
+  视觉门 Patch 1 反馈"卡片要从一个分组直接拖到另一个分组"): 所有 group 同
+  :group="'cards'", 卡片可拖到任意分组. 拖完 @end 收集所有 group 当前状态
+  (cardsByGroup nested array, vuedraggable 跨容器自动 splice + push), 重算
+  sort + group_id, 立即 PUT /admin/cards/reorder (auto-save C.1, 失败 reload
+  rollback). backend reorderCards API 已原生支持 group_id? 跨分组参数 (Task 1
+  grep 确认), 零后端改动. 拖完 reload 同步 cards.value 内 group_id 字段. search
+  时 disable draggable (handle 灰色 + tooltip "清空搜索后可拖动").
+
+- **新建卡片分组字段记忆** (P0 b, Bevan 反馈"建立多个卡片时, 自动选择最后选择
+  的分组"): 上次新建卡片时选择的分组 ID 存 localStorage (key:
+  moon.admin.cards.last_group_id, 符合 moon.* 命名约定 — see
+  memory/feedback_localstorage_naming.md). 下次 openCreate 读取, 自动预选
+  (vs v0.2.14 永远 reset 第一个分组). 提交成功后 (仅新建路径) 存最新值; 编辑
+  模式不动 localStorage. 验证 lastGroupId 仍在 groupsStore 内 (防分组被删后
+  无效, fallback groups[0]?.id ?? 0).
+
+### Removed
+
+- **CardsSortModal.vue 整文件删除** (-221 行): 主表格直拖 fully replace modal
+  功能, 单一 sort UX 来源. "调整顺序" 按钮 + sortOpen ref + import + 用法
+  全部清理 (Cards.vue grep 0 残留).
+
 ## [0.2.14] - 2026-05-08
 
 ### Changed

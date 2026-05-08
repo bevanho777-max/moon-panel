@@ -3,7 +3,6 @@ import { computed, h, onMounted, ref, type VNode } from 'vue'
 import {
   NButton,
   NCard,
-  NDataTable,
   NEmpty,
   NForm,
   NFormItem,
@@ -18,9 +17,10 @@ import {
   NSwitch,
   NTag,
   useMessage,
-  type DataTableColumns,
   type SelectOption,
 } from 'naive-ui'
+import draggable from 'vuedraggable'
+import { GripVertical } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import {
   type Card,
@@ -29,24 +29,30 @@ import {
   deleteCard,
   getCard,
   listCards,
+  reorderCards,
   updateCard,
 } from '@/api/card'
 import { fetchIconByURL } from '@/api/icon'
 import { useGroupsStore } from '@/stores/groups'
 import IconUploader from '@/components/IconUploader.vue'
 import LucideIcon from '@/components/LucideIcon.vue'
-import CardsSortModal from '@/components/admin/CardsSortModal.vue'
 import StatefulInput from '@/components/StatefulInput.vue'
 import IconAutoComplete from '@/components/admin/IconAutoComplete.vue'
 import { showStatefulInputHintOnce } from '@/utils/statefulInputHint'
-// Phase 4c: catalog lookup + suggestion rendering moved into IconAutoComplete.
-// Cards.vue keeps only URL-paste auto-fetch (tryAutoFetchIcon).
 
 const message = useMessage()
 const groupsStore = useGroupsStore()
 
+// v0.2.15 P0 b: localStorage 记忆上次新建卡片时选择的分组. 符合 moon.* 命名约定
+// (see memory/feedback_localstorage_naming.md). 仅新建路径写入, 编辑不污染.
+const STORAGE_KEY_LAST_GROUP = 'moon.admin.cards.last_group_id'
+
 const cards = ref<Card[]>([])
-const sortOpen = ref(false)
+
+// v0.2.15 P0 a: 按 group 分组 cards, 供 vuedraggable per-group :list.
+// ref (而不是 computed) 因为 vuedraggable 需要 mutate :list array. refresh() 时
+// 手动 build, 拖完 onCardReorder() 调 refresh() 重建以同步 sort 字段.
+const cardsByGroup = ref<{ id: number; name: string; cards: Card[] }[]>([])
 
 // Snapshot of editorForm at open time. StatefulInput compares modelValue to
 // originalValue to drive its 4-state UX. For create mode we use empty strings;
@@ -74,18 +80,25 @@ const groupOptions = computed<SelectOption[]>(() =>
   groupsStore.items.map((g) => ({ label: g.name, value: g.id })),
 )
 
-// Pure-frontend filter; future Phase may push to backend if dataset grows huge.
-const filteredCards = computed(() => {
+// v0.2.15 P0 a: search filter 仅 visual (per-item v-show), draggable disabled
+// while searching (避免拖隐藏 item 触发 sort 错误). search 清空后恢复.
+const isSearching = computed(() => searchQuery.value.trim() !== '')
+
+function cardMatchesSearch(card: Card): boolean {
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return cards.value
-  return cards.value.filter((c) =>
-    c.title.toLowerCase().includes(q) ||
-    c.description.toLowerCase().includes(q) ||
-    c.url_internal.toLowerCase().includes(q) ||
-    c.url_external.toLowerCase().includes(q) ||
-    groupsStore.nameOf(c.group_id).toLowerCase().includes(q),
+  if (!q) return true
+  return (
+    card.title.toLowerCase().includes(q) ||
+    card.description.toLowerCase().includes(q) ||
+    card.url_internal.toLowerCase().includes(q) ||
+    card.url_external.toLowerCase().includes(q) ||
+    groupsStore.nameOf(card.group_id).toLowerCase().includes(q)
   )
-})
+}
+
+const totalMatchedCount = computed(() =>
+  cards.value.filter(cardMatchesSearch).length,
+)
 
 const ICON_LIKE_PREFIX = /^(lucide:|upload:|https?:\/\/)/i
 
@@ -106,11 +119,30 @@ function emptyForm(): Required<CardWritePayload> {
   }
 }
 
+// v0.2.15 P0 a: build per-group cards bucket (groups 顺序 + 组内 sort 排).
+function rebuildCardsByGroup(allCards: Card[]) {
+  const byGroup: Record<number, Card[]> = {}
+  for (const g of groupsStore.items) byGroup[g.id] = []
+  for (const card of allCards) {
+    if (!byGroup[card.group_id]) byGroup[card.group_id] = []
+    byGroup[card.group_id].push(card)
+  }
+  for (const id in byGroup) {
+    byGroup[id].sort((a, b) => a.sort - b.sort || a.id - b.id)
+  }
+  cardsByGroup.value = groupsStore.items.map((g) => ({
+    id: g.id,
+    name: g.name,
+    cards: byGroup[g.id] ?? [],
+  }))
+}
+
 async function refresh() {
   loading.value = true
   try {
     const [c] = await Promise.all([listCards(), groupsStore.ensureLoaded()])
     cards.value = c
+    rebuildCardsByGroup(c)
   } catch (e) {
     message.error(e instanceof ApiError ? e.message : '加载失败')
   } finally {
@@ -118,13 +150,51 @@ async function refresh() {
   }
 }
 
+// v0.2.15 P0 a + Patch 1: 拖拽结束 → 收集所有 group 当前状态, 重算 sort + group_id,
+// 立即 PUT (auto-save). 跨分组拖时 vuedraggable 已 splice from-group + push to-group
+// (因为各 group 同 :group="'cards'", sortablejs 跨容器移动 nested array). 遍历
+// cardsByGroup 即可拿到最新状态, group_id 用 group.id (拖入目标分组). 失败时
+// reload (server state rollback). Bevan 决策 C.1 (无 debounce, 即时反馈) + Patch 1
+// B.1b (跨分组允许).
+async function onCardReorder() {
+  const items: { id: number; sort: number; group_id: number }[] = []
+  for (const g of cardsByGroup.value) {
+    g.cards.forEach((card, i) => {
+      items.push({
+        id: card.id,
+        sort: (i + 1) * 10,
+        group_id: g.id,
+      })
+    })
+  }
+  if (items.length === 0) return
+  try {
+    await reorderCards(items)
+    // Patch 1: 跨分组拖后重 fetch, 同步 cards.value 内 group_id 字段 (vuedraggable
+    // 仅 mutate cardsByGroup nested array, cards ref 内的 group_id 是旧值)
+    await refresh()
+  } catch (e) {
+    message.error(e instanceof ApiError ? e.message : '排序保存失败, 已撤销')
+    await refresh()
+  }
+}
+
+function readLastGroupId(): number | null {
+  const raw = localStorage.getItem(STORAGE_KEY_LAST_GROUP)
+  if (!raw) return null
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n <= 0) return null
+  // Validate: group 仍存在 (防被删后无效)
+  return groupsStore.items.some((g) => g.id === n) ? n : null
+}
+
 function openCreate() {
   editorMode.value = 'create'
   editingId.value = null
   editorForm.value = emptyForm()
-  if (groupsStore.items.length > 0) {
-    editorForm.value.group_id = groupsStore.items[0].id
-  }
+  // v0.2.15 P0 b: 优先 localStorage (有效), fallback 第一个分组.
+  editorForm.value.group_id =
+    readLastGroupId() ?? groupsStore.items[0]?.id ?? 0
   // Create mode: original values are all empty (StatefulInput skips B state
   // when originalValue is empty, so users see normal "click and type" UX).
   editorOriginal.value = { title: '', description: '', icon: '', url_internal: '', url_external: '' }
@@ -253,6 +323,10 @@ async function submit() {
   try {
     if (editorMode.value === 'create') {
       await createCard(f)
+      // v0.2.15 P0 b: 仅新建成功后存 localStorage (编辑不污染).
+      if (f.group_id) {
+        localStorage.setItem(STORAGE_KEY_LAST_GROUP, String(f.group_id))
+      }
       message.success('已创建')
     } else if (editingId.value !== null) {
       await updateCard(editingId.value, f)
@@ -280,12 +354,10 @@ async function handleDelete(c: Card) {
 // ---------- Render helpers (icon thumbnail + dual-URL status) ----------
 
 // Icon thumbnail in title cell. URL → <img>; lucide:/upload: → placeholder
-// box with letter; empty → muted box. Phase 3 will swap lucide/upload to real
-// icon rendering.
-// v0.2.13 Patch 3: size 参数化 — PC NDataTable 默认 28, mobile 1-行卡片 22
-// (Bevan: "图标可以再缩小一些"). LucideIcon 内 size 按 ~0.65 比例缩 (18/28),
-// mobile 22 box 内 lucide 14, 视觉留边一致.
-function renderIconThumb(icon: string, size = 28): VNode {
+// box with letter; empty → muted box.
+// v0.2.13 Patch 3: size 参数化 — 默认 22 (cards-list 统一, vs v0.2.13 PC 28).
+// LucideIcon 内 size 按 ~0.65 比例缩 (22→14).
+function renderIconThumb(icon: string, size = 22): VNode {
   const dim = `${size}px`
   const lucideSize = Math.round(size * 0.65)
   const baseStyle = `width:${dim};height:${dim};border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600`
@@ -332,7 +404,6 @@ function renderIconThumb(icon: string, size = 28): VNode {
 }
 
 // Inline SVG paths derived from Lucide MIT-licensed source (lucide.dev/icons).
-// Phase 3 will replace these with the proper lucide-vue-next components.
 function homeSvg(active: boolean, isDefault: boolean): VNode {
   return h(
     'svg',
@@ -400,54 +471,6 @@ function renderDualURL(card: Card): VNode {
   )
 }
 
-const columns = computed<DataTableColumns<Card>>(() => [
-  {
-    title: '标题',
-    key: 'title',
-    minWidth: 200,
-    render: (row) =>
-      h(
-        'div',
-        { style: 'display:flex;align-items:center;gap:10px' },
-        [renderIconThumb(row.icon), h('span', row.title)],
-      ),
-  },
-  {
-    title: '分组',
-    key: 'group_id',
-    width: 140,
-    render: (row) => h(NTag, { size: 'small' }, () => groupsStore.nameOf(row.group_id)),
-  },
-  {
-    title: '内/外网',
-    key: 'url_status',
-    width: 120,
-    render: renderDualURL,
-  },
-  { title: '排序', key: 'sort', width: 80 },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 200,
-    render: (row) =>
-      h(NSpace, { size: 'small' }, () => [
-        h(NButton, { size: 'small', onClick: () => openEdit(row) }, () => '编辑'),
-        h(
-          NPopconfirm,
-          {
-            onPositiveClick: () => handleDelete(row),
-            positiveText: '删除',
-            negativeText: '取消',
-          },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error' }, () => '删除'),
-            default: () => `删除卡片"${row.title}"？`,
-          },
-        ),
-      ]),
-  },
-])
-
 onMounted(refresh)
 </script>
 
@@ -456,12 +479,9 @@ onMounted(refresh)
     <template #header>
       <NSpace align="center" justify="space-between" style="width: 100%">
         <span>卡片管理</span>
-        <NSpace>
-          <NButton :disabled="cards.length === 0" @click="sortOpen = true">调整顺序</NButton>
-          <NButton type="primary" :disabled="groupsStore.items.length === 0" @click="openCreate">
-            新建卡片
-          </NButton>
-        </NSpace>
+        <NButton type="primary" :disabled="groupsStore.items.length === 0" @click="openCreate">
+          新建卡片
+        </NButton>
       </NSpace>
     </template>
 
@@ -472,47 +492,76 @@ onMounted(refresh)
         clearable
       />
       <NSpin :show="loading">
-        <NDataTable
-          v-if="filteredCards.length > 0"
-          :columns="columns"
-          :data="filteredCards"
-          :row-key="(row: Card) => row.id"
-          :bordered="false"
-          class="cards-table-pc"
-        />
-
-        <!-- v0.2.13: mobile card list. NDataTable 5 列 (标题/分组/内外网/排序/操作)
-             横向放不下手机宽度, 改为竖向单卡片堆叠. PC (≥769px) 由 .cards-table-pc
-             显示 NDataTable, 手机由 @media 隐藏 NDataTable + 显示此列表.
-             Pattern mirrors v0.2.6 AuditLog mobile card list. -->
-        <div v-if="filteredCards.length > 0" class="cards-mobile-list">
-          <div v-for="c in filteredCards" :key="c.id" class="cards-mobile-list__item">
-            <!-- v0.2.13 Patch 2+3: 1 行 flex (Bevan "可以直接一行吗?" → "图标和字
-                 可以再缩小"). 删除 mobile 分组 NTag 显示 (PC NDataTable 仍显示).
-                 icon 22px (PC 默认 28), 高度 ~40-42px (NButton small 28 锁定). -->
-            <component :is="renderIconThumb(c.icon, 22)" />
-            <span class="cards-mobile-list__title">{{ c.title }}</span>
-            <span class="cards-mobile-list__icons">
-              <component :is="renderDualURL(c)" />
-            </span>
-            <div class="cards-mobile-list__actions">
-              <NButton size="small" @click="openEdit(c)">编辑</NButton>
-              <NPopconfirm
-                :positive-text="'删除'"
-                :negative-text="'取消'"
-                @positive-click="handleDelete(c)"
-              >
-                <template #trigger>
-                  <NButton size="small" type="error" ghost>删除</NButton>
-                </template>
-                删除卡片"{{ c.title }}"？
-              </NPopconfirm>
+        <!-- v0.2.15 P0 a: cards-list 统一 PC + mobile 模板 (X3 方案, 弃 NDataTable).
+             per-group draggable, ⋮⋮ handle 直拖. search 时 disable draggable
+             (避免拖隐藏 item 错乱 sort), 不 match cards 用 v-show 隐藏. -->
+        <div
+          v-if="cards.length > 0"
+          class="cards-list"
+        >
+          <div
+            v-for="group in cardsByGroup"
+            :key="group.id"
+            class="cards-list__group"
+          >
+            <div class="cards-list__group-header">
+              <span class="cards-list__group-name">{{ group.name }}</span>
+              <span class="cards-list__group-count">({{ group.cards.length }})</span>
             </div>
+            <draggable
+              :list="group.cards"
+              :group="'cards'"
+              :animation="160"
+              :disabled="isSearching"
+              item-key="id"
+              handle=".cards-list__handle"
+              class="cards-list__items"
+              @end="onCardReorder"
+            >
+              <template #item="{ element: card }">
+                <div
+                  v-show="cardMatchesSearch(card)"
+                  class="cards-list__item"
+                >
+                  <button
+                    type="button"
+                    class="cards-list__handle"
+                    :class="{ 'cards-list__handle--disabled': isSearching }"
+                    :disabled="isSearching"
+                    :title="isSearching ? '清空搜索后可拖动' : '拖动调整顺序'"
+                  >
+                    <GripVertical :size="16" />
+                  </button>
+                  <component :is="renderIconThumb(card.icon, 22)" />
+                  <span class="cards-list__title">{{ card.title }}</span>
+                  <NTag size="small" class="cards-list__group-tag">
+                    {{ groupsStore.nameOf(card.group_id) }}
+                  </NTag>
+                  <span class="cards-list__icons">
+                    <component :is="renderDualURL(card)" />
+                  </span>
+                  <span class="cards-list__sort">{{ card.sort }}</span>
+                  <div class="cards-list__actions">
+                    <NButton size="small" @click="openEdit(card)">编辑</NButton>
+                    <NPopconfirm
+                      :positive-text="'删除'"
+                      :negative-text="'取消'"
+                      @positive-click="handleDelete(card)"
+                    >
+                      <template #trigger>
+                        <NButton size="small" type="error" ghost>删除</NButton>
+                      </template>
+                      删除卡片"{{ card.title }}"？
+                    </NPopconfirm>
+                  </div>
+                </div>
+              </template>
+            </draggable>
           </div>
         </div>
 
         <NEmpty
-          v-else-if="groupsStore.items.length === 0"
+          v-if="groupsStore.items.length === 0"
           description="还没有分组。请先到「分组」页面创建一个分组，再回来添加卡片。"
         />
         <NEmpty
@@ -520,7 +569,7 @@ onMounted(refresh)
           description="还没有卡片，点右上角「新建卡片」开始添加"
         />
         <NEmpty
-          v-else
+          v-else-if="isSearching && totalMatchedCount === 0"
           :description="`没有匹配「${searchQuery}」的卡片`"
         />
       </NSpin>
@@ -603,10 +652,9 @@ onMounted(refresh)
       <NFormItem label="新标签页打开">
         <NSwitch v-model:value="editorForm.open_in_new_tab" :disabled="submitting" />
       </NFormItem>
-      <!-- v0.2.13: 排序权重 NInputNumber 移除. CardsSortModal 已通过 vuedraggable
-           提供拖拽排序, NInputNumber 数字编辑属于 10 年前过时方案. editorForm.sort
-           保留在 reactive 定义中以维持 backend 协议向后兼容 (默认 0, 拖拽时由
-           CardsSortModal 重写). -->
+      <!-- v0.2.13: 排序权重 NInputNumber 移除 (CardsSortModal 拖拽替代; v0.2.15
+           主表格拖拽进一步取代 modal). editorForm.sort 保留 reactive 维持 backend
+           协议向后兼容 (默认 0, 拖拽时由 reorderCards 重写). -->
       <NSpace justify="end">
         <NButton @click="editorOpen = false" :disabled="submitting">取消</NButton>
         <NButton type="primary" :loading="submitting" @click="submit">
@@ -615,61 +663,119 @@ onMounted(refresh)
       </NSpace>
     </NForm>
   </NModal>
-
-  <CardsSortModal v-model:show="sortOpen" @saved="refresh" />
 </template>
 
 <style scoped>
-/* v0.2.13 P0 a + Patch 1+2: Mobile-only card list, 1-row 极致紧凑.
-   PC NDataTable hidden ≤768px. Patch 2 (Bevan: "可以直接一行吗?"): 2 行合并
-   为 1 行, 删 NTag 分组显示, 高度 ~50px (vs Patch 1 ~82px, vs 原 3 行 ~150-180px).
-   Trade-off: 长卡片名 (>65px) mobile ellipsis; PC NDataTable 仍完整可见. */
-.cards-mobile-list {
-  display: none;
+/* v0.2.15 P0 a: .cards-list 统一 PC + mobile 模板 (X3 方案, 弃 NDataTable + 弃
+   .cards-mobile-list). per-group draggable, mobile @media 隐藏 group-tag + sort
+   (group header 已显示分组名, sort 数字 mobile 不必要). Trade-off: title 横向
+   被 handle/icons/actions 占用, 长名 ellipsis. 视觉门反馈驱动. */
+.cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cards-list__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cards-list__group-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--mp-text-primary);
+}
+.cards-list__group-count {
+  font-size: 0.8rem;
+  color: var(--mp-text-secondary);
+}
+.cards-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cards-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--mp-card-bg);
+  border: 1px solid var(--mp-card-border);
+}
+.cards-list__handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: grab;
+  color: var(--mp-text-secondary);
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.cards-list__handle:hover:not(.cards-list__handle--disabled) {
+  color: var(--mp-brand-primary);
+}
+.cards-list__handle:active:not(.cards-list__handle--disabled) {
+  cursor: grabbing;
+}
+.cards-list__handle--disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+.cards-list__title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--mp-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.cards-list__group-tag {
+  flex-shrink: 0;
+}
+.cards-list__icons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.cards-list__sort {
+  font-size: 0.85rem;
+  color: var(--mp-text-secondary);
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.cards-list__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
+/* Mobile @media: 隐藏 PC-only 元素 (group-tag + sort), title font 缩小. */
 @media (max-width: 768px) {
-  .cards-table-pc {
+  .cards-list__group-tag {
     display: none;
   }
-  .cards-mobile-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  .cards-list__sort {
+    display: none;
   }
-  /* Item 直接成 flex row container: icon + title (flex 1, ellipsis) + 内外网 + actions */
-  .cards-mobile-list__item {
-    /* v0.2.13 Patch 3: padding 8→6 上下 (省 4px), 横向 10 维持呼吸感 */
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: var(--mp-card-bg);
-    border: 1px solid var(--mp-card-border);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .cards-mobile-list__title {
-    /* v0.2.13 Patch 3: font 0.95→0.85rem + line-height 1.3→1.2 */
+  .cards-list__title {
     font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--mp-text-primary);
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-  .cards-mobile-list__icons {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .cards-mobile-list__actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
   }
 }
 </style>
