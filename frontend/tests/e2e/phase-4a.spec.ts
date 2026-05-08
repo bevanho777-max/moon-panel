@@ -159,28 +159,9 @@ test.describe('Phase 4a security + drag', () => {
     await page.screenshot({ path: shotPath('05-security-page-empty', testInfo.project.name), fullPage: false })
   })
 
-  test('06-cards-sort-modal', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile', 'admin pages primarily desktop')
-    await mockAdmin(page)
-    await page.route('**/api/admin/groups', (route) =>
-      route.fulfill({
-        status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: 0, msg: 'ok', data: SAMPLE_GROUPS }),
-      }),
-    )
-    await page.route('**/api/admin/cards', (route) =>
-      route.fulfill({
-        status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: 0, msg: 'ok', data: SAMPLE_CARDS }),
-      }),
-    )
-    await page.goto('/admin/cards')
-    await page.locator('button', { hasText: '调整顺序' }).waitFor({ timeout: 10_000 })
-    await page.locator('button', { hasText: '调整顺序' }).click()
-    await page.waitForSelector('.cs__groups', { timeout: 5000 })
-    await page.waitForTimeout(300)
-    await page.screenshot({ path: shotPath('06-cards-sort-modal', testInfo.project.name), fullPage: false })
-  })
+  // v0.2.15: 06-cards-sort-modal removed — CardsSortModal.vue + "调整顺序" button
+  // deleted in commit b7fc394 (X3 inline drag fully replaces modal). 07-groups-sort-modal
+  // kept until v0.2.16 (GroupsSortModal still in use).
 
   test('07-groups-sort-modal', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile', 'admin pages primarily desktop')
