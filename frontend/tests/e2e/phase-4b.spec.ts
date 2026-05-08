@@ -56,9 +56,11 @@ async function mockAdmin(page: Page) {
 
 async function openEngineEditor(page: Page) {
   await page.goto('/admin/settings')
-  await page.waitForSelector('.n-data-table-tr', { timeout: 10_000 })
+  // v0.2.16: NDataTable removed in search engines (X3 inline drag), swap to .engines-list__item BEM.
+  // Audit-logs / security pages keep NDataTable (.n-data-table-tr selectors elsewhere unchanged).
+  await page.waitForSelector('.engines-list__item', { timeout: 10_000 })
   // Click "编辑" on the Google row
-  await page.locator('.n-data-table-tr').filter({ hasText: 'Google' }).locator('button:has-text("编辑")').click()
+  await page.locator('.engines-list__item').filter({ hasText: 'Google' }).locator('button:has-text("编辑")').click()
   await page.waitForSelector('.n-modal')
   // Wait for StatefulInput to mount
   await page.waitForSelector('.si', { timeout: 5000 })
@@ -199,7 +201,8 @@ test.describe('Phase 4b StatefulInput state machine', () => {
     await mockAdmin(page)
     // Open the CREATE editor (all originals empty)
     await page.goto('/admin/settings')
-    await page.waitForSelector('.n-data-table-tr', { timeout: 10_000 })
+    // v0.2.16: NDataTable -> .engines-list__item (search engines X3 inline drag)
+    await page.waitForSelector('.engines-list__item', { timeout: 10_000 })
     await page.locator('button', { hasText: '新建引擎' }).click()
     await page.waitForSelector('.n-modal')
     await page.waitForSelector('.si', { timeout: 5000 })

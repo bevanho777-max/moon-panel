@@ -385,7 +385,8 @@ test.describe('Phase 3c-2 home hero + time display', () => {
     )
 
     await page.goto('/admin/settings')
-    await page.waitForSelector('.n-data-table', { timeout: 10_000 })
+    // v0.2.16: NDataTable -> .engines-list__item (search engines X3 inline drag)
+    await page.waitForSelector('.engines-list__item', { timeout: 10_000 })
     await waitForImagesSettled(page)
     await page.screenshot({ path: shotPath('09-admin-site-settings-list', testInfo.project.name), fullPage: true })
   })
@@ -416,7 +417,8 @@ test.describe('Phase 3c-2 home hero + time display', () => {
     )
 
     await page.goto('/admin/settings')
-    await page.waitForSelector('.n-data-table', { timeout: 10_000 })
+    // v0.2.16: NDataTable -> .engines-list__item (search engines X3 inline drag)
+    await page.waitForSelector('.engines-list__item', { timeout: 10_000 })
     await page.getByText('新建引擎').click()
     await page.waitForSelector('.n-modal')
     await page.waitForTimeout(300)
