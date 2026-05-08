@@ -20,8 +20,65 @@ func (h *SearchEngineHandler) Register(rg *gin.RouterGroup, requireAuth gin.Hand
 	g := rg.Group("/admin/search-engines", requireAuth)
 	g.GET("", h.list)
 	g.POST("", h.create)
+	g.PUT("/reorder", h.reorder) // before /:id to avoid id binding conflict
 	g.PUT("/:id", h.update)
 	g.DELETE("/:id", h.delete)
+}
+
+// v0.2.16 P0 b: search engines batch reorder for inline drag UX.
+// Mirror GroupHandler.reorder pattern (atomic tx update; max items low because
+// search engines list is typically <20).
+type searchEngineReorderEntry struct {
+	ID   uint `json:"id" binding:"required"`
+	Sort int  `json:"sort"`
+}
+
+type searchEngineReorderRequest struct {
+	Items []searchEngineReorderEntry `json:"items" binding:"required"`
+}
+
+func (h *SearchEngineHandler) reorder(c *gin.Context) {
+	var req searchEngineReorderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		Fail(c, http.StatusBadRequest, 400, "invalid request")
+		return
+	}
+	if len(req.Items) == 0 {
+		Fail(c, http.StatusBadRequest, 400, "items must not be empty")
+		return
+	}
+	if len(req.Items) > 100 {
+		Fail(c, http.StatusBadRequest, 400, "too many items (max 100 per reorder)")
+		return
+	}
+
+	ids := make([]uint, len(req.Items))
+	for i, it := range req.Items {
+		ids[i] = it.ID
+	}
+	var existing []model.SearchEngine
+	if err := h.DB.Where("id IN ?", ids).Find(&existing).Error; err != nil {
+		Fail(c, http.StatusInternalServerError, 500, "db error")
+		return
+	}
+	if len(existing) != len(req.Items) {
+		Fail(c, http.StatusBadRequest, 400, "one or more search engine ids not found")
+		return
+	}
+
+	err := h.DB.Transaction(func(tx *gorm.DB) error {
+		for _, it := range req.Items {
+			if err := tx.Model(&model.SearchEngine{}).Where("id = ?", it.ID).Update("sort", it.Sort).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		Fail(c, http.StatusInternalServerError, 500, "reorder failed: "+err.Error())
+		return
+	}
+	OK(c, gin.H{"updated": len(req.Items)})
 }
 
 func (h *SearchEngineHandler) list(c *gin.Context) {

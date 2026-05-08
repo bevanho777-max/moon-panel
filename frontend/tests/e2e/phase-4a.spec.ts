@@ -160,25 +160,10 @@ test.describe('Phase 4a security + drag', () => {
   })
 
   // v0.2.15: 06-cards-sort-modal removed — CardsSortModal.vue + "调整顺序" button
-  // deleted in commit b7fc394 (X3 inline drag fully replaces modal). 07-groups-sort-modal
-  // kept until v0.2.16 (GroupsSortModal still in use).
-
-  test('07-groups-sort-modal', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile', 'admin pages primarily desktop')
-    await mockAdmin(page)
-    await page.route('**/api/admin/groups', (route) =>
-      route.fulfill({
-        status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: 0, msg: 'ok', data: SAMPLE_GROUPS }),
-      }),
-    )
-    await page.goto('/admin/groups')
-    await page.locator('button', { hasText: '调整顺序' }).waitFor({ timeout: 10_000 })
-    await page.locator('button', { hasText: '调整顺序' }).click()
-    await page.waitForSelector('.gs__group', { timeout: 5000 })
-    await page.waitForTimeout(300)
-    await page.screenshot({ path: shotPath('07-groups-sort-modal', testInfo.project.name), fullPage: false })
-  })
+  // deleted in commit b7fc394 (X3 inline drag fully replaces modal).
+  // v0.2.16: 07-groups-sort-modal removed — GroupsSortModal.vue + "调整顺序" button
+  // deleted (X3 inline drag in Groups.vue replaces modal). v0.2.17+ candidate:
+  // add inline drag e2e test once <SortableTable> abstraction lands.
 
   test('08-card-create-with-prefill', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile', 'admin pages primarily desktop')

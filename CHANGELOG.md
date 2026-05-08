@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.16] - 2026-05-08
+
+### Changed
+
+- **Admin Groups 主表格直接拖拽** (P0 a, X3 方案, Bevan v0.2.15 反馈"分组的排序
+  还是需要手动调整, 无法拖拉调整"): 弃 NDataTable, 改 div + vuedraggable inline
+  drag (.groups-list BEM, 跟 v0.2.15 Cards 一致). 拖动 ⋮⋮ handle 调序 (lucide
+  GripVertical icon). 拖完 @end 立即 PUT /admin/groups/reorder (auto-save).
+  groupsStore.invalidate() 同步 Cards 下拉列表. 编辑表单删 NInputNumber 排序
+  权重字段 (跟 v0.2.13 admin Cards 一致, 单一 sort UX).
+
+- **搜索引擎主表格 PC + Mobile 直接拖拽** (P0 b, X3 + 后端新加): 弃 NDataTable
+  (PC) + 弃 .engines-mobile-list (Mobile v0.2.14), 改统一 .engines-list BEM
+  (跟 Groups + Cards 一致). PC + Mobile 都加 ⋮⋮ inline drag handle. ★ Backend
+  新加 PUT /api/admin/search-engines/reorder ★ (跟 group reorder 模板, +57
+  行 Go, max items 100). frontend reorderSearchEngines API client. ⭐/☆ Star
+  icon 默认保留 (v0.2.14 模式, PC + Mobile 统一). URL 模板 PC 显示 (mobile
+  @media 隐藏).
+
+- **Home 卡片 dual-URL 标识** (Patch P1, M1.A.D4, Bevan v0.2.16 视觉门反馈
+  "内外网都填入时, 没有显示"): CardItem.vue networkBadge computed 加 'both'
+  state, template 加 v-else-if 渲染 "双网" badge (复用 homeBadgeIcon +
+  globeBadgeIcon, .card-item__badge--both BEM 跟 --internal/--external 同
+  pattern, 灰色 affordance hint). 修复 v0.1.0 起的 design 缺失 (双 URL 时
+  无视觉标识, 用户无 affordance). 不是 v0.2.x 退化, git log --all 验证从
+  initial release 就这样 design.
+
+### Removed
+
+- **GroupsSortModal.vue 整文件删除** (-150 行): X3 inline drag fully replace
+  modal (跟 v0.2.15 CardsSortModal 删除一致). "调整顺序" 按钮 + sortOpen ref
+  + import 全清理.
+
+- **e2e test 07-groups-sort-modal 删除** (phase-4a.spec.ts:166, -22 行): 同
+  commit 跟 product 改 (应用 v0.2.15 教训 feedback_e2e_test_sync.md, 不重复
+  v0.2.15 Patch A 单独 chore commit 修).
+
 ## [0.2.15] - 2026-05-08
 
 ### Changed

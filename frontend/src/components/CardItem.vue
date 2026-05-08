@@ -89,15 +89,17 @@ function handleMenuSelect(key: string | number) {
   showMenu.value = false
 }
 
-// Drives the auto "仅内网/仅外网" badge — both URLs set → no badge (default,
-// switcher chooses), exactly one set → that side's badge. Folded from three
-// computeds (5b-4): the per-side trim()-emptiness checks were only ever
-// consumed here, so inlining cuts two reactive nodes per card.
-const networkBadge = computed<'internal-only' | 'external-only' | null>(() => {
+// Drives the auto network-affordance badge — exactly one set → that side's
+// badge ("仅内网"/"仅外网"); both set → "双网" badge (v0.2.16 Patch P1, Bevan
+// daily-use feedback "内外网都填入时, 没有显示标识"); none set → no badge.
+// Folded from three computeds (5b-4): the per-side trim()-emptiness checks
+// were only ever consumed here, so inlining cuts two reactive nodes per card.
+const networkBadge = computed<'internal-only' | 'external-only' | 'both' | null>(() => {
   const internal = props.card.url_internal.trim() !== ''
   const external = props.card.url_external.trim() !== ''
   if (internal && !external) return 'internal-only'
   if (external && !internal) return 'external-only'
+  if (internal && external) return 'both'
   return null
 })
 
@@ -331,6 +333,15 @@ onBeforeUnmount(() => {
           <component :is="globeBadgeIcon()" />
           <span>仅外网</span>
         </span>
+        <span
+          v-else-if="networkBadge === 'both'"
+          class="card-item__badge card-item__badge--both"
+          title="此卡片同时设置了内网和外网地址"
+        >
+          <component :is="homeBadgeIcon()" />
+          <component :is="globeBadgeIcon()" />
+          <span>双网</span>
+        </span>
       </div>
       <div v-if="card.description" class="card-item__desc">{{ card.description }}</div>
     </div>
@@ -559,6 +570,11 @@ onBeforeUnmount(() => {
 }
 .card-item__badge--internal {
   /* same neutral grey as external — both are "limitation" hints, not status */
+}
+.card-item__badge--both {
+  /* v0.2.16 Patch P1: same neutral grey as internal/external — affordance hint
+     ("双 URL set"), not status. Token swap (internal/external/both 区分色) 等
+     Bevan 视觉门反馈再决定, 不预先加 --mp-badge-both-* token. */
 }
 .card-item__title {
   /* min-width: 0 lets the flex item shrink below its content width so the

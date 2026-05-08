@@ -4,7 +4,6 @@ import {
   NAlert,
   NButton,
   NCard,
-  NDataTable,
   NEmpty,
   NForm,
   NFormItem,
@@ -14,12 +13,10 @@ import {
   NSpace,
   NSpin,
   NSwitch,
-  NTag,
   useMessage,
-  type DataTableColumns,
 } from 'naive-ui'
 import { RouterLink } from 'vue-router'
-import { Star } from 'lucide-vue-next'
+import { Star, GripVertical } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import {
   type SearchEngine,
@@ -27,6 +24,7 @@ import {
   createSearchEngine,
   deleteSearchEngine,
   listSearchEngines,
+  reorderSearchEngines,
   updateSearchEngine,
 } from '@/api/searchEngine'
 import { getSettings, updateSettings } from '@/api/setting'
@@ -225,63 +223,23 @@ function renderEngineIcon(rawIcon: string, size = 24): VNode {
   return h('div', { style: `${baseStyle};color:rgba(255,193,77,0.7);font-size:11px`, title: icon }, '?')
 }
 
-const columns = computed<DataTableColumns<SearchEngine>>(() => [
-  {
-    title: '图标',
-    key: 'icon',
-    width: 50,
-    render: (row) => renderEngineIcon(row.icon),
-  },
-  { title: '名称', key: 'name', width: 140 },
-  {
-    title: 'URL 模板',
-    key: 'url_template',
-    minWidth: 280,
-    render: (row) =>
-      h(
-        'span',
-        {
-          style: 'font-family:monospace;font-size:0.8rem;color:rgba(255,255,255,0.65);word-break:break-all',
-        },
-        row.url_template,
-      ),
-  },
-  {
-    title: '默认',
-    key: 'is_default',
-    width: 90,
-    render: (row) =>
-      row.is_default
-        ? h(NTag, { type: 'success', size: 'small' }, () => '默认')
-        : h(
-            NButton,
-            { size: 'tiny', secondary: true, onClick: () => setAsDefault(row) },
-            () => '设为默认',
-          ),
-  },
-  { title: '排序', key: 'sort', width: 70 },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 180,
-    render: (row) =>
-      h(NSpace, { size: 'small' }, () => [
-        h(NButton, { size: 'small', onClick: () => openEdit(row) }, () => '编辑'),
-        h(
-          NPopconfirm,
-          {
-            onPositiveClick: () => handleDelete(row),
-            positiveText: '删除',
-            negativeText: '取消',
-          },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error' }, () => '删除'),
-            default: () => `删除"${row.name}"？${row.is_default ? '这是当前默认引擎，删除后没有默认引擎。' : ''}`,
-          },
-        ),
-      ]),
-  },
-])
+// v0.2.16 P0 b: 拖拽结束 → 重算 sort = (i+1)*10, 立即 PUT (auto-save). 失败时
+// reload (server state rollback). Mirrors v0.2.15 Cards.vue + v0.2.16 Groups.vue
+// onCardReorder/onGroupReorder.
+async function onEngineReorder() {
+  const items = engines.value.map((e, i) => ({
+    id: e.id,
+    sort: (i + 1) * 10,
+  }))
+  if (items.length === 0) return
+  try {
+    await reorderSearchEngines(items)
+    await refresh()
+  } catch (e) {
+    message.error(e instanceof ApiError ? e.message : '排序保存失败, 已撤销')
+    await refresh()
+  }
+}
 
 // ───────────── Widget settings (cities + temp unit) ─────────────
 
@@ -459,51 +417,59 @@ onMounted(() => {
         </NSpace>
       </template>
       <NSpin :show="loading">
-        <NDataTable
-          v-if="engines.length > 0"
-          :columns="columns"
-          :data="engines"
-          :row-key="(row: SearchEngine) => row.id"
-          :bordered="false"
-          class="engines-table-pc"
-        />
-
-        <!-- v0.2.14 P0 b: Mobile-only 搜索引擎 1 行卡片列表 (mirror v0.2.13 admin
-             Cards Patch 2/3 pattern). PC NDataTable 6 列 ~810px 不 fit 375 viewport.
-             "默认" 列改 lucide Star icon (实心金色 = is_default) 节省横向 ~66px,
-             URL 模板 + 排序数字 mobile 不显示 (进编辑表单看). -->
-        <div v-if="engines.length > 0" class="engines-mobile-list">
-          <div
-            v-for="engine in engines"
-            :key="engine.id"
-            class="engines-mobile-list__item"
+        <!-- v0.2.16 P0 b: engines-list 统一 PC + mobile (X3 inline drag, 弃 NDataTable
+             + 弃 v0.2.14 .engines-mobile-list). per-row ⋮⋮ handle, 拖完立即
+             reorderSearchEngines API. Mirrors v0.2.16 Groups + v0.2.15 Cards 模板.
+             URL 模板 + sort 数字 PC 显示, mobile @media 隐藏 (跟 v0.2.14 一致). -->
+        <div v-if="engines.length > 0" class="engines-list">
+          <draggable
+            :list="engines"
+            :group="'engines'"
+            :animation="160"
+            item-key="id"
+            handle=".engines-list__handle"
+            class="engines-list__items"
+            @end="onEngineReorder"
           >
-            <component :is="renderEngineIcon(engine.icon, 22)" />
-            <span class="engines-mobile-list__title">{{ engine.name }}</span>
-            <button
-              type="button"
-              class="engines-mobile-list__star"
-              :class="{ 'engines-mobile-list__star--active': engine.is_default }"
-              :title="engine.is_default ? '默认引擎' : '设为默认'"
-              :disabled="engine.is_default"
-              @click="setAsDefault(engine)"
-            >
-              <Star :size="18" :fill="engine.is_default ? 'currentColor' : 'none'" />
-            </button>
-            <div class="engines-mobile-list__actions">
-              <NButton size="small" @click="openEdit(engine)">编辑</NButton>
-              <NPopconfirm
-                :positive-text="'删除'"
-                :negative-text="'取消'"
-                @positive-click="handleDelete(engine)"
-              >
-                <template #trigger>
-                  <NButton size="small" type="error" ghost>删除</NButton>
-                </template>
-                删除"{{ engine.name }}"？{{ engine.is_default ? '这是当前默认引擎。' : '' }}
-              </NPopconfirm>
-            </div>
-          </div>
+            <template #item="{ element: engine }">
+              <div class="engines-list__item">
+                <button
+                  type="button"
+                  class="engines-list__handle"
+                  title="拖动调整顺序"
+                >
+                  <GripVertical :size="16" />
+                </button>
+                <component :is="renderEngineIcon(engine.icon, 22)" />
+                <span class="engines-list__title">{{ engine.name }}</span>
+                <span class="engines-list__url">{{ engine.url_template }}</span>
+                <button
+                  type="button"
+                  class="engines-list__star"
+                  :class="{ 'engines-list__star--active': engine.is_default }"
+                  :title="engine.is_default ? '默认引擎' : '设为默认'"
+                  :disabled="engine.is_default"
+                  @click="setAsDefault(engine)"
+                >
+                  <Star :size="18" :fill="engine.is_default ? 'currentColor' : 'none'" />
+                </button>
+                <span class="engines-list__sort">{{ engine.sort }}</span>
+                <div class="engines-list__actions">
+                  <NButton size="small" @click="openEdit(engine)">编辑</NButton>
+                  <NPopconfirm
+                    :positive-text="'删除'"
+                    :negative-text="'取消'"
+                    @positive-click="handleDelete(engine)"
+                  >
+                    <template #trigger>
+                      <NButton size="small" type="error" ghost>删除</NButton>
+                    </template>
+                    删除"{{ engine.name }}"？{{ engine.is_default ? '这是当前默认引擎。' : '' }}
+                  </NPopconfirm>
+                </div>
+              </div>
+            </template>
+          </draggable>
         </div>
 
         <NEmpty v-if="engines.length === 0" description="还没有搜索引擎" />
@@ -867,12 +833,103 @@ onMounted(() => {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* v0.2.14 P0 b: Mobile-only 搜索引擎卡片列表. PC NDataTable hidden ≤768px,
-   mobile 1 行紧凑卡片. Mirror v0.2.13 admin Cards Patch 2/3 (icon 22, font
-   0.85rem, padding 6/10, line-height 1.2). 独立 .engines-mobile-list__* BEM
-   命名 (Vue scoped CSS 不能跨文件复用 .cards-mobile-list__*). */
-.engines-mobile-list {
-  display: none;
+/* v0.2.16 P0 b: engines-list 统一 PC + mobile 模板 (X3 inline drag, 跟
+   v0.2.16 Groups + v0.2.15 Cards 一致). 弃 v0.2.14 .engines-mobile-list +
+   弃 .engines-table-pc (NDataTable). single list (engines 无 group concept). */
+.engines-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.engines-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.engines-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--mp-card-bg);
+  border: 1px solid var(--mp-card-border);
+}
+.engines-list__handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: grab;
+  color: var(--mp-text-secondary);
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.engines-list__handle:hover {
+  color: var(--mp-brand-primary);
+}
+.engines-list__handle:active {
+  cursor: grabbing;
+}
+.engines-list__title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--mp-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.engines-list__url {
+  font-size: 0.85rem;
+  color: var(--mp-text-secondary);
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.engines-list__star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--mp-text-secondary);
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.engines-list__star:hover:not(:disabled) {
+  color: var(--mp-brand-primary);
+}
+.engines-list__star--active {
+  color: #f59e0b;
+  cursor: default;
+}
+.engines-list__sort {
+  font-size: 0.85rem;
+  color: var(--mp-text-secondary);
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.engines-list__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 /* v0.2.6: cities row swaps from a single-line flex to a 2-row CSS Grid on
@@ -922,61 +979,17 @@ onMounted(() => {
     align-self: center;
   }
 
-  /* v0.2.14 P0 b: 搜索引擎 mobile 卡片列表规则 (合并到现有 mobile @media) */
-  .engines-table-pc {
+  /* v0.2.16 P0 b: engines-list mobile rules — URL 模板 + sort 数字 mobile 隐藏
+     (跟 v0.2.14 决策一致, 进编辑表单看 URL). title font 缩小. */
+  .engines-list__url {
     display: none;
   }
-  .engines-mobile-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  .engines-list__sort {
+    display: none;
   }
-  .engines-mobile-list__item {
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: var(--mp-card-bg);
-    border: 1px solid var(--mp-card-border);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .engines-mobile-list__title {
+  .engines-list__title {
     font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--mp-text-primary);
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-  .engines-mobile-list__star {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--mp-text-secondary);
-    flex-shrink: 0;
-    border-radius: 4px;
-    transition: color 0.15s;
-  }
-  .engines-mobile-list__star:hover:not(:disabled) {
-    color: var(--mp-brand-primary);
-  }
-  .engines-mobile-list__star--active {
-    color: #f59e0b;
-    cursor: default;
-  }
-  .engines-mobile-list__actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
   }
 }
 </style>

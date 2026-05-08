@@ -38,6 +38,16 @@ export async function deleteSearchEngine(id: number): Promise<void> {
   await http.delete(`/admin/search-engines/${id}`)
 }
 
+export interface SearchEngineReorderItem {
+  id: number
+  sort: number
+}
+
+// v0.2.16 P0 b: batch reorder for inline drag UX. Mirror reorderCards / reorderGroups.
+export async function reorderSearchEngines(items: SearchEngineReorderItem[]): Promise<void> {
+  await http.put('/admin/search-engines/reorder', { items })
+}
+
 /**
  * Substitute the query into a URL template. Supports both `{q}` and `{query}`
  * placeholders (admins can use either; same string is replaced for both).

@@ -1,24 +1,30 @@
 <script setup lang="ts">
-import { computed, h, onMounted, ref } from 'vue'
+import { computed, h, onMounted, ref, type VNode } from 'vue'
 import {
   NButton,
   NCard,
-  NDataTable,
   NEmpty,
   NForm,
   NFormItem,
-  NInputNumber,
   NModal,
   NPopconfirm,
   NSpace,
   NSpin,
   useMessage,
-  type DataTableColumns,
 } from 'naive-ui'
+import draggable from 'vuedraggable'
+import { GripVertical } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
-import { createGroup, deleteGroup, listGroups, updateGroup, type Group } from '@/api/group'
+import {
+  createGroup,
+  deleteGroup,
+  listGroups,
+  reorderGroups,
+  updateGroup,
+  type Group,
+} from '@/api/group'
 import { useGroupsStore } from '@/stores/groups'
-import GroupsSortModal from '@/components/admin/GroupsSortModal.vue'
+import LucideIcon from '@/components/LucideIcon.vue'
 import StatefulInput from '@/components/StatefulInput.vue'
 import IconAutoComplete from '@/components/admin/IconAutoComplete.vue'
 import { showStatefulInputHintOnce } from '@/utils/statefulInputHint'
@@ -28,7 +34,6 @@ const groupsStore = useGroupsStore()
 
 const groups = ref<Group[]>([])
 const loading = ref(false)
-const sortOpen = ref(false)
 // Snapshot of editorForm at modal open time — fed into StatefulInput so it
 // can compare current vs original and drive its 4-state UX.
 const editorOriginal = ref({ name: '', icon: '' })
@@ -36,7 +41,7 @@ const editorOriginal = ref({ name: '', icon: '' })
 const editorOpen = ref(false)
 const editorMode = ref<'create' | 'edit'>('create')
 const editingId = ref<number | null>(null)
-const editorForm = ref({ name: '', icon: '', sort: null as number | null })
+const editorForm = ref({ name: '', icon: '', sort: 0 })
 const submitting = ref(false)
 
 const editorTitle = computed(() => (editorMode.value === 'create' ? '新建分组' : '编辑分组'))
@@ -44,7 +49,9 @@ const editorTitle = computed(() => (editorMode.value === 'create' ? '新建分�
 async function refresh() {
   loading.value = true
   try {
-    groups.value = await listGroups()
+    const list = await listGroups()
+    list.sort((a, b) => a.sort - b.sort || a.id - b.id)
+    groups.value = list
   } catch (e) {
     message.error(e instanceof ApiError ? e.message : '加载失败')
   } finally {
@@ -52,10 +59,29 @@ async function refresh() {
   }
 }
 
+// v0.2.16 P0 a: 拖拽结束 → 重算 sort = (i+1)*10, 立即 PUT (auto-save). 失败时
+// reload (server state rollback). Mirrors v0.2.15 Cards.vue onCardReorder.
+async function onGroupReorder() {
+  const items = groups.value.map((g, i) => ({
+    id: g.id,
+    sort: (i + 1) * 10,
+  }))
+  if (items.length === 0) return
+  try {
+    await reorderGroups(items)
+    await refresh()
+    // Keep groupsStore (used by Cards.vue dropdown) in sync.
+    await groupsStore.invalidate()
+  } catch (e) {
+    message.error(e instanceof ApiError ? e.message : '排序保存失败, 已撤销')
+    await refresh()
+  }
+}
+
 function openCreate() {
   editorMode.value = 'create'
   editingId.value = null
-  editorForm.value = { name: '', icon: '', sort: null }
+  editorForm.value = { name: '', icon: '', sort: 0 }
   editorOriginal.value = { name: '', icon: '' }
   showStatefulInputHintOnce(message)
   editorOpen.value = true
@@ -81,7 +107,9 @@ async function submit() {
     const payload = {
       name,
       icon: editorForm.value.icon,
-      ...(editorForm.value.sort !== null ? { sort: editorForm.value.sort } : {}),
+      // sort 字段保留 reactive 维持 backend 协议向后兼容. 编辑表单不再含
+      // NInputNumber 排序权重 (v0.2.16 删, 跟 v0.2.13 admin Cards 一致),
+      // sort 由 inline drag onGroupReorder 重算.
     }
     if (editorMode.value === 'create') {
       await createGroup(payload)
@@ -114,38 +142,53 @@ async function handleDelete(g: Group) {
   }
 }
 
-const columns = computed<DataTableColumns<Group>>(() => [
-  { title: 'ID', key: 'id', width: 60 },
-  { title: '名称', key: 'name', minWidth: 160 },
-  {
-    title: '图标',
-    key: 'icon',
-    width: 200,
-    render: (row) => row.icon || h('span', { style: { opacity: 0.4 } }, '—'),
-  },
-  { title: '排序', key: 'sort', width: 80 },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 200,
-    render: (row) =>
-      h(NSpace, { size: 'small' }, () => [
-        h(NButton, { size: 'small', onClick: () => openEdit(row) }, () => '编辑'),
-        h(
-          NPopconfirm,
-          {
-            onPositiveClick: () => handleDelete(row),
-            positiveText: '删除',
-            negativeText: '取消',
-          },
-          {
-            trigger: () => h(NButton, { size: 'small', type: 'error' }, () => '删除'),
-            default: () => `删除分组"${row.name}"？组内卡片会一并删除。`,
-          },
-        ),
-      ]),
-  },
-])
+// v0.2.16: icon thumbnail render helper (mirror v0.2.15 Cards.vue renderIconThumb).
+// size 参数化 (PC 默认 28, mobile-list 22). LucideIcon 内 size ~0.65 比例.
+function renderGroupIcon(icon: string, size = 22): VNode {
+  const dim = `${size}px`
+  const lucideSize = Math.round(size * 0.65)
+  const baseStyle = `width:${dim};height:${dim};border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600`
+  if (!icon) {
+    return h('div', {
+      style: `${baseStyle};background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3)`,
+    }, '—')
+  }
+  if (/^https?:\/\//i.test(icon)) {
+    return h('img', {
+      src: icon,
+      style: `${baseStyle};object-fit:cover;background:rgba(255,255,255,0.05)`,
+      onError: (e: Event) => {
+        const img = e.target as HTMLImageElement
+        img.style.display = 'none'
+      },
+    })
+  }
+  if (icon.startsWith('lucide:')) {
+    return h(
+      'div',
+      {
+        style: `${baseStyle};background:rgba(91,141,239,0.15);color:#5b8def`,
+        title: icon,
+      },
+      h(LucideIcon, { name: icon.slice('lucide:'.length), size: lucideSize }),
+    )
+  }
+  if (icon.startsWith('upload:')) {
+    return h('img', {
+      src: '/uploads/' + icon.slice('upload:'.length),
+      style: `${baseStyle};object-fit:cover;background:rgba(255,255,255,0.05)`,
+      title: icon,
+      onError: (e: Event) => {
+        const img = e.target as HTMLImageElement
+        img.style.display = 'none'
+      },
+    })
+  }
+  return h('div', {
+    style: `${baseStyle};background:rgba(255,193,77,0.15);color:#ffc14d`,
+    title: icon,
+  }, '?')
+}
 
 onMounted(refresh)
 </script>
@@ -155,21 +198,55 @@ onMounted(refresh)
     <template #header>
       <NSpace align="center" justify="space-between" style="width: 100%">
         <span>分组管理</span>
-        <NSpace>
-          <NButton :disabled="groups.length < 2" @click="sortOpen = true">调整顺序</NButton>
-          <NButton type="primary" @click="openCreate">新建分组</NButton>
-        </NSpace>
+        <NButton type="primary" @click="openCreate">新建分组</NButton>
       </NSpace>
     </template>
 
     <NSpin :show="loading">
-      <NDataTable
-        v-if="groups.length > 0"
-        :columns="columns"
-        :data="groups"
-        :row-key="(row: Group) => row.id"
-        :bordered="false"
-      />
+      <!-- v0.2.16 P0 a: groups-list 统一 PC + mobile (X3 inline drag, 弃 NDataTable
+           + 弃 GroupsSortModal). per-row ⋮⋮ handle, 拖完立即 reorderGroups API.
+           Mirrors v0.2.15 Cards.vue .cards-list pattern (single list, 无跨容器). -->
+      <div v-if="groups.length > 0" class="groups-list">
+        <draggable
+          :list="groups"
+          :group="'groups'"
+          :animation="160"
+          item-key="id"
+          handle=".groups-list__handle"
+          class="groups-list__items"
+          @end="onGroupReorder"
+        >
+          <template #item="{ element: group }">
+            <div class="groups-list__item">
+              <button
+                type="button"
+                class="groups-list__handle"
+                title="拖动调整顺序"
+              >
+                <GripVertical :size="16" />
+              </button>
+              <component :is="renderGroupIcon(group.icon, 22)" />
+              <span class="groups-list__title">{{ group.name }}</span>
+              <span class="groups-list__id">ID: {{ group.id }}</span>
+              <span class="groups-list__sort">{{ group.sort }}</span>
+              <div class="groups-list__actions">
+                <NButton size="small" @click="openEdit(group)">编辑</NButton>
+                <NPopconfirm
+                  :positive-text="'删除'"
+                  :negative-text="'取消'"
+                  @positive-click="handleDelete(group)"
+                >
+                  <template #trigger>
+                    <NButton size="small" type="error" ghost>删除</NButton>
+                  </template>
+                  删除分组"{{ group.name }}"？组内卡片会一并删除。
+                </NPopconfirm>
+              </div>
+            </div>
+          </template>
+        </draggable>
+      </div>
+
       <NEmpty v-else description="还没有分组，点右上角「新建分组」开始添加" />
     </NSpin>
   </NCard>
@@ -198,15 +275,9 @@ onMounted(refresh)
           :disabled="submitting"
         />
       </NFormItem>
-      <NFormItem label="排序权重">
-        <NInputNumber
-          v-model:value="editorForm.sort"
-          :step="10"
-          placeholder="留空 = 自动追加到末尾"
-          :disabled="submitting"
-          style="width: 100%"
-        />
-      </NFormItem>
+      <!-- v0.2.16: 排序权重 NInputNumber 移除 (X3 inline drag fully replace; 跟
+           v0.2.13 admin Cards 编辑表单删除一致). editorForm.sort 保留 reactive
+           default 0 维持 backend 协议向后兼容. -->
       <NSpace justify="end">
         <NButton @click="editorOpen = false" :disabled="submitting">取消</NButton>
         <NButton type="primary" :loading="submitting" @click="submit">
@@ -215,6 +286,92 @@ onMounted(refresh)
       </NSpace>
     </NForm>
   </NModal>
-
-  <GroupsSortModal v-model:show="sortOpen" @saved="refresh" />
 </template>
+
+<style scoped>
+/* v0.2.16 P0 a: groups-list 统一 PC + mobile 模板 (X3 inline drag, 跟 v0.2.15
+   .cards-list 一致). single list (groups 无 group concept), per-row handle. */
+.groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.groups-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.groups-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--mp-card-bg);
+  border: 1px solid var(--mp-card-border);
+}
+.groups-list__handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: grab;
+  color: var(--mp-text-secondary);
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.groups-list__handle:hover {
+  color: var(--mp-brand-primary);
+}
+.groups-list__handle:active {
+  cursor: grabbing;
+}
+.groups-list__title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--mp-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.groups-list__id {
+  font-size: 0.85rem;
+  color: var(--mp-text-secondary);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.groups-list__sort {
+  font-size: 0.85rem;
+  color: var(--mp-text-secondary);
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.groups-list__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Mobile @media: PC-only 元素隐藏, font 缩小 (跟 .cards-list 一致). */
+@media (max-width: 768px) {
+  .groups-list__id {
+    display: none;
+  }
+  .groups-list__sort {
+    display: none;
+  }
+  .groups-list__title {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+}
+</style>
