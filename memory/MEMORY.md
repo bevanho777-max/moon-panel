@@ -25,3 +25,6 @@
 - [Monitor jq 可用性教训](feedback_monitor_jq_availability.md) — bash CI/release Monitor 用外部 jq 必须先验证可用; gh --jq flag 是首选, 否则 polling silent fail 触发 false STUCK_WARNING (v0.2.13 Ship 1)
 - [Spec 重发主动识别](feedback_patch_repeat_detection.md) — 收到 spec 先 grep 验证当前状态, 已实施完整时主动报告等指令, 不擅自重跑 (v0.2.13 Patch 3)
 - [视觉门 patch 迭代健康模式](feedback_visual_gate_iter_healthy.md) — 每个 patch 必须对应 Bevan 真实反馈, 健康范围 1-5, 6+ patches 必有 spec 误判 (v0.2.13 累积)
+- [E2E 测试同步教训](feedback_e2e_test_sync.md) — Spec 阶段删 UI element 时必 audit e2e test 引用, 否则 CI fail; Task 1 grep 必加 frontend/tests/e2e/ pattern (v0.2.15 Patch A)
+- [Spec 决策 default 保守倾向教训](feedback_decision_default_bias.md) — Task 1 候选不 default 推保守, 让 Bevan 从 daily UX 视角拍板; v0.2.15 P0 a B.1a→B.1b 修正实例
+- [Chore commit 路径策略](feedback_chore_commit_path_strategy.md) — chore 不 amend, 单独 commit 紧跟 feat; tag 指向 HEAD 含 chore; paths-ignore 决定是否触发 CI (v0.2.13/14/15 累积)
