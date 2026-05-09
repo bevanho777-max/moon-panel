@@ -16,7 +16,8 @@ import {
   useMessage,
 } from 'naive-ui'
 import { RouterLink } from 'vue-router'
-import { Star, GripVertical } from 'lucide-vue-next'
+import { Star } from 'lucide-vue-next'
+import SortableTable from '@/components/SortableTable.vue'
 import { ApiError } from '@/api/client'
 import {
   type SearchEngine,
@@ -223,6 +224,11 @@ function renderEngineIcon(rawIcon: string, size = 24): VNode {
   return h('div', { style: `${baseStyle};color:rgba(255,193,77,0.7);font-size:11px`, title: icon }, '?')
 }
 
+// v0.2.18: SortableTable interface 包装 (single list -> [{id:0, name:'', items}]).
+const enginesForSortable = computed(() => [
+  { id: 0, name: '', items: engines.value },
+])
+
 // v0.2.16 P0 b: 拖拽结束 → 重算 sort = (i+1)*10, 立即 PUT (auto-save). 失败时
 // reload (server state rollback). Mirrors v0.2.15 Cards.vue + v0.2.16 Groups.vue
 // onCardReorder/onGroupReorder.
@@ -417,60 +423,46 @@ onMounted(() => {
         </NSpace>
       </template>
       <NSpin :show="loading">
-        <!-- v0.2.16 P0 b: engines-list 统一 PC + mobile (X3 inline drag, 弃 NDataTable
-             + 弃 v0.2.14 .engines-mobile-list). per-row ⋮⋮ handle, 拖完立即
-             reorderSearchEngines API. Mirrors v0.2.16 Groups + v0.2.15 Cards 模板.
-             URL 模板 + sort 数字 PC 显示, mobile @media 隐藏 (跟 v0.2.14 一致). -->
-        <div v-if="engines.length > 0" class="engines-list">
-          <draggable
-            :list="engines"
-            :group="'engines'"
-            :animation="160"
-            item-key="id"
-            handle=".engines-list__handle"
-            class="engines-list__items"
-            @end="onEngineReorder"
-          >
-            <template #item="{ element: engine }">
-              <div class="engines-list__item">
-                <button
-                  type="button"
-                  class="engines-list__handle"
-                  title="拖动调整顺序"
-                >
-                  <GripVertical :size="16" />
-                </button>
-                <component :is="renderEngineIcon(engine.icon, 22)" />
-                <span class="engines-list__title">{{ engine.name }}</span>
-                <span class="engines-list__url">{{ engine.url_template }}</span>
-                <button
-                  type="button"
-                  class="engines-list__star"
-                  :class="{ 'engines-list__star--active': engine.is_default }"
-                  :title="engine.is_default ? '默认引擎' : '设为默认'"
-                  :disabled="engine.is_default"
-                  @click="setAsDefault(engine)"
-                >
-                  <Star :size="18" :fill="engine.is_default ? 'currentColor' : 'none'" />
-                </button>
-                <span class="engines-list__sort">{{ engine.sort }}</span>
-                <div class="engines-list__actions">
-                  <NButton size="small" @click="openEdit(engine)">编辑</NButton>
-                  <NPopconfirm
-                    :positive-text="'删除'"
-                    :negative-text="'取消'"
-                    @positive-click="handleDelete(engine)"
-                  >
-                    <template #trigger>
-                      <NButton size="small" type="error" ghost>删除</NButton>
-                    </template>
-                    删除"{{ engine.name }}"？{{ engine.is_default ? '这是当前默认引擎。' : '' }}
-                  </NPopconfirm>
-                </div>
-              </div>
-            </template>
-          </draggable>
-        </div>
+        <!-- v0.2.18: SortableTable 抽象 (Rule of Three). single list (engines 无 group
+             concept), 包装. 保留 v0.2.14 ⭐/☆ Star icon (PC + Mobile 统一) +
+             URL 模板 PC 显示 (mobile @media 隐藏). -->
+        <SortableTable
+          v-if="engines.length > 0"
+          :groups="enginesForSortable"
+          group-name="engines"
+          :show-group-headers="false"
+          @reorder="onEngineReorder"
+        >
+          <template #item="{ item: engine }">
+            <component :is="renderEngineIcon(engine.icon, 22)" />
+            <span class="engines-cell__title">{{ engine.name }}</span>
+            <span class="engines-cell__url">{{ engine.url_template }}</span>
+            <button
+              type="button"
+              class="engines-cell__star"
+              :class="{ 'engines-cell__star--active': engine.is_default }"
+              :title="engine.is_default ? '默认引擎' : '设为默认'"
+              :disabled="engine.is_default"
+              @click="setAsDefault(engine)"
+            >
+              <Star :size="18" :fill="engine.is_default ? 'currentColor' : 'none'" />
+            </button>
+            <span class="engines-cell__sort">{{ engine.sort }}</span>
+            <div class="engines-cell__actions">
+              <NButton size="small" @click="openEdit(engine)">编辑</NButton>
+              <NPopconfirm
+                :positive-text="'删除'"
+                :negative-text="'取消'"
+                @positive-click="handleDelete(engine)"
+              >
+                <template #trigger>
+                  <NButton size="small" type="error" ghost>删除</NButton>
+                </template>
+                删除"{{ engine.name }}"？{{ engine.is_default ? '这是当前默认引擎。' : '' }}
+              </NPopconfirm>
+            </div>
+          </template>
+        </SortableTable>
 
         <NEmpty v-if="engines.length === 0" description="还没有搜索引擎" />
       </NSpin>
@@ -833,50 +825,9 @@ onMounted(() => {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* v0.2.16 P0 b: engines-list 统一 PC + mobile 模板 (X3 inline drag, 跟
-   v0.2.16 Groups + v0.2.15 Cards 一致). 弃 v0.2.14 .engines-mobile-list +
-   弃 .engines-table-pc (NDataTable). single list (engines 无 group concept). */
-.engines-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.engines-list__items {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.engines-list__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: var(--mp-card-bg);
-  border: 1px solid var(--mp-card-border);
-}
-.engines-list__handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: grab;
-  color: var(--mp-text-secondary);
-  flex-shrink: 0;
-  border-radius: 4px;
-  transition: color 0.15s;
-}
-.engines-list__handle:hover {
-  color: var(--mp-brand-primary);
-}
-.engines-list__handle:active {
-  cursor: grabbing;
-}
-.engines-list__title {
+/* v0.2.18: cells-only styles (.sortable-table 共性已抽到 SortableTable.vue 内).
+   Search Engines 独有 cell: title + URL (PC) + ⭐/☆ Star + sort (PC) + actions. */
+.engines-cell__title {
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--mp-text-primary);
@@ -886,7 +837,7 @@ onMounted(() => {
   flex: 1 1 auto;
   min-width: 0;
 }
-.engines-list__url {
+.engines-cell__url {
   font-size: 0.85rem;
   color: var(--mp-text-secondary);
   font-family: monospace;
@@ -896,7 +847,7 @@ onMounted(() => {
   flex: 1 1 auto;
   min-width: 0;
 }
-.engines-list__star {
+.engines-cell__star {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -911,14 +862,14 @@ onMounted(() => {
   border-radius: 4px;
   transition: color 0.15s;
 }
-.engines-list__star:hover:not(:disabled) {
+.engines-cell__star:hover:not(:disabled) {
   color: var(--mp-brand-primary);
 }
-.engines-list__star--active {
+.engines-cell__star--active {
   color: #f59e0b;
   cursor: default;
 }
-.engines-list__sort {
+.engines-cell__sort {
   font-size: 0.85rem;
   color: var(--mp-text-secondary);
   width: 32px;
@@ -926,7 +877,7 @@ onMounted(() => {
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
-.engines-list__actions {
+.engines-cell__actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
@@ -979,15 +930,15 @@ onMounted(() => {
     align-self: center;
   }
 
-  /* v0.2.16 P0 b: engines-list mobile rules — URL 模板 + sort 数字 mobile 隐藏
+  /* v0.2.18: engines-cell mobile rules — URL 模板 + sort 数字 mobile 隐藏
      (跟 v0.2.14 决策一致, 进编辑表单看 URL). title font 缩小. */
-  .engines-list__url {
+  .engines-cell__url {
     display: none;
   }
-  .engines-list__sort {
+  .engines-cell__sort {
     display: none;
   }
-  .engines-list__title {
+  .engines-cell__title {
     font-size: 0.85rem;
     line-height: 1.2;
   }

@@ -19,8 +19,6 @@ import {
   useMessage,
   type SelectOption,
 } from 'naive-ui'
-import draggable from 'vuedraggable'
-import { GripVertical } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import {
   type Card,
@@ -36,6 +34,7 @@ import { fetchIconByURL } from '@/api/icon'
 import { useGroupsStore } from '@/stores/groups'
 import IconUploader from '@/components/IconUploader.vue'
 import LucideIcon from '@/components/LucideIcon.vue'
+import SortableTable from '@/components/SortableTable.vue'
 import StatefulInput from '@/components/StatefulInput.vue'
 import IconAutoComplete from '@/components/admin/IconAutoComplete.vue'
 import { showStatefulInputHintOnce } from '@/utils/statefulInputHint'
@@ -49,10 +48,10 @@ const STORAGE_KEY_LAST_GROUP = 'moon.admin.cards.last_group_id'
 
 const cards = ref<Card[]>([])
 
-// v0.2.15 P0 a: 按 group 分组 cards, 供 vuedraggable per-group :list.
-// ref (而不是 computed) 因为 vuedraggable 需要 mutate :list array. refresh() 时
-// 手动 build, 拖完 onCardReorder() 调 refresh() 重建以同步 sort 字段.
-const cardsByGroup = ref<{ id: number; name: string; cards: Card[] }[]>([])
+// v0.2.15 P0 a + v0.2.18: per-group nested 数据 (跟 SortableTable interface 对齐,
+// 字段名 items 而不是 cards). vuedraggable 需要 mutate :list array, 所以是 ref
+// 不是 computed. refresh() 时 rebuild, 拖完 onCardReorder() 调 refresh() 同步 sort.
+const cardsByGroup = ref<{ id: number; name: string; items: Card[] }[]>([])
 
 // Snapshot of editorForm at open time. StatefulInput compares modelValue to
 // originalValue to drive its 4-state UX. For create mode we use empty strings;
@@ -80,8 +79,8 @@ const groupOptions = computed<SelectOption[]>(() =>
   groupsStore.items.map((g) => ({ label: g.name, value: g.id })),
 )
 
-// v0.2.15 P0 a: search filter 仅 visual (per-item v-show), draggable disabled
-// while searching (避免拖隐藏 item 触发 sort 错误). search 清空后恢复.
+// v0.2.15 P0 a: search filter 仅 visual (per-item v-show via SortableTable
+// itemFilter prop), draggable disabled while searching. search 清空后恢复.
 const isSearching = computed(() => searchQuery.value.trim() !== '')
 
 function cardMatchesSearch(card: Card): boolean {
@@ -133,7 +132,7 @@ function rebuildCardsByGroup(allCards: Card[]) {
   cardsByGroup.value = groupsStore.items.map((g) => ({
     id: g.id,
     name: g.name,
-    cards: byGroup[g.id] ?? [],
+    items: byGroup[g.id] ?? [],
   }))
 }
 
@@ -159,7 +158,7 @@ async function refresh() {
 async function onCardReorder() {
   const items: { id: number; sort: number; group_id: number }[] = []
   for (const g of cardsByGroup.value) {
-    g.cards.forEach((card, i) => {
+    g.items.forEach((card, i) => {
       items.push({
         id: card.id,
         sort: (i + 1) * 10,
@@ -240,15 +239,9 @@ async function openEdit(c: Card) {
 }
 
 // Soft-warn but don't block; user retains final say (per Phase 2.3b prereq).
-// Track URLs that we've already attempted to fetch in this editor session.
-// Prevents re-fetching when user blurs the field repeatedly.
 const fetchedSet = ref<Set<string>>(new Set())
 const iconFetching = ref(false)
 
-// IconAutoComplete handles catalog loading + suggestions internally; Cards.vue
-// only needs the URL-paste auto-fetch path. The component emits @select
-// with the chosen value (jsdelivr URL or lucide:name); we ignore lucide:
-// names and trigger fetch for http(s) URLs.
 async function handleSuggestionSelect(value: string | number) {
   if (typeof value === 'string' && /^https?:\/\//i.test(value)) {
     await tryAutoFetchIcon()
@@ -258,7 +251,7 @@ async function handleSuggestionSelect(value: string | number) {
 async function tryAutoFetchIcon() {
   const v = editorForm.value.icon.trim()
   if (!v || !/^https?:\/\//i.test(v)) return
-  if (fetchedSet.value.has(v)) return // already tried this URL
+  if (fetchedSet.value.has(v)) return
   fetchedSet.value.add(v)
   iconFetching.value = true
   try {
@@ -297,9 +290,6 @@ function emitFieldShapeWarnings(f: Required<CardWritePayload>) {
 
 async function submit() {
   const f = editorForm.value
-  // Strip the Phase 4a protocol-only prefills. If user didn't add a host
-  // after "http://" / "https://", treat as empty so we don't persist a
-  // broken URL.
   if (f.url_internal.trim() === 'http://' || f.url_internal.trim() === 'https://') {
     f.url_internal = ''
   }
@@ -353,10 +343,8 @@ async function handleDelete(c: Card) {
 
 // ---------- Render helpers (icon thumbnail + dual-URL status) ----------
 
-// Icon thumbnail in title cell. URL → <img>; lucide:/upload: → placeholder
-// box with letter; empty → muted box.
-// v0.2.13 Patch 3: size 参数化 — 默认 22 (cards-list 统一, vs v0.2.13 PC 28).
-// LucideIcon 内 size 按 ~0.65 比例缩 (22→14).
+// v0.2.13 Patch 3: size 参数化 — 默认 22 (sortable-table cells). LucideIcon 内
+// size 按 ~0.65 比例缩 (22→14).
 function renderIconThumb(icon: string, size = 22): VNode {
   const dim = `${size}px`
   const lucideSize = Math.round(size * 0.65)
@@ -403,7 +391,6 @@ function renderIconThumb(icon: string, size = 22): VNode {
   }, '?')
 }
 
-// Inline SVG paths derived from Lucide MIT-licensed source (lucide.dev/icons).
 function homeSvg(active: boolean, isDefault: boolean): VNode {
   return h(
     'svg',
@@ -492,73 +479,43 @@ onMounted(refresh)
         clearable
       />
       <NSpin :show="loading">
-        <!-- v0.2.15 P0 a: cards-list 统一 PC + mobile 模板 (X3 方案, 弃 NDataTable).
-             per-group draggable, ⋮⋮ handle 直拖. search 时 disable draggable
-             (避免拖隐藏 item 错乱 sort), 不 match cards 用 v-show 隐藏. -->
-        <div
+        <!-- v0.2.18: SortableTable 抽象 (Rule of Three, 复用跨 Cards/Groups/Search Engines).
+             保留 v0.2.15 P0 a (跨分组拖, :group-name="cards" 同名), P0 b (localStorage
+             分组记忆 — openCreate/submit 内), search disable + v-show 隐藏 (itemFilter prop). -->
+        <SortableTable
           v-if="cards.length > 0"
-          class="cards-list"
+          :groups="cardsByGroup"
+          group-name="cards"
+          :disabled="isSearching"
+          :show-group-headers="true"
+          :item-filter="cardMatchesSearch"
+          @reorder="onCardReorder"
         >
-          <div
-            v-for="group in cardsByGroup"
-            :key="group.id"
-            class="cards-list__group"
-          >
-            <div class="cards-list__group-header">
-              <span class="cards-list__group-name">{{ group.name }}</span>
-              <span class="cards-list__group-count">({{ group.cards.length }})</span>
+          <template #item="{ item: card }">
+            <component :is="renderIconThumb(card.icon, 22)" />
+            <span class="cards-cell__title">{{ card.title }}</span>
+            <NTag size="small" class="cards-cell__group-tag">
+              {{ groupsStore.nameOf(card.group_id) }}
+            </NTag>
+            <span class="cards-cell__icons">
+              <component :is="renderDualURL(card)" />
+            </span>
+            <span class="cards-cell__sort">{{ card.sort }}</span>
+            <div class="cards-cell__actions">
+              <NButton size="small" @click="openEdit(card)">编辑</NButton>
+              <NPopconfirm
+                :positive-text="'删除'"
+                :negative-text="'取消'"
+                @positive-click="handleDelete(card)"
+              >
+                <template #trigger>
+                  <NButton size="small" type="error" ghost>删除</NButton>
+                </template>
+                删除卡片"{{ card.title }}"？
+              </NPopconfirm>
             </div>
-            <draggable
-              :list="group.cards"
-              :group="'cards'"
-              :animation="160"
-              :disabled="isSearching"
-              item-key="id"
-              handle=".cards-list__handle"
-              class="cards-list__items"
-              @end="onCardReorder"
-            >
-              <template #item="{ element: card }">
-                <div
-                  v-show="cardMatchesSearch(card)"
-                  class="cards-list__item"
-                >
-                  <button
-                    type="button"
-                    class="cards-list__handle"
-                    :class="{ 'cards-list__handle--disabled': isSearching }"
-                    :disabled="isSearching"
-                    :title="isSearching ? '清空搜索后可拖动' : '拖动调整顺序'"
-                  >
-                    <GripVertical :size="16" />
-                  </button>
-                  <component :is="renderIconThumb(card.icon, 22)" />
-                  <span class="cards-list__title">{{ card.title }}</span>
-                  <NTag size="small" class="cards-list__group-tag">
-                    {{ groupsStore.nameOf(card.group_id) }}
-                  </NTag>
-                  <span class="cards-list__icons">
-                    <component :is="renderDualURL(card)" />
-                  </span>
-                  <span class="cards-list__sort">{{ card.sort }}</span>
-                  <div class="cards-list__actions">
-                    <NButton size="small" @click="openEdit(card)">编辑</NButton>
-                    <NPopconfirm
-                      :positive-text="'删除'"
-                      :negative-text="'取消'"
-                      @positive-click="handleDelete(card)"
-                    >
-                      <template #trigger>
-                        <NButton size="small" type="error" ghost>删除</NButton>
-                      </template>
-                      删除卡片"{{ card.title }}"？
-                    </NPopconfirm>
-                  </div>
-                </div>
-              </template>
-            </draggable>
-          </div>
-        </div>
+          </template>
+        </SortableTable>
 
         <NEmpty
           v-if="groupsStore.items.length === 0"
@@ -652,9 +609,8 @@ onMounted(refresh)
       <NFormItem label="新标签页打开">
         <NSwitch v-model:value="editorForm.open_in_new_tab" :disabled="submitting" />
       </NFormItem>
-      <!-- v0.2.13: 排序权重 NInputNumber 移除 (CardsSortModal 拖拽替代; v0.2.15
-           主表格拖拽进一步取代 modal). editorForm.sort 保留 reactive 维持 backend
-           协议向后兼容 (默认 0, 拖拽时由 reorderCards 重写). -->
+      <!-- v0.2.13: 排序权重 NInputNumber 移除 (v0.2.15 主表格直拖, v0.2.18 SortableTable
+           抽象). editorForm.sort 保留 reactive 维持 backend 协议向后兼容. -->
       <NSpace justify="end">
         <NButton @click="editorOpen = false" :disabled="submitting">取消</NButton>
         <NButton type="primary" :loading="submitting" @click="submit">
@@ -666,73 +622,9 @@ onMounted(refresh)
 </template>
 
 <style scoped>
-/* v0.2.15 P0 a: .cards-list 统一 PC + mobile 模板 (X3 方案, 弃 NDataTable + 弃
-   .cards-mobile-list). per-group draggable, mobile @media 隐藏 group-tag + sort
-   (group header 已显示分组名, sort 数字 mobile 不必要). Trade-off: title 横向
-   被 handle/icons/actions 占用, 长名 ellipsis. 视觉门反馈驱动. */
-.cards-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.cards-list__group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.cards-list__group-header {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 0 4px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--mp-text-primary);
-}
-.cards-list__group-count {
-  font-size: 0.8rem;
-  color: var(--mp-text-secondary);
-}
-.cards-list__items {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.cards-list__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: var(--mp-card-bg);
-  border: 1px solid var(--mp-card-border);
-}
-.cards-list__handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: grab;
-  color: var(--mp-text-secondary);
-  flex-shrink: 0;
-  border-radius: 4px;
-  transition: color 0.15s;
-}
-.cards-list__handle:hover:not(.cards-list__handle--disabled) {
-  color: var(--mp-brand-primary);
-}
-.cards-list__handle:active:not(.cards-list__handle--disabled) {
-  cursor: grabbing;
-}
-.cards-list__handle--disabled {
-  cursor: not-allowed;
-  opacity: 0.3;
-}
-.cards-list__title {
+/* v0.2.18: cells-only styles (.sortable-table 共性已抽到 SortableTable.vue 内).
+   Cards 独有 cell: title + group-tag (PC) + icons (dual-URL) + sort (PC) + actions. */
+.cards-cell__title {
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--mp-text-primary);
@@ -742,16 +634,16 @@ onMounted(refresh)
   flex: 1 1 auto;
   min-width: 0;
 }
-.cards-list__group-tag {
+.cards-cell__group-tag {
   flex-shrink: 0;
 }
-.cards-list__icons {
+.cards-cell__icons {
   display: flex;
   gap: 4px;
   align-items: center;
   flex-shrink: 0;
 }
-.cards-list__sort {
+.cards-cell__sort {
   font-size: 0.85rem;
   color: var(--mp-text-secondary);
   width: 32px;
@@ -759,21 +651,20 @@ onMounted(refresh)
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
-.cards-list__actions {
+.cards-cell__actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
 }
 
-/* Mobile @media: 隐藏 PC-only 元素 (group-tag + sort), title font 缩小. */
 @media (max-width: 768px) {
-  .cards-list__group-tag {
+  .cards-cell__group-tag {
     display: none;
   }
-  .cards-list__sort {
+  .cards-cell__sort {
     display: none;
   }
-  .cards-list__title {
+  .cards-cell__title {
     font-size: 0.85rem;
     line-height: 1.2;
   }

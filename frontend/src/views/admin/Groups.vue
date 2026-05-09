@@ -12,8 +12,6 @@ import {
   NSpin,
   useMessage,
 } from 'naive-ui'
-import draggable from 'vuedraggable'
-import { GripVertical } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import {
   createGroup,
@@ -25,6 +23,7 @@ import {
 } from '@/api/group'
 import { useGroupsStore } from '@/stores/groups'
 import LucideIcon from '@/components/LucideIcon.vue'
+import SortableTable from '@/components/SortableTable.vue'
 import StatefulInput from '@/components/StatefulInput.vue'
 import IconAutoComplete from '@/components/admin/IconAutoComplete.vue'
 import { showStatefulInputHintOnce } from '@/utils/statefulInputHint'
@@ -45,6 +44,12 @@ const editorForm = ref({ name: '', icon: '', sort: 0 })
 const submitting = ref(false)
 
 const editorTitle = computed(() => (editorMode.value === 'create' ? '新建分组' : '编辑分组'))
+
+// v0.2.18: SortableTable interface 包装 (single list -> [{id:0, name:'', items}]).
+// Wrapper computed; vuedraggable mutates groups.value via this nested ref.
+const groupsForSortable = computed(() => [
+  { id: 0, name: '', items: groups.value },
+])
 
 async function refresh() {
   loading.value = true
@@ -107,9 +112,6 @@ async function submit() {
     const payload = {
       name,
       icon: editorForm.value.icon,
-      // sort 字段保留 reactive 维持 backend 协议向后兼容. 编辑表单不再含
-      // NInputNumber 排序权重 (v0.2.16 删, 跟 v0.2.13 admin Cards 一致),
-      // sort 由 inline drag onGroupReorder 重算.
     }
     if (editorMode.value === 'create') {
       await createGroup(payload)
@@ -120,9 +122,6 @@ async function submit() {
     }
     editorOpen.value = false
     await refresh()
-    // Invalidate the shared groups store so Cards.vue dropdown shows the
-    // new name/sort immediately (4b polish — fixes the "rename group, then
-    // open card editor → still shows old name" stale-cache bug).
     await groupsStore.invalidate()
   } catch (e) {
     message.error(e instanceof ApiError ? e.message : '保存失败')
@@ -142,8 +141,7 @@ async function handleDelete(g: Group) {
   }
 }
 
-// v0.2.16: icon thumbnail render helper (mirror v0.2.15 Cards.vue renderIconThumb).
-// size 参数化 (PC 默认 28, mobile-list 22). LucideIcon 内 size ~0.65 比例.
+// v0.2.16: icon thumbnail render helper. size 参数化 (default 22 cells).
 function renderGroupIcon(icon: string, size = 22): VNode {
   const dim = `${size}px`
   const lucideSize = Math.round(size * 0.65)
@@ -203,49 +201,36 @@ onMounted(refresh)
     </template>
 
     <NSpin :show="loading">
-      <!-- v0.2.16 P0 a: groups-list 统一 PC + mobile (X3 inline drag, 弃 NDataTable
-           + 弃 GroupsSortModal). per-row ⋮⋮ handle, 拖完立即 reorderGroups API.
-           Mirrors v0.2.15 Cards.vue .cards-list pattern (single list, 无跨容器). -->
-      <div v-if="groups.length > 0" class="groups-list">
-        <draggable
-          :list="groups"
-          :group="'groups'"
-          :animation="160"
-          item-key="id"
-          handle=".groups-list__handle"
-          class="groups-list__items"
-          @end="onGroupReorder"
-        >
-          <template #item="{ element: group }">
-            <div class="groups-list__item">
-              <button
-                type="button"
-                class="groups-list__handle"
-                title="拖动调整顺序"
-              >
-                <GripVertical :size="16" />
-              </button>
-              <component :is="renderGroupIcon(group.icon, 22)" />
-              <span class="groups-list__title">{{ group.name }}</span>
-              <span class="groups-list__id">ID: {{ group.id }}</span>
-              <span class="groups-list__sort">{{ group.sort }}</span>
-              <div class="groups-list__actions">
-                <NButton size="small" @click="openEdit(group)">编辑</NButton>
-                <NPopconfirm
-                  :positive-text="'删除'"
-                  :negative-text="'取消'"
-                  @positive-click="handleDelete(group)"
-                >
-                  <template #trigger>
-                    <NButton size="small" type="error" ghost>删除</NButton>
-                  </template>
-                  删除分组"{{ group.name }}"？组内卡片会一并删除。
-                </NPopconfirm>
-              </div>
-            </div>
-          </template>
-        </draggable>
-      </div>
+      <!-- v0.2.18: SortableTable 抽象 (Rule of Three). single list (groups 无 group
+           concept), 包装 [{id:0, name:'', items: groups.value}]. show-group-headers
+           false. 拖完 reorderGroups + refresh + groupsStore.invalidate (保留 v0.2.16). -->
+      <SortableTable
+        v-if="groups.length > 0"
+        :groups="groupsForSortable"
+        group-name="groups"
+        :show-group-headers="false"
+        @reorder="onGroupReorder"
+      >
+        <template #item="{ item: group }">
+          <component :is="renderGroupIcon(group.icon, 22)" />
+          <span class="groups-cell__title">{{ group.name }}</span>
+          <span class="groups-cell__id">ID: {{ group.id }}</span>
+          <span class="groups-cell__sort">{{ group.sort }}</span>
+          <div class="groups-cell__actions">
+            <NButton size="small" @click="openEdit(group)">编辑</NButton>
+            <NPopconfirm
+              :positive-text="'删除'"
+              :negative-text="'取消'"
+              @positive-click="handleDelete(group)"
+            >
+              <template #trigger>
+                <NButton size="small" type="error" ghost>删除</NButton>
+              </template>
+              删除分组"{{ group.name }}"？组内卡片会一并删除。
+            </NPopconfirm>
+          </div>
+        </template>
+      </SortableTable>
 
       <NEmpty v-else description="还没有分组，点右上角「新建分组」开始添加" />
     </NSpin>
@@ -275,8 +260,7 @@ onMounted(refresh)
           :disabled="submitting"
         />
       </NFormItem>
-      <!-- v0.2.16: 排序权重 NInputNumber 移除 (X3 inline drag fully replace; 跟
-           v0.2.13 admin Cards 编辑表单删除一致). editorForm.sort 保留 reactive
+      <!-- v0.2.16: 排序权重 NInputNumber 移除. editorForm.sort 保留 reactive
            default 0 维持 backend 协议向后兼容. -->
       <NSpace justify="end">
         <NButton @click="editorOpen = false" :disabled="submitting">取消</NButton>
@@ -289,49 +273,9 @@ onMounted(refresh)
 </template>
 
 <style scoped>
-/* v0.2.16 P0 a: groups-list 统一 PC + mobile 模板 (X3 inline drag, 跟 v0.2.15
-   .cards-list 一致). single list (groups 无 group concept), per-row handle. */
-.groups-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.groups-list__items {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.groups-list__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: var(--mp-card-bg);
-  border: 1px solid var(--mp-card-border);
-}
-.groups-list__handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: grab;
-  color: var(--mp-text-secondary);
-  flex-shrink: 0;
-  border-radius: 4px;
-  transition: color 0.15s;
-}
-.groups-list__handle:hover {
-  color: var(--mp-brand-primary);
-}
-.groups-list__handle:active {
-  cursor: grabbing;
-}
-.groups-list__title {
+/* v0.2.18: cells-only styles (.sortable-table 共性已抽到 SortableTable.vue 内).
+   Groups 独有 cell: title + ID (PC) + sort (PC) + actions. */
+.groups-cell__title {
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--mp-text-primary);
@@ -341,13 +285,13 @@ onMounted(refresh)
   flex: 1 1 auto;
   min-width: 0;
 }
-.groups-list__id {
+.groups-cell__id {
   font-size: 0.85rem;
   color: var(--mp-text-secondary);
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
-.groups-list__sort {
+.groups-cell__sort {
   font-size: 0.85rem;
   color: var(--mp-text-secondary);
   width: 32px;
@@ -355,21 +299,20 @@ onMounted(refresh)
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
-.groups-list__actions {
+.groups-cell__actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
 }
 
-/* Mobile @media: PC-only 元素隐藏, font 缩小 (跟 .cards-list 一致). */
 @media (max-width: 768px) {
-  .groups-list__id {
+  .groups-cell__id {
     display: none;
   }
-  .groups-list__sort {
+  .groups-cell__sort {
     display: none;
   }
-  .groups-list__title {
+  .groups-cell__title {
     font-size: 0.85rem;
     line-height: 1.2;
   }

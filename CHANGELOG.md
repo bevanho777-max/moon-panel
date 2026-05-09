@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.18] - 2026-05-09
+
+### Added
+
+- **`<SortableTable>` 抽象组件** (Rule of Three 时机, v0.2.15+v0.2.16 累积 3 用例
+  成熟): `frontend/src/components/SortableTable.vue` (~165 行) 抽象 admin Cards /
+  Groups / Search Engines 三栏目共性 80% (handle / drag UX / animation / disabled /
+  group-name / show-group-headers / itemFilter / .sortable-table BEM), 差异 20% 由
+  `#item` slot 调用方自己渲染 cells. 数据结构统一 `[{id, name, items}]` (single
+  list 1 行 computed 包装). 后续新栏目接入快 (10-20 行调用).
+
+### Changed
+
+- **三栏目接入 SortableTable**:
+  - `frontend/src/views/admin/Cards.vue` 接入 (保留 P0 b localStorage 分组记忆 +
+    跨分组拖 + search disable + NTag(group) + dual-URL + sort + actions). cardsByGroup
+    nested 字段 `cards` → `items` (跟 SortableTable interface 直接对齐). itemFilter
+    prop 替代原 v-show search filter.
+  - `frontend/src/views/admin/Groups.vue` 接入 (保留 groupsStore.invalidate +
+    ID + sort + actions, single list 包装 `[{id:0, items: groups.value}]`).
+  - `frontend/src/views/admin/SiteSettings.vue` 搜索引擎接入 (保留 ⭐/☆ Star +
+    URL 模板 PC + sort + actions, single list 包装).
+  - BEM 完全迁移 `.sortable-table__*` (跟 v0.2.17 V2 教训实战延续).
+
+- **E2E test selector swap (V2 教训实战第二次延续, 同 commit 修)**: 5 处
+  `.engines-list__item` → `.sortable-table__item` (phase-3c-2 + phase-4b),
+  应用 feedback_e2e_test_sync_v2.md + accumulated_lesson_e2e_chore_pattern.md
+  教训, 不进 chore commit 循环 (跟 v0.2.17 V2 实战首次模式一致).
+
+### Stats
+- Net: ~-50 行 (5 文件 +175/-390 + 1 新 SortableTable.vue ~165 行)
+- Bundle minified: -3.62kB total (Cards/Groups/SiteSettings CSS 大幅减小, BEM 抽走)
+- Build: 6.99s ★ 历史最快 ★
+
 ## [0.2.17] - 2026-05-09
 
 ### Changed
