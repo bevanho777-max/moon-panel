@@ -138,7 +138,8 @@ test.describe('Phase 4a security + drag', () => {
       }),
     )
     await page.goto('/admin/security')
-    await page.waitForSelector('.n-data-table-tr', { timeout: 10_000 })
+    // v0.2.17: NaiveUI internal -> own BEM (Security.vue NDataTable wrapped with class="sec__table")
+    await page.waitForSelector('.sec__table tbody tr', { timeout: 10_000 })
     await page.waitForTimeout(200)
     await page.screenshot({ path: shotPath('04-security-page-locked-ips', testInfo.project.name), fullPage: false })
   })

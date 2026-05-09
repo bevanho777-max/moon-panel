@@ -290,7 +290,8 @@ test.describe('Phase 3d-3 2FA / TOTP', () => {
       }),
     )
     await page.goto('/admin/audit-logs')
-    await page.waitForSelector('.n-data-table-tr', { timeout: 10_000 })
+    // v0.2.17: NaiveUI internal -> own BEM (V2 lesson)
+    await page.waitForSelector('.al__table--desktop tbody tr', { timeout: 10_000 })
     await page.waitForTimeout(200)
     await page.screenshot({ path: shotPath('09-audit-log-with-totp-actions', testInfo.project.name), fullPage: true })
   })

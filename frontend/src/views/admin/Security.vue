@@ -125,6 +125,7 @@ onBeforeUnmount(() => {
 
       <NDataTable
         v-if="items.length > 0"
+        class="sec__table"
         :columns="columns"
         :data="items"
         :loading="loading"

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.17] - 2026-05-09
+
+### Changed
+
+- **E2E test 第三方 internal class 迁移自有 BEM** (V2 教训应用第一次实战, 应用
+  v0.2.16 chore memory feedback_e2e_test_sync_v2.md +
+  feedback_e2e_test_avoid_third_party_internal.md): audit-logs/security 7 处
+  `.n-data-table-tr` (NaiveUI internal class) 迁移自有 BEM, 防 NaiveUI 升级 /
+  主题改造时 e2e 测试再触发 stale (跟 v0.2.15+v0.2.16 累积 chore 模式不同, 这次
+  预先彻底修).
+  - audit-logs (6 处): `.n-data-table-tr` → `.al__table--desktop tbody tr`
+    (复用 AuditLog.vue 已有 BEM wrapper)
+  - security (1 处): `.n-data-table-tr` → `.sec__table tbody tr`
+    (Security.vue 加 `class="sec__table"` wrapper, 跟 .al__table--desktop
+    平行 BEM)
+  - 空状态测试: `.n-data-table` → `.al__table--desktop` (整 wrapper, 因空
+    状态 tbody 内无 tr)
+  - phase-4b.spec.ts:60 过期注释删 (顺手清理 v0.2.17 ship 后的过期文档).
+
 ## [0.2.16] - 2026-05-08
 
 ### Changed

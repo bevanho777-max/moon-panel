@@ -57,7 +57,6 @@ async function mockAdmin(page: Page) {
 async function openEngineEditor(page: Page) {
   await page.goto('/admin/settings')
   // v0.2.16: NDataTable removed in search engines (X3 inline drag), swap to .engines-list__item BEM.
-  // Audit-logs / security pages keep NDataTable (.n-data-table-tr selectors elsewhere unchanged).
   await page.waitForSelector('.engines-list__item', { timeout: 10_000 })
   // Click "编辑" on the Google row
   await page.locator('.engines-list__item').filter({ hasText: 'Google' }).locator('button:has-text("编辑")').click()
