@@ -210,7 +210,10 @@ func (h *CardHandler) create(c *gin.Context) {
 		card.OpenInNewTab = true
 	}
 
-	if req.Sort != nil {
+	// v0.2.19: sort=0 视为"未提供" → 走 max+10 fallback (新卡放底部, Bevan
+	// daily UX 反馈 "新建卡片放最后一行"). frontend emptyForm 默认 sort:0 短路
+	// 原 nil check 导致新卡顶部, 加 *req.Sort > 0 短路修复.
+	if req.Sort != nil && *req.Sort > 0 {
 		card.Sort = *req.Sort
 	} else {
 		card.Sort = h.nextSortInGroup(*req.GroupID)

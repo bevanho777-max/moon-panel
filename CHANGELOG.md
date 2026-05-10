@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.19] - 2026-05-10
+
+### Fixed
+
+- **新建卡片/分组/搜索引擎默认放在底部** (Bevan v0.2.18 真机验收 daily UX
+  反馈: "新建卡片默认是在第一行, 我建议新建卡片放在最后一行").
+  根因: backend createHandler 已有 max+10 fallback (v0.2.0+ 设计如此),
+  但 frontend emptyForm 传 `sort: 0` 短路 nil check, 导致新建项 sort=0
+  插入列表顶部.
+  修法 (Y1, 后端 nil check 改进, scope 极简 ~3 行 Go 跨 3 文件):
+  `if req.Sort != nil` → `if req.Sort != nil && *req.Sort > 0` (sort=0
+  视为"未提供" → 走 max+10 fallback). 应用 3 栏目一致 (Cards/Groups/
+  Search Engines) daily UX 期望.
+  - `backend/internal/api/card.go` (createCard nil check)
+  - `backend/internal/api/group.go` (createGroup nil check)
+  - `backend/internal/api/search_engine.go` (createSearchEngine nil check,
+    不动 updateHandler 行 221 — update 时 sort=0 是用户明确意图)
+
+### Engineering
+- V2 教训实战第三次延续 (e2e test 0 影响, Task 1 grep audit 5 类 selector
+  全清, 0 处验证新建顺序). Backend 改动模式跟 v0.2.16 search_engine reorder
+  API 一致. 0 patches 一次到位预期 (跟 v0.2.14/2.17/2.18 模式).
+
 ## [0.2.18] - 2026-05-09
 
 ### Added

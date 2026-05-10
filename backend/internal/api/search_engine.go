@@ -149,7 +149,10 @@ func (h *SearchEngineHandler) create(c *gin.Context) {
 	if req.IsDefault != nil {
 		engine.IsDefault = *req.IsDefault
 	}
-	if req.Sort != nil {
+	// v0.2.19: sort=0 视为"未提供" → 走 max+10 fallback (新搜索引擎放底部, Bevan
+	// daily UX 反馈一致, 跟 card.go + group.go 同模式). 只 createHandler 改, 不
+	// 动 updateHandler 行 221 (update 时 sort=0 是用户明确意图, 应尊重).
+	if req.Sort != nil && *req.Sort > 0 {
 		engine.Sort = *req.Sort
 	} else {
 		var maxSorts []int

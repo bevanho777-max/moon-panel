@@ -116,7 +116,9 @@ func (h *GroupHandler) create(c *gin.Context) {
 		Name: name,
 		Icon: req.Icon,
 	}
-	if req.Sort != nil {
+	// v0.2.19: sort=0 视为"未提供" → 走 max+10 fallback (新分组放底部, Bevan
+	// daily UX 反馈一致, 跟 card.go 同模式).
+	if req.Sort != nil && *req.Sort > 0 {
 		g.Sort = *req.Sort
 	} else {
 		// Default to (max existing sort) + 10 so manual reordering has gaps
