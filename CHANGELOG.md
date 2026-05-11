@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.22] - 2026-05-11
+
+### Changed
+- **NaiveUI Input/Select/Button 主题切换适配** (Bevan daily UX 反馈, 截图对比):
+  "不管在什么主题下, 图片里的搜索框和自动跟随框都是默认, 能否随着主题变化?"
+  扩展 frontend/src/stores/ui.ts themeOverrides computed, 添加 Input /
+  InternalSelection / Button 字段, 让全 app NaiveUI 表单元素跟随主题切换 (Risen
+  暖棕金 / Moon 蓝灰). NaiveUI cssr inject CSS var 字符串, 浏览器 paint 时
+  解析 + data-theme 改变自动 invalidate (D.3.b 决策, 0 reactivity hack).
+  - `frontend/src/stores/ui.ts`: themeOverrides computed 扩展 ~+40-50 行,
+     添加 Input / InternalSelection / Button 字段.
+  - `--mp-search-*` dead token (Moon + Risen 各 3) 重启用 (跟 v0.2.20
+    `.mp-acrylic-light` 规则保留同思路).
+  - Focus 状态 fallback: `var(--mp-search-bg-focus, var(--mp-search-bg))` —
+    future-proof, focus token 未来加时 ui.ts 不需改 (γ 方案).
+  - main.css 不动: 严守 D.3 single source of truth + 现有 3 token 复用.
+  - 全 app 影响 (B.1): NInput / NSelect / 非 primary NButton 全跟主题, 包括
+    Admin Cards/Groups/Settings forms, WallpaperPicker, CityPicker, Modals 等.
+  - Login primary button (type="primary") 保留 colorPrimary 联动, 不被
+    surface override 影响.
+
+### Engineering
+- V2 教训实战第六次延续 (e2e test 0 影响, NaiveUI themeOverrides 是 NaiveUI
+  API 标准做法, 不破 e2e BEM selector).
+- ★ Claude Code 主动 flag 累积模式 第 4+5 次成功 ★:
+  * 第 4 次 (D.3 决策, Task 2.2 实施前): spec 草案 getCssVar + reactive hack
+    时序脆性 (4 步 async 链), 主动提供 D.3.b (CSS var 字符串 cssr inject) 更优解.
+  * 第 5 次 (D.3.b spec, Task 2.2 实施前): spec 草案 2 个客观技术错误 (Issue 1:
+    Button.colorActive 不存在, 应 colorPressed; Issue 2: --mp-search-bg-focus
+    token 未定义), verify NaiveUI 源码 + main.css 抓出. γ 方案 fallback 解决.
+  * 跟 v0.2.19/2.20/2.21 累积 root cause flag 一脉相承 (现在 5 次累积).
+- Claude Code 主动 root cause 诊断: R1 + R3 混合 root cause — themeOverrides
+  仅响应 themePrimary 不响应 themePreset + 6 个 `--mp-search-*` dead token 已存在
+  但无消费方.
+- Task 2.1 前置 verify (跨文件 grep hh-icon-button + NInput/NSelect/NButton):
+  避免 themeOverrides Button 字段覆盖现有自定义 button, 第 2 次累积应用.
+
+## [0.2.22] - 2026-05-11
+
+### Changed
+- **NaiveUI Input/Select/Button 主题切换适配** (Bevan daily UX 反馈, 截图对比):
+  "不管在什么主题下, 图片里的搜索框和自动跟随框都是默认, 能否随着主题变化?"
+  扩展 frontend/src/stores/ui.ts themeOverrides computed, 添加 Input /
+  InternalSelection / Button 字段, 让全 app NaiveUI 表单元素跟随主题切换 (Risen
+  暖棕金 / Moon 蓝灰). NaiveUI cssr inject CSS var 字符串, 浏览器 paint 时
+  解析 + data-theme 改变自动 invalidate (D.3.b 决策, 0 reactivity hack).
+  - `frontend/src/stores/ui.ts`: themeOverrides computed 扩展 ~+40-50 行,
+     添加 Input / InternalSelection / Button 字段.
+  - `--mp-search-*` dead token (Moon + Risen 各 3) 重启用 (跟 v0.2.20
+    `.mp-acrylic-light` 规则保留同思路).
+  - Focus 状态 fallback: `var(--mp-search-bg-focus, var(--mp-search-bg))` —
+    future-proof, focus token 未来加时 ui.ts 不需改 (γ 方案).
+  - main.css 不动: 严守 D.3 single source of truth + 现有 3 token 复用.
+  - 全 app 影响 (B.1): NInput / NSelect / 非 primary NButton 全跟主题, 包括
+    Admin Cards/Groups/Settings forms, WallpaperPicker, CityPicker, Modals 等.
+  - Login primary button (type="primary") 保留 colorPrimary 联动, 不被
+    surface override 影响.
+
+### Engineering
+- V2 教训实战第六次延续 (e2e test 0 影响, NaiveUI themeOverrides 是 NaiveUI
+  API 标准做法, 不破 e2e BEM selector).
+- ★ Claude Code 主动 flag 累积模式 第 4+5 次成功 ★:
+  * 第 4 次 (D.3 决策, Task 2.2 实施前): spec 草案 getCssVar + reactive hack
+    时序脆性 (4 步 async 链), 主动提供 D.3.b (CSS var 字符串 cssr inject) 更优解.
+  * 第 5 次 (D.3.b spec, Task 2.2 实施前): spec 草案 2 个客观技术错误 (Issue 1:
+    Button.colorActive 不存在, 应 colorPressed; Issue 2: --mp-search-bg-focus
+    token 未定义), verify NaiveUI 源码 + main.css 抓出. γ 方案 fallback 解决.
+  * 跟 v0.2.19/2.20/2.21 累积 root cause flag 一脉相承 (现在 5 次累积).
+- Claude Code 主动 root cause 诊断: R1 + R3 混合 root cause — themeOverrides
+  仅响应 themePrimary 不响应 themePreset + 6 个 `--mp-search-*` dead token 已存在
+  但无消费方.
+- Task 2.1 前置 verify (跨文件 grep hh-icon-button + NInput/NSelect/NButton):
+  避免 themeOverrides Button 字段覆盖现有自定义 button, 第 2 次累积应用.
+
 ## [0.2.21] - 2026-05-11
 
 ### Changed

@@ -51,16 +51,52 @@ export const useUIStore = defineStore('ui', () => {
   })
 
   const themeOverrides = computed<GlobalThemeOverrides>(() => {
-    if (!themePrimary.value) return {}
-    const shades = derivePrimaryShades(themePrimary.value)
-    return {
-      common: {
+    // v0.2.22: NaiveUI Input/Select/Button surface 跟主题切换 (Bevan daily UX
+    // 反馈, "搜索框/自动跟随框不管什么主题都默认"). D.3.b: cssr inject CSS var
+    // 字符串, 浏览器 paint 时解析 var(), [data-theme] 改变自动 invalidate —
+    // 0 reactivity hack. Focus 走 γ fallback 'var(--mp-search-bg-focus,
+    // var(--mp-search-bg))' future-proof. NaiveUI typed key 确认:
+    // Button=colorHover/colorPressed/colorFocus, InternalSelection=colorActive.
+    // 不动 colorPrimary 字段, primary button 走下方 common.primaryColor* 联动.
+    const base: GlobalThemeOverrides = {
+      Input: {
+        color: 'var(--mp-search-bg)',
+        colorFocus: 'var(--mp-search-bg-focus, var(--mp-search-bg))',
+        borderColor: 'var(--mp-search-border)',
+        borderColorHover: 'var(--mp-search-border)',
+        borderColorFocus: 'var(--mp-search-border)',
+        textColor: 'var(--mp-text-primary)',
+      },
+      InternalSelection: {
+        color: 'var(--mp-search-bg)',
+        colorActive: 'var(--mp-search-bg-focus, var(--mp-search-bg))',
+        border: '1px solid var(--mp-search-border)',
+        borderHover: '1px solid var(--mp-search-border)',
+        borderActive: '1px solid var(--mp-search-border)',
+        borderFocus: '1px solid var(--mp-search-border)',
+        textColor: 'var(--mp-text-primary)',
+      },
+      Button: {
+        color: 'var(--mp-search-bg)',
+        colorHover: 'var(--mp-search-bg-focus, var(--mp-search-bg))',
+        colorPressed: 'var(--mp-search-bg-focus, var(--mp-search-bg))',
+        colorFocus: 'var(--mp-search-bg-focus, var(--mp-search-bg))',
+        border: '1px solid var(--mp-search-border)',
+        borderHover: '1px solid var(--mp-search-border)',
+        borderFocus: '1px solid var(--mp-search-border)',
+        textColor: 'var(--mp-text-primary)',
+      },
+    }
+    if (themePrimary.value) {
+      const shades = derivePrimaryShades(themePrimary.value)
+      base.common = {
         primaryColor: shades.base,
         primaryColorHover: shades.hover,
         primaryColorPressed: shades.pressed,
         primaryColorSuppl: shades.suppl,
-      },
+      }
     }
+    return base
   })
 
   /** Load from backend if not already loaded. Idempotent.
