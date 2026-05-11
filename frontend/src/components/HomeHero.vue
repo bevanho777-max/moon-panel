@@ -102,39 +102,22 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* v0.2.20 P0 a: 弃 flex, 改 CSS Grid 显式列数 (Bevan backlog 反馈 PC 3-up center,
+   Mobile 2-up). 5 cities 时第 2/3 行 cards Grid 默认左对齐. max-width 900px ≈
+   3×280px cards + 2×12px gap + buffer, margin auto 居中. */
 .hero {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  margin-bottom: 24px;
-}
-/* v0.2.9: Mobile/tablet (≤768px) — 3 cards per row, evenly distributed.
-   Replaces v0.2.8's 720/420 split AND v0.2.9 first attempt's single-column
-   stacking. Single row keeps weather widgets compact rather than dominating
-   mobile screen. Cards inside use single-line 4-element layout (city/temp/
-   date/time) so 33% width per card is sufficient. */
-@media (max-width: 768px) {
-  .hero {
-    gap: 6px;
-  }
-  .hero > * {
-    flex: 0 1 calc(33.333% - 4px);
-    min-width: 0;
-  }
+  max-width: 900px;
+  margin: 0 auto 24px;
 }
 
-/* v0.2.8: PC desktop (≥769px) — center weather cards at fixed width
-   instead of stretching across the container. Mobile (≤720px) and
-   intermediate (721-768px) layouts unchanged.
-   :deep(.cw) targets the CityWidget root class via Vue scoped CSS
-   boundary penetration (same pattern as v0.2.7 AuditLog NCard fix). */
-@media (min-width: 769px) {
+@media (max-width: 768px) {
   .hero {
-    justify-content: center;
-  }
-  .hero :deep(.cw) {
-    flex: 0 1 280px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    max-width: none;
   }
 }
 </style>

@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="cw mp-acrylic-light"
+    class="cw"
     :data-loading="weather === null"
     :title="`${city.name_cn} / ${city.name_en} · ${city.tz}`"
   >

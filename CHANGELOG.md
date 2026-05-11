@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.20] - 2026-05-11
+
+### Changed
+
+- **Weather card 重新布局** (P0 a, Bevan backlog 累积反馈): HomeHero 弃 flex,
+  改 CSS Grid 显式列数 (PC 3-up + max-width 900px 居中, Mobile 2-up). 5 cities
+  时第 2/3 行 cards 默认左对齐 (Grid 默认行为).
+  - `frontend/src/components/HomeHero.vue`: `grid-template-columns: repeat(3, 1fr)`
+    (PC) + `repeat(2, 1fr)` (mobile @media), 删 flex-wrap / :deep(.cw) 旧代码.
+    净 -17 行 (CSS 简化).
+
+- **Weather card 颜色 (purple cast → Risen gold)** (P0 b, Bevan 长期反馈
+  "purple → warmer gold for Risen"): Root cause 修正 (Claude Code 主动 flag,
+  v0.2.x 第 2 次累积): purple cast 不是 weather token 问题 (token 已是 Risen
+  gold), 是 `.mp-acrylic-light` global class CSS specificity 覆盖, 加上
+  backdrop-filter saturate(180%) 透出 wallpaper purple cast. 修法极简:
+  CityWidget.vue 行 112 删 `mp-acrylic-light` class (1 字符), 让 weather
+  token 直接生效 (Risen gold / Moon 白透, 跟主题切换彻底).
+  - `frontend/src/components/CityWidget.vue` 行 112:
+    `<div class="cw mp-acrylic-light">` → `<div class="cw">`
+  - Moon 主题一并改 (token 跟随, 视觉接近原 acrylic)
+  - main.css 不动 (token 已设计完整, .mp-acrylic-light 规则保留供别处用)
+
+### Engineering
+- V2 教训实战第四次延续 (e2e test 0 影响, Task 1 grep audit 5 类 selector
+  全清, 0 处验证 grid 列数 / acrylic background).
+- Claude Code 主动 flag spec 假设错误 (第 2 次累积, 跟 v0.2.19 一脉相承):
+  P0 b spec 假设 weather token 是 purple, 实际 grep 揭示 token 已 gold, 是
+  acrylic class CSS specificity 覆盖. 修法从"加新 token"简化为"删 1 字符 class".
+- Task 2.1 前置 verify (跨文件 grep `mp-acrylic-light`): 仅 CityWidget 1 处使用,
+  main.css 3 处仅规则定义保留. 安全删, 不影响别处.
+
 ## [0.2.19] - 2026-05-10
 
 ### Fixed
