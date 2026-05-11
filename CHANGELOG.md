@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.21] - 2026-05-11
+
+### Changed
+- **Home 用户端 group 容器扁平化** (Bevan daily UX 反馈, 截图对比):
+  "卡片栏只保留这些卡片的样式, AI流之类的标题不需要再外框和背景, 这样
+  看起来感觉会更舒服和整洁、直观". 删 `.home-group` 容器 background /
+  border / border-radius / padding (PC + mobile), 保留 margin-bottom 作
+  group 间距. `.home-group__title` (folder icon + 分组名 + border-bottom
+  divider) 保留作分组识别. 跟 v0.2.13 HomeCard 扁平化 + v0.2.20 Weather
+  删 acrylic 同理念 (去除多余视觉层级, 更整洁直观).
+  - `frontend/src/views/Home.vue`: `.home-group` PC + 2 个 mobile @media
+    规则简化, 删 bg/border/border-radius/padding. 净 -16 行 CSS.
+  - `.home-group` class 保留 (e2e 10 处 selector 不破, V2 教训应用第五次延续)
+  - `--mp-group-*` token 保留在 main.css (备用给未来组件, 跟 v0.2.20
+    `.mp-acrylic-light` 规则保留同思路)
+
+### Engineering
+- V2 教训实战第五次延续 (e2e test 0 影响, 主动保留 `.home-group` class
+  避免 10 处 selector 同 commit 修).
+- Claude Code 主动 Bevan 反馈解读分析 (跟 v0.2.19/2.20 主动 flag root cause
+  一脉相承): 你反馈 "标题不需要外框和背景", 实际是 `.home-group` 容器删
+  (容器 contains title, title 本身无 bg/border). X1 修法精准对应期望.
+
 ## [0.2.20] - 2026-05-11
 
 ### Changed

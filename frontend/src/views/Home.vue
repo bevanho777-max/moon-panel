@@ -266,28 +266,14 @@ onMounted(load)
   justify-content: center;
 }
 
+/* v0.2.21: group 容器扁平化 (Bevan daily UX 反馈 "AI流之类的标题不需要再外框
+   和背景, 这样看起来感觉会更舒服和整洁、直观"). 删 bg/border/border-radius/
+   padding, 仅保留 margin-bottom 作 group 间距. 跟 v0.2.13 HomeCard 扁平化
+   + v0.2.20 Weather 删 acrylic 同理念 (去除多余视觉层级). .home-group__title
+   (含 folder icon + group name + border-bottom divider) 保留作分组识别.
+   --mp-group-* token 保留在 main.css (备用给未来组件). */
 .home-group {
   margin-bottom: 32px;
-  padding: 24px;
-  /* v0.2.2: theme-driven group container. moon = v0.2.0 hardcoded values
-     verbatim; risen = warm-brown subtle frame with golden border. */
-  background: var(--mp-group-bg);
-  border: 1px solid var(--mp-group-border);
-  border-radius: 16px;
-  /* v0.1.6: backdrop-filter removed.
-     5b-4 kept it on the assumption that 6 px blur was cheap enough for
-     2-3 group instances. v0.1.6 Paint Flashing disproved that — the
-     blur turned the entire group into a single composite region, so
-     ANY child-card hover transition (bg / translate / ring) forced
-     the whole group region to re-composite. Five cards were flashing
-     green together because they share the parent's paint unit, not
-     because each card was repainting individually. CardItem's
-     `contain: layout paint style` (v0.1.5) prevents child paint from
-     escaping its box, but doesn't stop the parent from re-compositing
-     when child output changes. Dropping the filter splits the cards
-     back into independent paint regions. Trade: group loses the
-     frosted-glass effect; the 0.025 bg + 1 px border still gives a
-     subtle structural frame over the wallpaper. */
 }
 .home-group:last-child {
   margin-bottom: 0;
@@ -391,10 +377,10 @@ onMounted(load)
   .home-content {
     padding: 1.25rem 1rem 2rem;
   }
+  /* v0.2.21: .home-group mobile padding/border-radius 删 (跟 PC 容器扁平化
+     一致). 仅保留 margin-bottom 调整 (mobile 间距更紧凑). */
   .home-group {
-    padding: 16px;
     margin-bottom: 20px;
-    border-radius: 12px;
   }
   .home-group__cards {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -402,9 +388,7 @@ onMounted(load)
   }
 }
 @media (max-width: 480px) {
-  .home-group {
-    padding: 14px;
-  }
+  /* v0.2.21: .home-group ≤480px padding 也删 (跟 ≤768 + PC 一致). */
   .home-group__cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
