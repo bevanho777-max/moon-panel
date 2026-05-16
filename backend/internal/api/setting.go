@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -49,7 +50,7 @@ func (h *SettingHandler) upsert(c *gin.Context) {
 		OK(c, gin.H{"updated": 0})
 		return
 	}
-	for k := range body {
+	for k, v := range body {
 		if k == "" {
 			Fail(c, http.StatusBadRequest, 400, "empty key not allowed")
 			return
@@ -57,6 +58,19 @@ func (h *SettingHandler) upsert(c *gin.Context) {
 		if len(k) > 64 {
 			Fail(c, http.StatusBadRequest, 400, "key too long (max 64): "+k)
 			return
+		}
+		// Key-specific value validation. Per-key branches are inline because
+		// v0.2.23 only validates one key; promote to a registry once a third
+		// case appears.
+		if k == "network.probe_url" && v != "" {
+			if len(v) > 200 {
+				Fail(c, http.StatusBadRequest, 400, "network.probe_url too long (max 200)")
+				return
+			}
+			if !strings.HasPrefix(v, "http://") && !strings.HasPrefix(v, "https://") {
+				Fail(c, http.StatusBadRequest, 400, "network.probe_url must start with http:// or https://")
+				return
+			}
 		}
 	}
 

@@ -7,6 +7,7 @@ import {
   NEmpty,
   NForm,
   NFormItem,
+  NInput,
   NInputNumber,
   NModal,
   NPopconfirm,
@@ -294,6 +295,39 @@ async function saveTempUnit(v: 'C' | 'F') {
   }
 }
 
+// ───────────── Network probe URL (v0.2.23) ─────────────
+// Empty = auto-sample from card internal URLs; explicit URL = probe that
+// endpoint to decide LAN vs WAN. Backend validates http/https prefix +
+// max length 200 — surface the failure inline if rejected.
+const probeUrlDraft = ref('')
+const probeUrlOriginal = ref('')
+const probeUrlSaving = ref(false)
+
+async function loadNetworkSettings() {
+  try {
+    const settings = await getSettings()
+    probeUrlDraft.value = settings['network.probe_url'] ?? ''
+    probeUrlOriginal.value = probeUrlDraft.value
+  } catch (e) {
+    message.error(e instanceof ApiError ? e.message : '加载网络设置失败')
+  }
+}
+
+async function saveProbeUrl() {
+  const v = probeUrlDraft.value.trim()
+  probeUrlSaving.value = true
+  try {
+    await updateSettings({ 'network.probe_url': v })
+    probeUrlOriginal.value = v
+    probeUrlDraft.value = v
+    message.success(v === '' ? '已清空，将自动从卡片内网 URL 取样' : '已保存')
+  } catch (e) {
+    message.error(e instanceof ApiError ? e.message : '保存失败')
+  } finally {
+    probeUrlSaving.value = false
+  }
+}
+
 function handleCityPick(city: City) {
   if (cities.value.length >= MAX_CITIES) {
     message.warning(`最多 ${MAX_CITIES} 个城市，请先删除现有的再添加`)
@@ -381,6 +415,7 @@ function onRestored() {
 onMounted(() => {
   refresh()
   loadWidgetSettings()
+  loadNetworkSettings()
   refreshTOTPState()
   loadTrustedIPs()
 })
@@ -548,6 +583,33 @@ onMounted(() => {
           </div>
         </NSpace>
       </NSpin>
+    </NCard>
+
+    <!-- Section 2.5 (v0.2.23): Network auto-detection probe URL -->
+    <NCard title="网络检测">
+      <NSpace vertical :size="12">
+        <NSpace align="center" :size="12" style="width: 100%">
+          <span class="ws__label" style="min-width: 7em">内网检测 URL</span>
+          <NInput
+            v-model:value="probeUrlDraft"
+            placeholder="http://192.168.x.x:port （留空则自动从卡片内网 URL 取样）"
+            :maxlength="200"
+            clearable
+            style="max-width: 460px"
+            :disabled="probeUrlSaving"
+          />
+          <NButton
+            type="primary"
+            :disabled="probeUrlDraft.trim() === probeUrlOriginal.trim()"
+            :loading="probeUrlSaving"
+            @click="saveProbeUrl"
+          >保存</NButton>
+        </NSpace>
+        <div class="ws__help">
+          用于自动检测当前是否在本地局域网。设置后探测此 URL 是否可达；留空时自动从卡片内网 URL 池取样。
+          探测使用 no-cors 模式，1.5s 超时，不会向页面回传任何数据。
+        </div>
+      </NSpace>
     </NCard>
 
     <!-- Section 3: Two-Factor Authentication -->
@@ -731,6 +793,13 @@ onMounted(() => {
 .ws__totp-tip {
   font-size: 0.78rem;
   opacity: 0.55;
+}
+/* v0.2.23: probe URL help text — same dimming as .ws__totp-tip but kept
+   as a distinct class so future copy/layout tweaks don't bleed across. */
+.ws__help {
+  font-size: 0.78rem;
+  opacity: 0.55;
+  line-height: 1.5;
 }
 .ws__trusted-empty {
   font-size: 0.85rem;

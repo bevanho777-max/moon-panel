@@ -65,7 +65,7 @@ const SAMPLE_PANEL = {
   code: 0,
   msg: 'ok',
   data: {
-    site: { public_mode: true, cities: HERO_CITIES, temp_unit: 'C' },
+    site: { public_mode: true, cities: HERO_CITIES, temp_unit: 'C', network: { probe_url: '' } },
     groups: [
       {
         id: 1,
@@ -104,7 +104,7 @@ const EMPTY_PANEL = {
   code: 0,
   msg: 'ok',
   data: {
-    site: { public_mode: true, cities: [], temp_unit: 'C' },
+    site: { public_mode: true, cities: [], temp_unit: 'C', network: { probe_url: '' } },
     groups: [],
     search_engines: [],
   },
@@ -127,6 +127,19 @@ async function mockMe(page: Page) {
 }
 
 async function mockPanel(page: Page, body: unknown, status = 200) {
+  // v0.2.23 C.2: pin session network to 'lan' before the Home page loads.
+  // Headless e2e fetches to 192.168.x.x always fail → detectedMode='wan' →
+  // cards with only url_internal would render disabled (per WAN-strict in
+  // cardUrl.ts). The session override beats auto-detection so cards stay
+  // clickable and screenshots match v0.2.22 visuals. sessionStorage key
+  // mirrors KEY_SESSION_OVERRIDE in src/stores/network.ts.
+  await page.addInitScript(() => {
+    try {
+      sessionStorage.setItem('moon-panel.session-override', 'lan')
+    } catch {
+      /* iOS-style sessionStorage quota errors aren't relevant in playwright */
+    }
+  })
   await page.route('**/api/public/panel', (route) =>
     route.fulfill({
       status,
@@ -280,7 +293,7 @@ test.describe('Phase 3c-2 home hero + time display', () => {
       code: 0,
       msg: 'ok',
       data: {
-        site: { public_mode: true },
+        site: { public_mode: true, network: { probe_url: '' } },
         groups: [
           {
             id: 1,

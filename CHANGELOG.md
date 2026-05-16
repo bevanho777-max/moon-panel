@@ -7,6 +7,112 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.23] - 2026-MM-DD
+
+### Added
+
+- **Auto network detection** — Home page now automatically detects whether
+  the client is on the local LAN or remote network and switches dual-URL
+  cards (cards with both internal and external URLs) to the appropriate
+  target. Detection uses an admin-configurable probe URL (new
+  `network.probe_url` setting) with fallback to a sampled card's internal
+  URL. The probe runs on mount, on browser `online`/`offline` events, and
+  every 60 seconds while the page is visible (paused when tab is hidden,
+  resumed on `visibilitychange`).
+
+- **NetworkSwitcher status indicator** — When in "自动检测" mode, a small
+  dot indicates the current detection state: green for LAN, orange for
+  WAN, grey pulsing for detecting. A 1×1 spinner appears next to the
+  switcher during active probing. Mobile dropdown trigger shows a small
+  dot in the bottom-right corner with the same color semantics.
+
+- **Dual-URL badge — visual state** — Cards with both internal and
+  external URLs now show their current routing target in the badge:
+  blue with 🏠 icon when going LAN, orange with 🌐 icon when going WAN,
+  grey with spinner when detecting.
+
+- **WAN-strict routing for LAN-only cards** — When detection determines
+  the client is on WAN, cards with only an internal URL become
+  non-clickable (`card-item--disabled`) with tooltip "外网环境无法访问此
+  卡片（仅有内网 URL）". This prevents the dead-link behavior where users
+  on mobile data accidentally tap LAN-only services. The new
+  `resolveWANStrict` helper in `cardUrl.ts` enforces the asymmetric
+  fallback rule (LAN falls back to external, WAN does not fall back to
+  internal).
+
+- **Session-scoped manual override** — Users can temporarily force LAN
+  or WAN mode in NetworkSwitcher; this override persists for the current
+  browser session only (sessionStorage, key
+  `moon-panel.session-override`). On refresh, behavior returns to
+  auto-detection. The existing permanent `internal`/`external`
+  localStorage preferences (the "global mode" setting) are unaffected
+  and coexist.
+
+- **Admin setting: 内网检测 URL** — New "网络检测" card in SiteSettings
+  for configuring an explicit probe URL. Validates http(s):// prefix and
+  length ≤ 200 in both frontend and backend. Empty value triggers
+  auto-sampling from the first card with an internal URL. The setting
+  is exposed to anonymous Home clients via `/api/public/panel`
+  (`site.network.probe_url`).
+
+### Changed
+
+- **NetworkSwitcher "自动" mode semantics** — Previously, "自动 · 跟随
+  各卡默认" meant "follow each card's `url_default` field". v0.2.23
+  redefines it as "自动检测" — detect and switch globally based on
+  network reachability. The `url_default` field is retained for backward
+  compatibility but is no longer read by `cardUrl.ts`. The default
+  network mode (`'auto'`) is unchanged from v0.2.22; existing users keep
+  whatever localStorage value they previously set.
+
+- **`/api/health` Cache-Control** — Now returns `Cache-Control: no-store`
+  to prevent stale probe responses from being cached by browsers or
+  intermediate proxies (previously had no Cache-Control header).
+
+### Fixed
+
+- **`NInput` not registered in SiteSettings.vue** — The `NInput`
+  component was used in `SiteSettings.vue` template but not imported
+  from `'naive-ui'`. Browsers silently rendered `<NInput>` as an
+  unknown 0×0 element. v0.2.23 adds the missing import, which also
+  restores the "站点名称" (site title) input field that has been
+  silently broken since v0.2.0 — users couldn't change the panel title
+  for the entire v0.2.x series. This was discovered during v0.2.23
+  visual-gate testing of the new `内网检测 URL` input.
+
+### Internal
+
+- **Network probe via `<img>` tag** — The auto-detection probe uses an
+  `<img>` element rather than `fetch()`. `<img>` is unconstrained by
+  CORS or redirect modes, so any server response (image, HTML, 301,
+  404, JSON) triggers `onload` or `onerror` and counts as reachable.
+  Only `setTimeout` firing first signals genuine unreachability. This
+  sidesteps Chrome's `fetch(mode:'no-cors')` restriction that forbids
+  `redirect:'manual'`, and avoids the `redirect:'follow'` flake where
+  a LAN reverse-proxy 301→https follow-up request fails for unrelated
+  reasons (false-WAN false-positive).
+- **Zero new npm dependencies** — Detection uses browser-native APIs
+  only (`Image`, `setTimeout`, `sessionStorage`); no new entries in
+  `package.json`.
+- **Zero database migration** — `model.Setting` generic key→value table;
+  `bootstrapNetworkSettings()` follows the same pattern as
+  `bootstrapWidgetSettings/DefaultEngines/SessionFloor/TrustedIPs`.
+- **`cardUrl.ts` refactor** — `effectiveURL(card, state)` now accepts
+  `CardURLState {override, effectiveMode}` and returns
+  `EffectiveURL {side, fallback}` rich object instead of a plain string.
+  The richer return value enables the dual-URL badge to display the
+  current routing target and the tooltip to differentiate "no URL set"
+  from "WAN environment, internal only". 14 vitest cases cover the new
+  matrix, including 2 dedicated WAN-strict assertions.
+- **E2E mock alignment** — `phase-3c-2`, `phase-4a`, and
+  `readme-screenshots` fixtures now include `site.network.probe_url`.
+  Tests that load Home (`phase-3c-2`, `readme-screenshots`) pin
+  `sessionStorage['moon-panel.session-override'] = 'lan'` via
+  `addInitScript` before navigation to avoid probe-failure flake in
+  the headless environment.
+- **Bundle delta** — +2.3 KB gzipped (JS +1.9, CSS +0.4) across
+  Home/SiteSettings/NetworkSwitcher chunks. No new chunk-size warnings.
+
 ## [0.2.22] - 2026-05-11
 
 ### Changed

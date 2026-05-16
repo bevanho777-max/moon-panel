@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch, type VNode } from 'vue'
 import { NDropdown, type DropdownOption } from 'naive-ui'
+import { Globe, Home as HomeLucide, Loader2 } from 'lucide-vue-next'
 import type { Card } from '@/api/card'
 import { useNetworkStore } from '@/stores/network'
 import { effectiveURL } from '@/utils/cardUrl'
@@ -12,10 +13,30 @@ const network = useNetworkStore()
 
 const url = computed(() =>
   effectiveURL(props.card, {
-    global: network.global,
-    overrides: network.overrides,
+    override: network.overrides[props.card.id],
+    effectiveMode: network.effectiveMode,
   }),
 )
+
+// v0.2.23: 双网卡片的当前走向 — drives the badge icon + colour modifier.
+//   'lan'        → 走内网（home 图标）
+//   'wan'        → 走外网（globe 图标）
+//   'detecting'  → 探测中（spinner + 灰色）
+// Probing-in-progress collapses to 'detecting' regardless of the optimistic
+// effectiveMode (store maps 'detecting'→'lan' optimistically so links stay
+// clickable, but the badge should show the real probe state).
+const bothState = computed<'lan' | 'wan' | 'detecting'>(() => {
+  if (network.probeStatus === 'probing') return 'detecting'
+  if (network.detectedMode === 'detecting') return 'detecting'
+  if (url.value?.side === 'internal') return 'lan'
+  return 'wan'
+})
+
+const bothTooltip = computed(() => {
+  if (bothState.value === 'lan') return '此卡片同时设置了内网和外网地址 · 当前走内网'
+  if (bothState.value === 'wan') return '此卡片同时设置了内网和外网地址 · 当前走外网'
+  return '此卡片同时设置了内网和外网地址 · 正在探测网络'
+})
 
 // NDropdown is lazy-mounted (v0.1.4): pre-v0.1.4 it was always rendered
 // with :show="false", but NaiveUI still spins up VBinder + popper.js
@@ -151,7 +172,15 @@ const target = computed(() => (props.card.open_in_new_tab ? '_blank' : '_self'))
 const rel = computed(() => (props.card.open_in_new_tab ? 'noopener noreferrer' : undefined))
 
 const tooltipText = computed(() => {
-  if (!url.value) return '未设置链接'
+  if (!url.value) {
+    // v0.2.23 D4: WAN-strict 模式下,仅内网 URL 卡片显式说明不可达原因
+    // (cardUrl.ts effectiveMode='wan' 时不 fallback 到 internal,因为
+    //  外网环境根本访问不到内网地址 — 点了等于送用户去 connection error).
+    if (network.effectiveMode === 'wan' && props.card.url_internal.trim() !== '') {
+      return '外网环境无法访问此卡片（仅有内网 URL）'
+    }
+    return '未设置链接'
+  }
   const parts = [props.card.description]
   if (url.value.fallback) parts.push(`(fallback: ${url.value.side === 'internal' ? '内网空，走外网' : '外网空，走内网'})`)
   parts.push(url.value.url)
@@ -336,10 +365,12 @@ onBeforeUnmount(() => {
         <span
           v-else-if="networkBadge === 'both'"
           class="card-item__badge card-item__badge--both"
-          title="此卡片同时设置了内网和外网地址"
+          :class="`card-item__badge--both-${bothState}`"
+          :title="bothTooltip"
         >
-          <component :is="homeBadgeIcon()" />
-          <component :is="globeBadgeIcon()" />
+          <HomeLucide v-if="bothState === 'lan'" :size="10" />
+          <Globe v-else-if="bothState === 'wan'" :size="10" />
+          <Loader2 v-else :size="10" class="card-item__badge-spinner" />
           <span>双网</span>
         </span>
       </div>
@@ -572,9 +603,31 @@ onBeforeUnmount(() => {
   /* same neutral grey as external — both are "limitation" hints, not status */
 }
 .card-item__badge--both {
-  /* v0.2.16 Patch P1: same neutral grey as internal/external — affordance hint
-     ("双 URL set"), not status. Token swap (internal/external/both 区分色) 等
-     Bevan 视觉门反馈再决定, 不预先加 --mp-badge-both-* token. */
+  /* v0.2.23: 'both' badge 从 neutral grey 升级到状态彩色 — 内/外/探测中 三态
+     用 hex 直写 (不绑 brand-token, 状态语义不该随主题色调换). 跟
+     NetworkSwitcher 状态色保持一致 (同 hex). */
+}
+.card-item__badge--both-lan {
+  /* 蓝: 当前走内网 */
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.card-item__badge--both-wan {
+  /* 橙: 当前走外网 */
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+}
+.card-item__badge--both-detecting {
+  /* 灰: 探测中 (spinner 旋转) */
+  background: rgba(156, 163, 175, 0.12);
+  color: var(--mp-text-tertiary);
+}
+.card-item__badge-spinner {
+  animation: card-badge-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes card-badge-spin {
+  to { transform: rotate(360deg); }
 }
 .card-item__title {
   /* min-width: 0 lets the flex item shrink below its content width so the

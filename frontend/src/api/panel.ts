@@ -23,6 +23,13 @@ export interface UISettings {
   builtins: string[]
 }
 
+/** v0.2.23: network auto-detection settings exposed publicly. */
+export interface NetworkSettings {
+  /** Admin-configured probe URL. Empty string = frontend auto-samples from
+   *  card internal URLs. */
+  probe_url: string
+}
+
 export interface SiteInfo {
   public_mode: boolean
   /** v0.2.0: admin-customizable site title; falls back to "Moon Panel". */
@@ -32,6 +39,7 @@ export interface SiteInfo {
   cities: City[]
   temp_unit: TempUnit
   ui: UISettings
+  network: NetworkSettings
 }
 
 export interface PanelData {

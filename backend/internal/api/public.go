@@ -55,6 +55,7 @@ func (h *PublicHandler) getPanel(c *gin.Context) {
 	ui := loadUISettings(h.DB)
 	title := loadSiteTitleSetting(h.DB)
 	theme := loadThemePresetSetting(h.DB)
+	probeURL := loadProbeURLSetting(h.DB)
 
 	OK(c, gin.H{
 		"site": gin.H{
@@ -64,10 +65,24 @@ func (h *PublicHandler) getPanel(c *gin.Context) {
 			"cities":       cities,
 			"temp_unit":    tempUnit,
 			"ui":           ui,
+			"network": gin.H{
+				"probe_url": probeURL,
+			},
 		},
 		"groups":         groups,
 		"search_engines": engines,
 	})
+}
+
+// loadProbeURLSetting reads "network.probe_url" raw. Empty string means
+// "admin has not configured one — frontend will auto-sample from card
+// internal URLs". v0.2.23.
+func loadProbeURLSetting(db *gorm.DB) string {
+	var s model.Setting
+	if err := db.Where("key = ?", "network.probe_url").First(&s).Error; err != nil {
+		return ""
+	}
+	return s.Value
 }
 
 // loadThemePresetSetting reads the "site.theme_preset" setting and falls

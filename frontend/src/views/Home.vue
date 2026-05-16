@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, h, onMounted, ref, type VNode } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref, watch, watchEffect, type VNode } from 'vue'
 import {
   NButton,
   NEmpty,
@@ -21,8 +21,10 @@ import HomeHero from '@/components/HomeHero.vue'
 import VersionBadge from '@/components/VersionBadge.vue'
 import StatusBar from '@/components/StatusBar.vue'
 import { useUIStore } from '@/stores/ui'
+import { useNetworkStore } from '@/stores/network'
 
 const ui = useUIStore()
+const networkStore = useNetworkStore()
 
 const router = useRouter()
 const message = useMessage()
@@ -115,6 +117,41 @@ function moonIcon(): VNode {
 }
 
 onMounted(load)
+
+// v0.2.23 Phase B: wire admin-configured probe URL into the network store
+// and start the auto-detection watcher once card data has arrived.
+//
+// Flag 5 (Phase A): panel.site.network is TS-required, so no optional chaining
+// on the access path. If the field is missing at runtime (e.g. stale fixture
+// in tests), TS would still let this through — Phase C will add the e2e mock
+// fixture field to keep the contract honest end-to-end.
+watchEffect(() => {
+  if (panel.value) {
+    networkStore.setProbeUrl(panel.value.site.network.probe_url)
+  }
+})
+
+// Spec watched `panelData.cards`, but PanelData groups its cards under
+// `groups[].cards` (no flat .cards). Flattening here gives the watcher a
+// single list to sample url_internal from. Re-firing on the flattened
+// array re-arms the watcher whenever admin edits change the card pool
+// (panel reloads → new groups → new flattened array).
+const allCards = computed(() =>
+  (panel.value?.groups ?? []).flatMap((g) => g.cards ?? []),
+)
+watch(
+  allCards,
+  (cards) => {
+    if (cards.length > 0) {
+      networkStore.startWatcher(cards.map((c) => ({ url_internal: c.url_internal })))
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  networkStore.stopWatcher()
+})
 </script>
 
 <template>

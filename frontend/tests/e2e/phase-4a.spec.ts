@@ -209,6 +209,7 @@ test.describe('Phase 4a security + drag', () => {
                 { name_cn: '北京', name_en: 'Beijing', tz: 'Asia/Shanghai', lat: 39.9, lon: 116.4 },
                 { name_cn: '纽约', name_en: 'New York', tz: 'America/New_York', lat: 40.7, lon: -74.0 },
               ],
+              network: { probe_url: '' },
             },
             groups: [], search_engines: [],
           },

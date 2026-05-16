@@ -59,6 +59,9 @@ func main() {
 	if err := bootstrapWidgetSettings(db); err != nil {
 		log.Fatalf("bootstrap widgets: %v", err)
 	}
+	if err := bootstrapNetworkSettings(db); err != nil {
+		log.Fatalf("bootstrap network: %v", err)
+	}
 	if err := bootstrapSessionFloor(db); err != nil {
 		log.Fatalf("bootstrap session floor: %v", err)
 	}
@@ -322,6 +325,31 @@ func bootstrapWidgetSettings(db *gorm.DB) error {
 		err := db.Where("key = ?", s.Key).First(&existing).Error
 		if err == nil {
 			continue // already set, leave alone
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if err := db.Create(&s).Error; err != nil {
+			return err
+		}
+		log.Printf("bootstrapped setting %s", s.Key)
+	}
+	return nil
+}
+
+// bootstrapNetworkSettings seeds network.probe_url (default empty string) on
+// first start. v0.2.23: empty means "auto-sample from card internal URLs";
+// an explicit value enables LAN/WAN detection against a user-known endpoint.
+// Idempotent — same pattern as bootstrapWidgetSettings.
+func bootstrapNetworkSettings(db *gorm.DB) error {
+	defaults := []model.Setting{
+		{Key: "network.probe_url", Value: ""},
+	}
+	for _, s := range defaults {
+		var existing model.Setting
+		err := db.Where("key = ?", s.Key).First(&existing).Error
+		if err == nil {
+			continue
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err

@@ -176,6 +176,19 @@ try {
 }
 
 async function mockCommon(page: Page, opts: { authenticated: boolean }) {
+  // v0.2.23 C.2: pin session network to 'lan' before the Home page loads.
+  // Without this, README screenshots would capture the WAN-disabled state of
+  // lan-only cards (Plex / Hass / Pi-hole) because headless fetches to
+  // *.lan addresses always fail. Key mirrors KEY_SESSION_OVERRIDE in
+  // src/stores/network.ts.
+  await page.addInitScript(() => {
+    try {
+      sessionStorage.setItem('moon-panel.session-override', 'lan')
+    } catch {
+      /* sessionStorage quota errors aren't relevant in playwright */
+    }
+  })
+
   // Public-mode auth state. The home page renders without auth; admin
   // routes need authenticated:true.
   await page.route('**/api/auth/me', (route) =>
@@ -202,6 +215,7 @@ async function mockCommon(page: Page, opts: { authenticated: boolean }) {
           cities: SAMPLE_CITIES,
           temp_unit: 'C',
           ui: SAMPLE_UI,
+          network: { probe_url: '' },
         },
         groups: SAMPLE_GROUPS,
         search_engines: SAMPLE_ENGINES,
