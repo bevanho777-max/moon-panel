@@ -348,3 +348,82 @@ in [docs/DEV.md](docs/DEV.md).
 ## License
 
 [MIT](LICENSE)
+
+---
+
+## Update History
+
+> Only user-visible feature updates are listed here.
+> Full changelog: [CHANGELOG.md](CHANGELOG.md).
+
+<details open>
+<summary><b>v0.2.23</b> — Auto network detection (2026-05-16)</summary>
+
+The Home page now auto-detects whether the client is on LAN or WAN
+and routes dual-URL cards to the appropriate target. LAN-only cards
+become disabled (grey + tooltip) on WAN, preventing dead-link taps
+on mobile data. New Admin field 「网络检测 URL」 for explicit probe
+URL. Manual overrides persist only for the current session;
+auto-detection resumes after refresh.
+
+Bonus: fixed a silent prod bug where the site title input field has
+been broken since v0.2.0.
+
+See [CHANGELOG v0.2.23](CHANGELOG.md#0223---2026-05-16) ·
+[Release](https://github.com/bevanho777-max/moon-panel/releases/tag/v0.2.23)
+</details>
+
+<details>
+<summary><b>v0.2.22</b> — Theme deep integration (2026-05-11)</summary>
+
+Naive UI Input / Select / Button now fully honor the active theme.
+Moon ↔ Risen switching applies consistently across native controls.
+
+See [CHANGELOG v0.2.22](CHANGELOG.md#0222---2026-05-11)
+</details>
+
+<details>
+<summary><b>v0.2.21</b> — Flatter group containers (2026-05-11)</summary>
+
+Flattened the Home page group container hierarchy for a tighter,
+less-nested card layout.
+
+See [CHANGELOG v0.2.21](CHANGELOG.md#0221---2026-05-11)
+</details>
+
+<details>
+<summary><b>v0.2.20</b> — Weather card relayout (2026-05-11)</summary>
+
+Refined weather card layout. Fixed a purple color bleed in Acrylic
+glass mode under certain wallpapers.
+
+See [CHANGELOG v0.2.20](CHANGELOG.md#0220---2026-05-11)
+</details>
+
+<details>
+<summary><b>v0.2.19</b> — New entries go to bottom (2026-05-10)</summary>
+
+Newly created cards, groups, and search engines now default to the
+end of their list (preserves existing user-arranged order).
+
+See [CHANGELOG v0.2.19](CHANGELOG.md#0219---2026-05-10)
+</details>
+
+<details>
+<summary><b>v0.2.18</b> — Admin table unification (2026-05-09)</summary>
+
+Admin tables (audit logs, security, etc.) now share a unified
+abstraction with consistent sort/filter/pagination behavior and
+improved mobile viewport handling.
+
+See [CHANGELOG v0.2.18](CHANGELOG.md#0218---2026-05-09)
+</details>
+
+<details>
+<summary><b>v0.2.17</b> — Audit log UX improvements (2026-05-09)</summary>
+
+Improved admin audit log experience — faster loading, clearer field
+presentation.
+
+See [CHANGELOG v0.2.17](CHANGELOG.md#0217---2026-05-09)
+</details>

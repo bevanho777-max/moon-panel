@@ -321,3 +321,73 @@ Moon Panel 从初始脚手架到 v0.1 release 全程使用
 ## 协议
 
 [MIT](LICENSE)
+
+---
+
+## 更新历史
+
+> 仅列出 用户可见 的功能更新。完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
+
+<details open>
+<summary><b>v0.2.23</b> — 自动内外网检测 (2026-05-16)</summary>
+
+主页根据当前网络环境自动检测 LAN/WAN, 双 URL 卡片自动走对应 URL。
+外网环境下仅有内网 URL 的卡片变为灰色禁点 + 鼠标悬停提示, 不再死链。
+Admin 新增「网络检测 URL」配置项。临时手动覆盖支持本会话有效,
+刷新后恢复自动检测。
+
+顺手修复了 v0.2.0 起一直 silently broken 的「站点名称」输入字段。
+
+详见 [CHANGELOG v0.2.23](CHANGELOG.md#0223---2026-05-16) ·
+[Release](https://github.com/bevanho777-max/moon-panel/releases/tag/v0.2.23)
+</details>
+
+<details>
+<summary><b>v0.2.22</b> — 主题深度适配 (2026-05-11)</summary>
+
+NaiveUI Input / 下拉选择 / 按钮 等控件接入主题色系统,
+Moon ↔ Risen 主题切换在所有原生控件上完整生效。
+
+详见 [CHANGELOG v0.2.22](CHANGELOG.md#0222---2026-05-11)
+</details>
+
+<details>
+<summary><b>v0.2.21</b> — 主页分组容器扁平化 (2026-05-11)</summary>
+
+主页用户端的分组容器视觉扁平化, 减少嵌套层级, 卡片排布更紧凑。
+
+详见 [CHANGELOG v0.2.21](CHANGELOG.md#0221---2026-05-11)
+</details>
+
+<details>
+<summary><b>v0.2.20</b> — 天气卡片重新布局 (2026-05-11)</summary>
+
+天气卡片布局优化, 修复 Acrylic 毛玻璃在某些壁纸下的紫色调溢色问题。
+
+详见 [CHANGELOG v0.2.20](CHANGELOG.md#0220---2026-05-11)
+</details>
+
+<details>
+<summary><b>v0.2.19</b> — 新建卡片放底部 (2026-05-10)</summary>
+
+新建卡片、分组、搜索引擎时, 默认放到列表底部 (符合直觉, 不打乱已有顺序)。
+
+详见 [CHANGELOG v0.2.19](CHANGELOG.md#0219---2026-05-10)
+</details>
+
+<details>
+<summary><b>v0.2.18</b> — 后台表格统一抽象 (2026-05-09)</summary>
+
+后台审计日志、安全管理等表格统一抽象, 排序、筛选、分页行为一致,
+Mobile 视口下表现优化。
+
+详见 [CHANGELOG v0.2.18](CHANGELOG.md#0218---2026-05-09)
+</details>
+
+<details>
+<summary><b>v0.2.17</b> — 审计日志体验改进 (2026-05-09)</summary>
+
+后台审计日志查看体验改进, 加载更快, 字段呈现更清晰。
+
+详见 [CHANGELOG v0.2.17](CHANGELOG.md#0217---2026-05-09)
+</details>
