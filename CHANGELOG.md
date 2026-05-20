@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.24] - YYYY-MM-DD
+
+### Added
+
+- frontend: NRadioGroup 智能自动跟随 URL 输入 (A1) — 用户输入 url_internal /
+  url_external 时, default radio 智能跟随; 用户手动选过后停止自动跟随; 编辑态
+  尊重历史选择不自动改
+- backend: `url_default` 字段接受空字符串 `''` (允许 "无 default" 状态, 配合
+  A1 nullable 语义, 用空字符串语义代替 SQLite nullable migration)
+- frontend: `Card` type union 扩 `'' | 'internal' | 'external'`
+- ci: GitHub Actions 升级 9 actions (checkout@v6, setup-node@v6 Node 22,
+  setup-go@v6, docker/* 全升, softprops@v3)
+- tests: cardUrl D3 WAN-strict 4 新 vitest case (currentMode / fallback)
+
+### Changed
+
+- frontend: emptyForm `url_default` 默认值 `'internal'` → `''` (新建态不预选)
+- frontend: mobile @media `.cards-cell__icons { display: none }` 隐双 URL
+  icons (free ~60px for title)
+
+### Fixed
+
+- frontend: mobile 320 viewport admin Cards title 可用宽 0px silent bug (B.4
+  Flag #34, 量化推断 + A patch 3 行修)
+- tests: cardUrl D3 WAN invariant 改变后 2 旧 vitest case regression (A.6
+  Flag #31, makeCard 加 `url_default: 'external'` 显式禁用 fallback)
+
+### Internal
+
+- 12 flag 全 surface, 0 擅自决定 (#27–#38)
+- 6 次工程纪律真实救场:
+  - #30 nullable 推翻 → X2 空字符串语义 (4 行 vs 30-50 行 + DB migration risk)
+  - #31 vitest 旧 case regression A.6 抓到 + makeCard 修
+  - #33 emptyForm protocol prefix 实质空判断式复用 (spec 救场)
+  - #34 mobile silent bug 量化推断 + A patch 3 行修
+  - Phase C Task 0 grep 整合 (#36 nspace 重叠 / #37 README 无英文 / #38
+    CLAUDE.md inline 互补) 全 scope 验证
+- 7 连 0-patch streak 候选 (v0.2.18 起算, 真实数字以 git log v0.2.17–23 verify)
+- 4 新 memory/feedback_*.md (`spec_placeholder` / `silent_render_failure` /
+  `browser_api_limits` / `unverified_prod_work`) + 1 existing 扩
+  (`naiveui_deep_override` 加 NSpace v2 baseline section)
+
 ## [0.2.23] - 2026-05-16
 
 ### Added
