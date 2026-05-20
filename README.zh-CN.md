@@ -329,7 +329,7 @@ Moon Panel 从初始脚手架到 v0.1 release 全程使用
 > 仅列出 用户可见 的功能更新。完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 <details open>
-<summary><b>v0.2.24</b> — A1 NRadioGroup 智能 nullable 自动跟随 + mobile Cards title silent bug 修复 (YYYY-MM-DD)</summary>
+<summary><b>v0.2.24</b> — A1 NRadioGroup 智能 nullable 自动跟随 + mobile Cards title silent bug 修复 (2026-05-20)</summary>
 
 Phase A + Phase B 累积 ~138 行 across 10 files, 12 flag 全 surface, 6 工程纪律真实救场, 第 7 次 0-patch streak 候选.
 
@@ -339,7 +339,7 @@ Phase A + Phase B 累积 ~138 行 across 10 files, 12 flag 全 surface, 6 工程
 - ci: GitHub Actions 升级 9 actions + Node 22
 - tests: cardUrl D3 WAN-strict 4 新 vitest case
 
-详见 [CHANGELOG](CHANGELOG.md#0224---YYYY-MM-DD)  
+详见 [CHANGELOG](CHANGELOG.md#0224---2026-05-20)  
 [Release](https://github.com/bevanho777-max/moon-panel/releases/tag/v0.2.24)
 
 </details>
