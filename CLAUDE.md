@@ -3,7 +3,7 @@
 本文件是 Claude Code (Anthropic 命令行编程助手) 在 Moon Panel 项目工作的
 onboarding 文件。每次 Claude Code 启动会自动读这个文件了解项目背景 + 工程纪律。
 
-完整累积教训详细版见 [`memory/MEMORY.md`](memory/MEMORY.md) (29 entries)。
+完整累积教训详细版见 [`memory/MEMORY.md`](memory/MEMORY.md) (31 entries)。
 本文件是高密度入口 + 高频引用 + v0.2.23 累积的最新边界。
 
 ---
@@ -57,7 +57,7 @@ Bevan 核心原则: 不留尾巴。选完整方案而非增量, 不 defer 已知
 3. 给候选方案 + 推荐 + 理由
 4. 等 Bevan 拍板再继续
 
-比错了再改便宜 1 个数量级。累积 v0.2.x 已 flag 44+ 项 spec 错误。
+比错了再改便宜 1 个数量级。累积 v0.2.x 已 flag 62+ 项 spec 错误。
 
 ### 4. 单一职责 release
 
@@ -177,7 +177,7 @@ Bevan 核心原则: 不留尾巴。选完整方案而非增量, 不 defer 已知
 
 ## 数据 (截至 v0.2.23 ship, 2026-05-16)
 
-- 累积 release: v0.1.0 → v0.2.23 (含 23+ minor releases)
+- 累积 release: v0.1.0 → v0.2.24 (含 24+ minor releases)
 - 0-patch streak: 8 连 (v0.2.17 - v0.2.24)
 - 主动 flag 累计: 44+ 项 (跨 release)
 - 视觉门 fail safe 抓 bug: 多次
@@ -190,7 +190,7 @@ Bevan 核心原则: 不留尾巴。选完整方案而非增量, 不 defer 已知
 - **项目根**: `c:\moon-panel-dev\`
 - **Backend**: `backend/` (Go modules)
 - **Frontend**: `frontend/` (Vue 3)
-- **累积教训**: `memory/` (29 个 .md, 含 MEMORY.md index)
+- **累积教训**: `memory/` (32 个 .md, 含 MEMORY.md index)
 - **Build sync**: `c:\moon-build\` (robocopy + type-check + build)
 - **CI workflows**: `.github/workflows/*.yml`
 
