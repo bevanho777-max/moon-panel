@@ -62,7 +62,7 @@ Bevan 核心原则: 不留尾巴。选完整方案而非增量, 不 defer 已知
 ### 4. 单一职责 release
 
 每个 release 一个清晰主题。scope creep 是项目延期主因。
-累积 7 连 0-patch streak (v0.2.17-v0.2.23) 全部单一职责。
+累积 8 连 0-patch streak (v0.2.17-v0.2.24) 全部单一职责。
 
 ---
 
@@ -178,7 +178,7 @@ Bevan 核心原则: 不留尾巴。选完整方案而非增量, 不 defer 已知
 ## 数据 (截至 v0.2.23 ship, 2026-05-16)
 
 - 累积 release: v0.1.0 → v0.2.23 (含 23+ minor releases)
-- 0-patch streak: 7 连 (v0.2.17 - v0.2.23)
+- 0-patch streak: 8 连 (v0.2.17 - v0.2.24)
 - 主动 flag 累计: 44+ 项 (跨 release)
 - 视觉门 fail safe 抓 bug: 多次
 - silent prod bug 顺手修: 1 项 (v0.2.0 起 22 release 都没人发现)

@@ -33,11 +33,13 @@
 - [Silent render failure](feedback_silent_render_failure.md) — 视觉量化检测 + mobile project 必跑 (v0.2.24 #34 + v0.2.0 NInput 同类)
 - [Browser API CORS/redirect limits](feedback_browser_api_limits.md) — fetch no-cors+redirect 边界 + `<img>` 探测绕过 (v0.2.23 patch-2/3)
 - [Unverified prod work](feedback_unverified_prod_work.md) — 不假设, 实际 grep / 跑 / 看 (v0.2.24 #28 #29 #32 #35)
+- [Spec 决策 default 保守倾向教训](feedback_decision_default_bias.md) — Task 1 候选不 default 推保守, 让 Bevan 从 daily UX 视角拍板; v0.2.15 P0 a B.1a→B.1b 修正实例
+- [Chore commit 路径策略](feedback_chore_commit_path_strategy.md) — chore 不 amend, 单独 commit 紧跟 feat; tag 指向 HEAD 含 chore; paths-ignore 决定是否触发 CI (v0.2.13/14/15 累积)
 
 ## Backlog
 
 待累积 2+ case 后开 dedicated memory file:
 
 - #35 spec convention drift (CSS single-line vs multi-line, `<strong>` vs `<b>`, "### Internal" vs "### Internal (engineering discipline)") — v0.2.24 累 3 case (CSS + README summary + CHANGELOG section title), 接近开新 memory 阈值
-- [Spec 决策 default 保守倾向教训](feedback_decision_default_bias.md) — Task 1 候选不 default 推保守, 让 Bevan 从 daily UX 视角拍板; v0.2.15 P0 a B.1a→B.1b 修正实例
-- [Chore commit 路径策略](feedback_chore_commit_path_strategy.md) — chore 不 amend, 单独 commit 紧跟 feat; tag 指向 HEAD 含 chore; paths-ignore 决定是否触发 CI (v0.2.13/14/15 累积)
+- #45 MSYS bash gh api 前导 / 被改写为 filesystem path — v0.2.24 1 次重犯 (CLAUDE.md line 148+173 已警告, 执行失误非 spec 假设错误; 累积 2+ 开 feedback_msys_gh_api_slash.md)
+- v0.2.24 文档 streak 计数笔误 — CHANGELOG/README 写 "7 连", 实际 8 连 (v0.2.17-v0.2.24, 已 tag 不改; 下个 release backfill 时修正)
