@@ -50,17 +50,20 @@ describe('effectiveURL', () => {
     expect(r).toEqual({ url: 'https://example.com/', side: 'external', fallback: false })
   })
 
-  it("★ effectiveMode='wan' + only url_internal set → null (intentional, NO fallback)", () => {
+  it("★ effectiveMode='wan' + only url_internal set + url_default='external' → null (intentional, NO fallback)", () => {
+    // v0.2.24 D3: explicit url_default='external' disables the D3 fallback,
+    // restoring the v0.2.23 strict-WAN behavior tested here. With makeCard's
+    // default url_default='internal', D3 would now fall back to internal.
     const r = effectiveURL(
-      makeCard({ url_external: '' }),
+      makeCard({ url_external: '', url_default: 'external' }),
       { effectiveMode: 'wan' },
     )
     expect(r).toBeNull()
   })
 
-  it("★ effectiveMode='wan' + url_external whitespace + url_internal set → null", () => {
+  it("★ effectiveMode='wan' + url_external whitespace + url_internal set + url_default='external' → null", () => {
     const r = effectiveURL(
-      makeCard({ url_external: '   ' }),
+      makeCard({ url_external: '   ', url_default: 'external' }),
       { effectiveMode: 'wan' },
     )
     expect(r).toBeNull()
@@ -136,5 +139,41 @@ describe('effectiveURL', () => {
       { effectiveMode: 'lan' },
     )
     expect(r).toEqual({ url: 'https://example.com/', side: 'external', fallback: true })
+  })
+
+  describe('D3 wan-strict with url_default fallback (v0.2.24)', () => {
+    it("wan: url_external empty + url_default='internal' → fall back to internal", () => {
+      const r = effectiveURL(
+        makeCard({ url_external: '', url_default: 'internal' }),
+        { effectiveMode: 'wan' },
+      )
+      expect(r).toEqual({ url: 'http://192.168.1.1/', side: 'internal', fallback: true })
+    })
+
+    it("wan: url_external empty + url_default='external' → null (no fallback)", () => {
+      const r = effectiveURL(
+        makeCard({ url_external: '', url_default: 'external' }),
+        { effectiveMode: 'wan' },
+      )
+      expect(r).toBeNull()
+    })
+
+    it("wan: url_external empty + url_default='' (X2 no preference) → null", () => {
+      // X2 (v0.2.24): backend writes url_default='' for new cards until the
+      // user opts in. The Card type widened to include '' in Phase B.
+      const r = effectiveURL(
+        makeCard({ url_external: '', url_default: '' }),
+        { effectiveMode: 'wan' },
+      )
+      expect(r).toBeNull()
+    })
+
+    it("wan: url_external set + url_default='internal' → external (D3 only on empty)", () => {
+      const r = effectiveURL(
+        makeCard({ url_default: 'internal' }),
+        { effectiveMode: 'wan' },
+      )
+      expect(r).toEqual({ url: 'https://example.com/', side: 'external', fallback: false })
+    })
   })
 })

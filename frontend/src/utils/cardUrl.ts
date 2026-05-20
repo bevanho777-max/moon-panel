@@ -23,19 +23,19 @@ export interface EffectiveURL {
  *   2. effectiveMode picks the side:
  *        'internal' / 'lan' → primary=internal, fallback=external
  *        'external'         → primary=external, fallback=internal
- *        'wan'              → primary=external, NO fallback (return null)
+ *        'wan'              → primary=external; fall back to internal only
+ *                             when url_default='internal' (D3, v0.2.24)
  *   3. For modes other than 'wan', if the chosen side is empty, fall back to
  *      the other side and mark `fallback: true`.
  *   4. If no URL resolvable, return null — UI disables the link.
  *
  * The asymmetric 'wan' behavior is intentional: when auto-detection says the
  * user is on an external network, falling back to an internal URL would
- * produce an unreachable address. Better to disable the card than to send
- * the user to a guaranteed failure.
- *
- * url_default is intentionally unused in v0.2.23 — direction now comes from
- * auto-detection (effectiveMode) instead of the per-card hint. The field
- * persists for backward compat / future use.
+ * produce an unreachable address — UNLESS the card was explicitly marked as
+ * 'default=internal', signaling the user knows this card serves an internal
+ * service and wants the internal URL even on WAN. url_default 'external' or
+ * '' (no preference, X2 empty-string semantics in v0.2.24) stays strict and
+ * returns null.
  */
 export function effectiveURL(card: Card, state: CardURLState): EffectiveURL | null {
   if (state.override) {
@@ -74,6 +74,13 @@ function resolveWANStrict(card: Card): EffectiveURL | null {
   const url = card.url_external
   if (url && url.trim() !== '') {
     return { url, side: 'external', fallback: false }
+  }
+  // v0.2.24 D3: WAN external empty + card marked 'default=internal' → fall
+  // back to internal. Treats url_default='internal' as user opt-in to the
+  // "I know this is internal, route me there even on WAN" path. Other
+  // url_default values ('external', '' = no preference) keep strict null.
+  if (card.url_default === 'internal' && card.url_internal && card.url_internal.trim() !== '') {
+    return { url: card.url_internal, side: 'internal', fallback: true }
   }
   return null
 }

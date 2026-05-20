@@ -201,9 +201,6 @@ func (h *CardHandler) create(c *gin.Context) {
 		URLExternal: req.URLExternal,
 		URLDefault:  req.URLDefault,
 	}
-	if card.URLDefault == "" {
-		card.URLDefault = "internal"
-	}
 	if req.OpenInNewTab != nil {
 		card.OpenInNewTab = *req.OpenInNewTab
 	} else {

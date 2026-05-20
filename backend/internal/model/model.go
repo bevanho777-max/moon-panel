@@ -38,7 +38,7 @@ type Card struct {
 	IconType      string    `gorm:"size:16;default:url" json:"icon_type"`
 	URLInternal   string    `gorm:"size:1024" json:"url_internal"`
 	URLExternal   string    `gorm:"size:1024" json:"url_external"`
-	URLDefault    string    `gorm:"size:16;default:internal" json:"url_default"` // internal | external
+	URLDefault    string    `gorm:"size:16" json:"url_default"` // "" | internal | external
 	OpenInNewTab  bool      `gorm:"default:true" json:"open_in_new_tab"`
 	Sort          int       `gorm:"index;default:0" json:"sort"`
 	CreatedAt     time.Time `json:"created_at"`

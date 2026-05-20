@@ -29,7 +29,7 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # backend/web/embed.go uses //go:embed all:dist to bundle the SPA
       # into the Go binary. On a clean checkout the dist/ directory does
@@ -38,11 +38,12 @@ jobs:
       # single-context build) rather than passing an artifact between
       # jobs — keeps the backend job self-contained.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+          package-manager-cache: false
 
       - name: Install frontend dependencies
         working-directory: frontend
@@ -55,7 +56,7 @@ jobs:
         run: npm run build
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.23'
           # actions/setup-go restores the module cache automatically when
@@ -82,17 +83,18 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           # Cache npm based on lockfile hash. First run: ~40s install. Cached:
           # ~5s restore + skip download. Note: `npm ci` requires a lockfile,
           # which we have committed (package-lock.json).
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+          package-manager-cache: false
 
       - name: Install dependencies (clean)
         run: npm ci

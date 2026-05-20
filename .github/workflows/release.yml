@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source at the tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # We need the full history to extract the matching CHANGELOG section
           # — shallow clones (default depth=1) work too because CHANGELOG.md
@@ -39,16 +39,16 @@ jobs:
       # backend stage with --platform=$BUILDPLATFORM), so QEMU is only used
       # for the tiny final-image steps. Total arm64 build ≈ same as amd64.
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Auth to GHCR using GITHUB_TOKEN. github.actor is the user that pushed
       # the tag (you, in solo-maintainer mode). Token is short-lived per
       # workflow run.
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -62,7 +62,7 @@ jobs:
       # would NOT clobber latest — important once we start cutting RCs.
       - name: Compute image tags + labels
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -88,7 +88,7 @@ jobs:
       # tag pushes hit the cache and finish in ~3 min if the Dockerfile didn't
       # change.
       - name: Build and push multi-arch image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -152,7 +152,7 @@ jobs:
       # immediately; flip to true if you want to review the rendered notes
       # in GitHub UI before announcing.
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}

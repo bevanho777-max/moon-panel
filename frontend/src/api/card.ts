@@ -9,7 +9,7 @@ export interface Card {
   icon_type: string // deprecated, ignore on frontend
   url_internal: string
   url_external: string
-  url_default: 'internal' | 'external'
+  url_default: '' | 'internal' | 'external'
   open_in_new_tab: boolean
   sort: number
   created_at: string
@@ -23,7 +23,7 @@ export interface CardWritePayload {
   icon?: string
   url_internal?: string
   url_external?: string
-  url_default?: 'internal' | 'external'
+  url_default?: '' | 'internal' | 'external'
   open_in_new_tab?: boolean
   sort?: number
 }

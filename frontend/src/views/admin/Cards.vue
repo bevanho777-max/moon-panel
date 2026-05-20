@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, h, onMounted, ref, type VNode } from 'vue'
+import { computed, h, onMounted, ref, watch, type VNode } from 'vue'
 import {
   NButton,
   NCard,
@@ -72,6 +72,10 @@ const editorMode = ref<'create' | 'edit'>('create')
 const editingId = ref<number | null>(null)
 const editorForm = ref<Required<CardWritePayload>>(emptyForm())
 const submitting = ref(false)
+// v0.2.24 B.3: tracks whether the user manually picked a radio this edit
+// session. False = watch auto-follows URL input. True = leave alone (respects
+// what the user — or, in edit mode, the persisted record — already chose).
+const userPickedUrlDefault = ref(false)
 
 const editorTitle = computed(() => (editorMode.value === 'create' ? '新建卡片' : '编辑卡片'))
 
@@ -101,6 +105,47 @@ const totalMatchedCount = computed(() =>
 
 const ICON_LIKE_PREFIX = /^(lucide:|upload:|https?:\/\/)/i
 
+// v0.2.24 B.3: A1 自动跟随. "实质空" 判断跟 submit handler (line ~293) 同一
+// 逻辑, 避免新建表单的 protocol prefix 'http://' / 'https://' 被当作有内容
+// 误触 (Flag #33).
+function isUrlSubstantiallyEmpty(v: string): boolean {
+  const trimmed = (v || '').trim()
+  return trimmed === '' || trimmed === 'http://' || trimmed === 'https://'
+}
+
+watch(() => editorForm.value.url_internal, (newVal) => {
+  if (userPickedUrlDefault.value) return
+  const intEmpty = isUrlSubstantiallyEmpty(newVal)
+  const extEmpty = isUrlSubstantiallyEmpty(editorForm.value.url_external)
+  if (intEmpty && extEmpty) {
+    editorForm.value.url_default = ''
+  } else if (!intEmpty && extEmpty) {
+    editorForm.value.url_default = 'internal'
+  } else if (!intEmpty && !extEmpty) {
+    // 同时有值 → 跟最后输入 (Bevan X1, watch 顺序决定)
+    editorForm.value.url_default = 'internal'
+  }
+})
+
+watch(() => editorForm.value.url_external, (newVal) => {
+  if (userPickedUrlDefault.value) return
+  const intEmpty = isUrlSubstantiallyEmpty(editorForm.value.url_internal)
+  const extEmpty = isUrlSubstantiallyEmpty(newVal)
+  if (intEmpty && extEmpty) {
+    editorForm.value.url_default = ''
+  } else if (intEmpty && !extEmpty) {
+    editorForm.value.url_default = 'external'
+  } else if (!intEmpty && !extEmpty) {
+    // 同时有值 → 跟最后输入 (Bevan X1)
+    editorForm.value.url_default = 'external'
+  }
+})
+
+function onUrlDefaultPick() {
+  // 用户点 radio → 后续 watch 跳过自动跟随 (Bevan X1: 尊重历史)
+  userPickedUrlDefault.value = true
+}
+
 function emptyForm(): Required<CardWritePayload> {
   return {
     group_id: 0,
@@ -112,7 +157,7 @@ function emptyForm(): Required<CardWritePayload> {
     // skips this entirely (existing url_internal/url_external loaded as-is).
     url_internal: 'http://',
     url_external: 'https://',
-    url_default: 'internal',
+    url_default: '',
     open_in_new_tab: true,
     sort: 0,
   }
@@ -191,6 +236,8 @@ function openCreate() {
   editorMode.value = 'create'
   editingId.value = null
   editorForm.value = emptyForm()
+  // v0.2.24 B.3: 新建态允许 watch 自动跟随 URL 输入
+  userPickedUrlDefault.value = false
   // v0.2.15 P0 b: 优先 localStorage (有效), fallback 第一个分组.
   editorForm.value.group_id =
     readLastGroupId() ?? groupsStore.items[0]?.id ?? 0
@@ -221,6 +268,8 @@ async function openEdit(c: Card) {
       open_in_new_tab: fresh.open_in_new_tab,
       sort: fresh.sort,
     }
+    // v0.2.24 B.3: 编辑态尊重已存 url_default, 不自动跟随 (Bevan X1)
+    userPickedUrlDefault.value = true
     editorOriginal.value = {
       title: fresh.title,
       description: fresh.description,
@@ -601,7 +650,11 @@ onMounted(refresh)
         />
       </NFormItem>
       <NFormItem label="默认指向">
-        <NRadioGroup v-model:value="editorForm.url_default" :disabled="submitting">
+        <NRadioGroup
+          v-model:value="editorForm.url_default"
+          :disabled="submitting"
+          @update:value="onUrlDefaultPick"
+        >
           <NRadio value="internal">内网</NRadio>
           <NRadio value="external">外网</NRadio>
         </NRadioGroup>
@@ -662,6 +715,9 @@ onMounted(refresh)
     display: none;
   }
   .cards-cell__sort {
+    display: none;
+  }
+  .cards-cell__icons {
     display: none;
   }
   .cards-cell__title {

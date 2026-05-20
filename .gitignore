@@ -6,6 +6,7 @@
 
 # Local dev data + air hot-reload working dir (see docs/DEV.md)
 /backend/data-dev/
+/backend/data/
 /backend/tmp/
 /backend/build-errors.log
 
