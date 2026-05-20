@@ -111,3 +111,53 @@ NCard header 是顶层布局容器, 改它的 flex-direction 不影响内部 box
 - 本文 = "改什么 + 怎么改"
 - mobile_layout_audit = "诊断 wrap 应该量化总宽"
 - 一起用: 改之前先量化, 改 box 属性前先想 outer width 影响
+
+## NSpace v2 .n-space-item baseline alignment
+
+### 背景
+
+v0.2.10 Home.vue mobile header 反馈: SearchBox (NInput 矩形) + NetworkSwitcher
+(NButton circle) + Settings (NButton circle) 横排, mobile 下垂直对齐错位.
+
+Root cause: NSpace v2 默认子项 wrapper `.n-space-item` 用 `inline-block`, 元素
+按 baseline 对齐. 圆 button 跟矩形 NInput baseline 不同, 视觉错位 (圆 button
+看起来 "偏低"). v0.2.7 AuditLog 已碰到同模式, 同修法.
+
+### 错误模式
+
+```vue
+<!-- ❌ 错: 期待 NSpace 默认就居中 -->
+<NSpace>
+  <HeaderSearchBox />
+  <NetworkSwitcher />
+  <NButton circle>...</NButton>
+</NSpace>
+```
+
+视觉表现: 圆 button 跟 NInput baseline 不齐, 圆 button "偏低".
+
+### 正确做法
+
+```css
+/* ✓ 对: 强制 .n-space-item 用 inline-flex + center */
+.home-header :deep(.n-space-item) {
+  display: inline-flex;
+  align-items: center;
+}
+```
+
+注意:
+- selector 是 `.n-space-item` (无下划线, NaiveUI v2)
+- 用 `:deep()` 跨 NSpace 内部 BEM
+- 仅 mobile @media 内加 (避免 PC 回归)
+
+### 适用范围
+
+- 任何 NSpace 容器内混排 矩形元素 + 圆元素 + 不同 baseline 元素
+- 任何 mobile / 紧凑布局发现元素 "略偏低 / 略偏高" 的视觉问题
+- 任何 NSpace 子项视觉对齐失败 (尤其 NInput + NButton circle 混排)
+
+### 关联 reference
+
+- 本文上方 "## 跟其他 memory 的关系" section (mobile_layout_audit cross-ref)
+- 本文上方 "## 安全做法" 第 3 点 (改 layout 容器, v0.2.10 Task 2.10 提到 `.n-space-item :deep() inline-flex`)

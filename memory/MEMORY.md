@@ -29,5 +29,15 @@
 - [E2E 测试同步教训 V2](feedback_e2e_test_sync_v2.md) — V1 升级, Task 1 grep 必加第三方 internal class (.n-data-table-tr) + UI text + data-* + role/aria 5 类 selector (v0.2.16 Patch B)
 - [E2E 测试避免第三方 internal class](feedback_e2e_test_avoid_third_party_internal.md) — 优先项目自有 BEM, 不依赖 NaiveUI internal; 写新测试 + 改测试 + 维护时机纪律 (v0.2.16 Patch B)
 - [累积教训 删组件→CI fail→chore 修 模式](accumulated_lesson_e2e_chore_pattern.md) — v0.2.15 + v0.2.16 连续 2 release 同模式, V1 不彻底 → V2 修, v0.2.17+ 应一次到位
+- [Spec placeholder pitfall](feedback_spec_placeholder.md) — spec 边界值用真实预期, 不靠记忆推测 (v0.2.24 #33 救场)
+- [Silent render failure](feedback_silent_render_failure.md) — 视觉量化检测 + mobile project 必跑 (v0.2.24 #34 + v0.2.0 NInput 同类)
+- [Browser API CORS/redirect limits](feedback_browser_api_limits.md) — fetch no-cors+redirect 边界 + `<img>` 探测绕过 (v0.2.23 patch-2/3)
+- [Unverified prod work](feedback_unverified_prod_work.md) — 不假设, 实际 grep / 跑 / 看 (v0.2.24 #28 #29 #32 #35)
+
+## Backlog
+
+待累积 2+ case 后开 dedicated memory file:
+
+- #35 spec convention drift (CSS single-line vs multi-line, `<strong>` vs `<b>`, "### Internal" vs "### Internal (engineering discipline)") — v0.2.24 累 3 case (CSS + README summary + CHANGELOG section title), 接近开新 memory 阈值
 - [Spec 决策 default 保守倾向教训](feedback_decision_default_bias.md) — Task 1 候选不 default 推保守, 让 Bevan 从 daily UX 视角拍板; v0.2.15 P0 a B.1a→B.1b 修正实例
 - [Chore commit 路径策略](feedback_chore_commit_path_strategy.md) — chore 不 amend, 单独 commit 紧跟 feat; tag 指向 HEAD 含 chore; paths-ignore 决定是否触发 CI (v0.2.13/14/15 累积)

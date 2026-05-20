@@ -113,6 +113,8 @@ Bevan 核心原则: 不留尾巴。选完整方案而非增量, 不 defer 已知
 - [`@memory/feedback_ssrf_protection.md`](memory/feedback_ssrf_protection.md) — 用户 URL → 后端 fetch 必须 DNS 解析 + IP 段拒绝 + 复用 IP 防 rebinding
 - [`@memory/feedback_external_resource_fallback.md`](memory/feedback_external_resource_fallback.md) — 用户 NAS 翻墙但其他客户端不假设; 图片/API/CDN 全 fallback
 - [`@memory/accumulated_lesson_e2e_chore_pattern.md`](memory/accumulated_lesson_e2e_chore_pattern.md) — v0.2.15+v0.2.16 连续 2 release 同模式 e2e fail, 一次到位
+- [`@memory/feedback_unverified_prod_work.md`](memory/feedback_unverified_prod_work.md) — 不假设, 实际 grep / 跑 / 看 (spec 必须基于真实 codebase, v0.2.24 4 spec 假设错误 Task 0 全 surface)
+- [`@memory/feedback_spec_placeholder.md`](memory/feedback_spec_placeholder.md) — spec 边界值用真实预期, 不要 placeholder (v0.2.24 #33 protocol prefix 救场)
 
 ---
 
