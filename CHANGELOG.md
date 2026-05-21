@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.25] - 2026-05-21
+
+### Added
+
+- frontend: Home + Login 动态背景 (CSS-only, 双主题定制) — 两层动画:
+  渐变流动 (aurora translate) + 光晕呼吸 (glow scale+opacity), 周期错开
+- frontend: Moon 蓝紫冷调 (aurora 22s / glow 10s) / Risen 暖金沉稳
+  (26s / 12s) 双主题 token (`--mp-bg-*`)
+- a11y: `prefers-reduced-motion` 静态 fallback (全工程首引, WCAG 2.3.3)
+
+### Changed
+
+- docs: CLAUDE.md stale 数字清理 (#46a 根因, b6dfe8c)
+
+### Internal
+
+- 动态背景层 `isolation: isolate` 隔离 stacking context — Login card
+  acrylic (mp-acrylic-strong) 不采样动画层, 避开 INP 退化
+  (v0.2.x acrylic 教训)
+- admin 路由 `v-if` 条件渲染禁动效 (非 CSS hide, 0 paint, Cards drag
+  INP 优先)
+- 动态层 `aria-hidden` — 不进 a11y selector tree, e2e selector 全保留
+- 视觉门方式: 本地 dev 缺 backend + 缺壁纸, 真机 (NAS) 当视觉门
+- Flag #49: CLAUDE.md 被 PS Invoke-WebRequest 响应污染 (+89 行垃圾,
+  UTF-16 编码), revert 止血, 未进 history
+- 开关推迟 v0.2.26 (单一职责: 本 release 仅动效, 不含设置系统)
+
 ## [0.2.24] - 2026-05-20
 
 ### Added

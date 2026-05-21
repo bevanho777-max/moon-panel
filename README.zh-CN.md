@@ -329,6 +329,19 @@ Moon Panel 从初始脚手架到 v0.1 release 全程使用
 > 仅列出 用户可见 的功能更新。完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 <details open>
+<summary><b>v0.2.25</b> — Home + Login 动态背景 (CSS-only 双主题) (2026-05-21)</summary>
+
+Home + Login 页加入 CSS-only 动态背景, 两层缓慢动画 (渐变流动 + 光晕呼吸),
+Moon 蓝紫冷调 / Risen 暖金沉稳各自定制气质. 叠加在壁纸之上, isolation 隔离
+保证 acrylic 不退化 INP. admin 页禁动效 (Cards drag 优先). 首引
+prefers-reduced-motion a11y 降级. 动态背景开关推迟 v0.2.26.
+
+详见 [CHANGELOG](CHANGELOG.md#0225---2026-05-21)  
+[Release](https://github.com/bevanho777-max/moon-panel/releases/tag/v0.2.25)
+
+</details>
+
+<details>
 <summary><b>v0.2.24</b> — A1 NRadioGroup 智能 nullable 自动跟随 + mobile Cards title silent bug 修复 (2026-05-20)</summary>
 
 Phase A + Phase B 累积 ~138 行 across 10 files, 12 flag 全 surface, 6 工程纪律真实救场, 第 7 次 0-patch streak 候选.
