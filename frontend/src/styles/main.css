@@ -81,6 +81,18 @@
      from being clipped/overlapped. Consumed by admin Layout.vue's @media
      (max-width: 768px) block. */
   --mp-content-bottom-pad-mobile: 24px;
+
+  /* v0.2.25: ambient animated background. Moon = cool blue/violet aurora.
+     Alphas tuned low (0.07-0.12) because the layer composites on top of
+     the wallpaper — push higher and risen's gold wallpaper looks muddy.
+     Durations are intentionally non-divisible (22s aurora drift vs 10s
+     glow breathe) so the two layers stay out of phase. */
+  --mp-bg-aurora-1: rgba(91, 141, 239, 0.10);
+  --mp-bg-aurora-2: rgba(140, 100, 220, 0.07);
+  --mp-bg-glow: rgba(110, 90, 210, 0.12);
+  --mp-bg-aurora-duration: 22s;
+  --mp-bg-glow-duration: 10s;
+  --mp-bg-glow-radius: 60vw;
 }
 
 :root[data-theme="risen"] {
@@ -140,6 +152,18 @@
      would be clipped/overlapped at 24px. 70px clears the bar plus a
      12-14px breathing margin. */
   --mp-content-bottom-pad-mobile: 70px;
+
+  /* v0.2.25: ambient animated background. Risen = warm gold aurora,
+     slower cadence (26s/12s vs moon's 22s/10s) — the serif theme reads
+     calmer, fast drift undercuts that. Slightly larger glow radius
+     (70vw) softens the focal hotspot to match risen's wider color
+     palette. */
+  --mp-bg-aurora-1: rgba(212, 175, 122, 0.12);
+  --mp-bg-aurora-2: rgba(193, 154, 94, 0.08);
+  --mp-bg-glow: rgba(220, 180, 110, 0.11);
+  --mp-bg-aurora-duration: 26s;
+  --mp-bg-glow-duration: 12s;
+  --mp-bg-glow-radius: 70vw;
 }
 
 * {
@@ -261,5 +285,83 @@ a {
     background-color: rgba(20, 20, 24, 0.95) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v0.2.25: ambient animated background.
+
+   Two stacked decorative layers on the home + login pages:
+   - aurora: three radial-gradient color blobs translating slowly across
+     the viewport (22s moon / 26s risen, ease-in-out, infinite)
+   - glow: a single soft radial pulse scaling+fading at the upper-mid
+     focal point (10s moon / 12s risen)
+
+   `isolation: isolate` on the wrapper is load-bearing: it confines this
+   subtree's compositing so the heavier `backdrop-filter` surfaces above
+   (Login card, modals) don't have their filter re-evaluated on every
+   animation tick. Tokens (alpha / radius / duration) live in the
+   :root[data-theme] blocks at the top of this file. */
+.mp-dynamic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  isolation: isolate;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mp-dynamic-bg__aurora {
+  position: absolute;
+  /* Oversize the box so the translate-keyframe never reveals the edge. */
+  inset: -30%;
+  will-change: transform;
+  background:
+    radial-gradient(40% 50% at 30% 35%, var(--mp-bg-aurora-1) 0%, transparent 60%),
+    radial-gradient(45% 55% at 70% 65%, var(--mp-bg-aurora-2) 0%, transparent 60%),
+    radial-gradient(35% 40% at 50% 80%, var(--mp-bg-aurora-1) 0%, transparent 55%);
+  animation: mpAuroraFlow var(--mp-bg-aurora-duration, 22s) ease-in-out infinite;
+}
+
+.mp-dynamic-bg__glow {
+  position: absolute;
+  width: var(--mp-bg-glow-radius, 60vw);
+  height: var(--mp-bg-glow-radius, 60vw);
+  left: 50%;
+  /* 42% sits above the geometric center so the focal hotspot lands above
+     the Login card (which is vertically centered) rather than behind it. */
+  top: 42%;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--mp-bg-glow) 0%, transparent 70%);
+  animation: mpGlowBreathe var(--mp-bg-glow-duration, 10s) ease-in-out infinite;
+}
+
+@keyframes mpAuroraFlow {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(3%, -2%); }
+  50%  { transform: translate(-2%, 3%); }
+  75%  { transform: translate(2%, 2%); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes mpGlowBreathe {
+  0%   { transform: translate(-50%, -50%) scale(0.85); opacity: 0.5; }
+  50%  { transform: translate(-50%, -50%) scale(1.15); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.5; }
+}
+
+/* a11y baseline (Flag #47, first in-project use). Animation off — gradient
+   stays painted, glow stays visible at a fixed mid-state so the visual
+   theme survives without motion. */
+@media (prefers-reduced-motion: reduce) {
+  .mp-dynamic-bg__aurora,
+  .mp-dynamic-bg__glow {
+    animation: none !important;
+  }
+  .mp-dynamic-bg__glow {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.65;
   }
 }

@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { NConfigProvider, NMessageProvider, darkTheme } from 'naive-ui'
 import { computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { useUIStore } from './stores/ui'
 
 const auth = useAuthStore()
 const ui = useUIStore()
+const route = useRoute()
+
+// v0.2.25: gate the dynamic background on non-admin routes. Admin's
+// drag-heavy UX (Cards reorder) is the existing INP hotspot — keeping
+// the animated layer off /admin/* means the existing acrylic-on-modals
+// path stays the only backdrop-filter cost there.
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 
 // Phase 1: dark by default. Phase 2.5c adds primary-color override on top —
 // the rest of darkTheme stays untouched, so disabling the override (theme
@@ -114,6 +122,17 @@ onMounted(() => {
       :style="{ backgroundImage: `url(${ui.wallpaperUrl})` }"
       aria-hidden="true"
     />
+    <!-- v0.2.25: ambient animated background. Sits between the wallpaper
+         layer (z-index:-1) and content (default z-index). `isolation:
+         isolate` is the core constraint — it confines the aurora/glow
+         compositing to this subtree so the heavier acrylic surfaces on
+         Login/modals don't have their backdrop-filter recomputed every
+         animation frame. Hidden on /admin/* to keep Cards drag INP
+         clean. -->
+    <div v-if="!isAdminRoute" class="mp-dynamic-bg" aria-hidden="true">
+      <div class="mp-dynamic-bg__aurora"></div>
+      <div class="mp-dynamic-bg__glow"></div>
+    </div>
     <NMessageProvider>
       <router-view />
     </NMessageProvider>
