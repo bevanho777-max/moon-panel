@@ -43,3 +43,4 @@
 - #35 spec convention drift (CSS single-line vs multi-line, `<strong>` vs `<b>`, "### Internal" vs "### Internal (engineering discipline)") — v0.2.24 累 3 case (CSS + README summary + CHANGELOG section title), 接近开新 memory 阈值
 - #45 MSYS bash gh api 前导 / 被改写为 filesystem path — v0.2.24 1 次重犯 (CLAUDE.md line 148+173 已警告, 执行失误非 spec 假设错误; 累积 2+ 开 feedback_msys_gh_api_slash.md)
 - v0.2.24 文档 streak 计数笔误 — CHANGELOG/README 写 "7 连", 实际 8 连 (v0.2.17-v0.2.24, 已 tag 不改; 下个 release backfill 时修正)
+- CLAUDE.md 易变计数硬编码 = stale 根因 (#46a 同类) — entries/flag/.md count 每 release 手动 +N 必漏 (625cebc 就漏 3 处); 下次评估改成免维护表述或删除
