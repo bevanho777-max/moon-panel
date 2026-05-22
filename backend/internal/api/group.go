@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/moon-panel/moon-panel/internal/auth"
+	"github.com/moon-panel/moon-panel/internal/middleware"
 	"github.com/moon-panel/moon-panel/internal/model"
 )
 
@@ -112,9 +114,13 @@ func (h *GroupHandler) create(c *gin.Context) {
 		return
 	}
 
+	// v0.2.28 R1: stamp owner_id from the authed session. See the equivalent
+	// note in card.go's create handler for the R2/R3 rationale.
+	claims := c.MustGet(middleware.ContextClaimsKey).(*auth.Claims)
 	g := model.Group{
-		Name: name,
-		Icon: req.Icon,
+		OwnerID: claims.UserID,
+		Name:    name,
+		Icon:    req.Icon,
 	}
 	// v0.2.19: sort=0 视为"未提供" → 走 max+10 fallback (新分组放底部, Bevan
 	// daily UX 反馈一致, 跟 card.go 同模式).

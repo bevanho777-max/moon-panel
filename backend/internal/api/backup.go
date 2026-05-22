@@ -20,6 +20,7 @@ import (
 	"github.com/moon-panel/moon-panel/internal/audit"
 	"github.com/moon-panel/moon-panel/internal/middleware"
 	"github.com/moon-panel/moon-panel/internal/model"
+	"github.com/moon-panel/moon-panel/internal/store"
 )
 
 // BackupHandler exposes JSON metadata export + restore. Phase 4c.
@@ -287,6 +288,17 @@ func (h *BackupHandler) restore(c *gin.Context) {
 	if err != nil {
 		Fail(c, http.StatusInternalServerError, 500, "restore failed: "+err.Error())
 		return
+	}
+
+	// v0.2.28 R1: backups produced before v0.2.28 don't carry owner_id, so the
+	// rows just re-inserted land with owner_id=0. The boot migration already
+	// ran once and won't re-run on its own, so call it here to stamp the
+	// freshly-restored data with the current admin owner. No-op for backups
+	// produced on v0.2.28+.
+	if err := store.MigrateOwnerID(h.DB); err != nil {
+		// Don't fail the whole restore — the data is in, just unowned.
+		// Admin sees a warning in the log and can investigate.
+		log.Printf("backup restore: owner_id backfill failed (rows are restored but unowned): %v", err)
 	}
 
 	// Restore uploads/ if the zip path provided one. Done OUTSIDE the DB

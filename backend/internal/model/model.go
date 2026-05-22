@@ -18,7 +18,18 @@ type User struct {
 }
 
 type Group struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
+	ID uint `gorm:"primaryKey" json:"id"`
+	// v0.2.28: A.5 multi-user roadmap R1. owner_id is the user this group
+	// belongs to. AutoMigrate adds the column for existing rows with default
+	// 0, then store.MigrateOwnerID backfills 0 → admin.ID at startup.
+	// Query-level owner filtering is NOT enforced here yet — that lands in
+	// R3. The field exists in R1 so handlers can stamp it on new rows and
+	// the schema is ready for R3's WHERE owner_id = ? without another
+	// migration. No GORM association is declared here on purpose: a DB-level
+	// FK would reject the legacy owner_id=0 rows mid-upgrade, and we don't
+	// need the join in R1. R6 can revisit if cascade-on-user-delete is
+	// needed.
+	OwnerID   uint      `gorm:"index" json:"owner_id"`
 	Name      string    `gorm:"size:128;not null" json:"name"`
 	Icon      string    `gorm:"size:512" json:"icon"`
 	Sort      int       `gorm:"index;default:0" json:"sort"`
@@ -28,7 +39,13 @@ type Group struct {
 }
 
 type Card struct {
-	ID            uint      `gorm:"primaryKey" json:"id"`
+	ID uint `gorm:"primaryKey" json:"id"`
+	// v0.2.28 R1: see Group.OwnerID comment. Card carries its own owner_id
+	// (rather than deriving from Group.OwnerID via a join) so R3's per-query
+	// filter is a single WHERE — fewer chances to ship a query that forgot
+	// the join and leaks across owners. No DB-level FK on purpose (same
+	// reason as Group).
+	OwnerID       uint      `gorm:"index" json:"owner_id"`
 	GroupID       uint      `gorm:"index;not null" json:"group_id"`
 	Title         string    `gorm:"size:128;not null" json:"title"`
 	Description   string    `gorm:"size:512" json:"description"`

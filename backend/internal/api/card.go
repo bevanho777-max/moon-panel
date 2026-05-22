@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/moon-panel/moon-panel/internal/auth"
+	"github.com/moon-panel/moon-panel/internal/middleware"
 	"github.com/moon-panel/moon-panel/internal/model"
 )
 
@@ -192,7 +194,14 @@ func (h *CardHandler) create(c *gin.Context) {
 		return
 	}
 
+	// v0.2.28 R1: stamp owner_id from the authed session so the row is
+	// attributable from the moment it's created. R1 only has one user
+	// (admin), so this is admin.ID in practice — but writing it via claims
+	// instead of hardcoding admin.ID means R2/R3 don't have to touch this
+	// path again.
+	claims := c.MustGet(middleware.ContextClaimsKey).(*auth.Claims)
 	card := model.Card{
+		OwnerID:     claims.UserID,
 		GroupID:     *req.GroupID,
 		Title:       strings.TrimSpace(req.Title),
 		Description: req.Description,

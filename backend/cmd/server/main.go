@@ -56,6 +56,13 @@ func main() {
 	if err := migrateBootstrapIconURLs(db); err != nil {
 		log.Fatalf("migrate icons: %v", err)
 	}
+	// v0.2.28 (A.5 R1): backfill owner_id on existing Group/Card rows. Runs
+	// after bootstrapAdmin so the admin user is guaranteed to exist when we
+	// look it up by username. Idempotent — re-runs on every boot are no-ops
+	// once the rows are stamped.
+	if err := store.MigrateOwnerID(db); err != nil {
+		log.Fatalf("migrate owner ids: %v", err)
+	}
 	if err := bootstrapWidgetSettings(db); err != nil {
 		log.Fatalf("bootstrap widgets: %v", err)
 	}

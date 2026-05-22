@@ -76,6 +76,15 @@ jobs:
       - name: go build
         run: go build ./...
 
+      # v0.2.28 (A.5 R1): project's first Go test suite lives under
+      # internal/store/ and locks in the OwnerID migration contract.
+      # Existing TempDir cleanup hits a Windows file-lock false-negative
+      # on SQLite WAL mode, but Linux CI doesn't carry that constraint,
+      # so the suite runs clean here. R2's authz tests will land in the
+      # same job once the data-isolation pattern is in place.
+      - name: go test
+        run: go test ./...
+
   frontend:
     name: Frontend (typecheck + vitest + e2e)
     runs-on: ubuntu-latest
