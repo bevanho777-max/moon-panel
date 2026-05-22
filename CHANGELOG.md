@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.27] - 2026-05-22
+
+### Changed
+
+- frontend: 星空呼吸微调 — 周期 15s → 8s, 星星不再像定在原位
+- frontend: 星星明暗对比拉大 (`base` 0.15-0.40 / `amp` 0.35-0.80) — 部分
+  星完整经历熄灭→全亮, 此起彼伏的忽隐忽现感
+- 起因: v0.2.26 真机观感星星"像定在原位", 缺流动感
+
+### Internal
+
+- 仅 `StarfieldBackground.vue` 3 处常量微调 (流星不动, Bevan 反馈"非常棒")
+- alpha clip `[0, 1]` 已有 — 谷值负数 clip 到 0 = 星星熄灭效果
+- 视觉门: 真机当视觉门 (同 v0.2.26)
+
 ## [0.2.26] - 2026-05-22
 
 ### Changed

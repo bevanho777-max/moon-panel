@@ -329,6 +329,18 @@ Moon Panel 从初始脚手架到 v0.1 release 全程使用
 > 仅列出 用户可见 的功能更新。完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 <details open>
+<summary><b>v0.2.27</b> — 星空忽隐忽现微调 (2026-05-22)</summary>
+
+星空呼吸节奏微调: 周期从 15 秒缩到 8 秒, 星星明暗对比拉大, 部分星会完整经历
+熄灭到全亮, 此起彼伏的忽隐忽现感. 起因是 v0.2.26 真机观感星星"像定在原位",
+缺流动感. 流星保持不变.
+
+详见 [CHANGELOG](CHANGELOG.md#0227---2026-05-22)  
+[Release](https://github.com/bevanho777-max/moon-panel/releases/tag/v0.2.27)
+
+</details>
+
+<details>
 <summary><b>v0.2.26</b> — 星空背景 (替换整屏呼吸) (2026-05-22)</summary>
 
 动态背景从 v0.2.25 整屏呼吸+光晕改为星空粒子: 26 颗小星按 15 秒节奏缓慢呼吸
