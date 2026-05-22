@@ -49,7 +49,11 @@ interface Meteor {
 }
 
 const STAR_COUNT = 26
-const BREATHE_PERIOD_MS = 15000
+// v0.2.27: 15s → 8s. The 15s cycle felt static on real-machine review
+// (Bevan called the stars "frozen in place"). Combined with the
+// base/amp tweak below this gives a livelier twinkle without the
+// scale-pulse that drove the v0.2.25 rework.
+const BREATHE_PERIOD_MS = 8000
 const ANGULAR_W = (2 * Math.PI) / BREATHE_PERIOD_MS
 const FRAME_INTERVAL_MS = 1000 / 30
 const METEOR_GAP_MIN_MS = 20000
@@ -88,8 +92,13 @@ function buildStars() {
       x: Math.random(),
       y: Math.random(),
       r: 0.5 + Math.random() * 1.1,
-      base: 0.28 + Math.random() * 0.35,
-      amp: 0.22 + Math.random() * 0.35,
+      // v0.2.27: darker base + wider amp so each star dips closer to 0
+      // (off) and peaks near 1 (bright). The alpha clip at the draw site
+      // takes care of out-of-range values, so [base-amp, base+amp] is
+      // allowed to exceed [0,1] — the truncation is exactly what creates
+      // the off-then-on twinkle that v0.2.26's softer range lacked.
+      base: 0.15 + Math.random() * 0.25,
+      amp: 0.35 + Math.random() * 0.45,
       phase: Math.random() * Math.PI * 2,
     })
   }
