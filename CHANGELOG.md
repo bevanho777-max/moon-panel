@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.28] - 2026-05-22
+
+### Internal
+
+- model: Group/Card 加 `OwnerID` 字段 (纯 index, FK 留 R6) — multi-user
+  数据归属地基
+- store: 新增 `MigrateOwnerID` — 现有数据 atomic 迁移到默认 user (幂等,
+  `WHERE username = "admin"` 不假设 ID)
+- backup: restore 后补跑 migration (防旧 backup 数据无主)
+- ci: 加 `go test` 步骤 (项目首引 Go test, Linux 首跑通过)
+- 用户无感: 前端 0 改动, Login/UI/数据展示行为不变
+
+### Notes
+
+- A.5 multi-user roadmap 第 1 步 (地基, 功能未启用)
+- 升级说明见 [docs/MIGRATION.md](docs/MIGRATION.md) (建议升级前 backup)
+
 ## [0.2.27] - 2026-05-22
 
 ### Changed

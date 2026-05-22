@@ -329,6 +329,18 @@ Moon Panel 从初始脚手架到 v0.1 release 全程使用
 > 仅列出 用户可见 的功能更新。完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 <details open>
+<summary><b>v0.2.28</b> — multi-user 地基 (2026-05-22)</summary>
+
+后端为 Card/Group 加入数据归属字段 (OwnerID) 并迁移现有数据, 为后续多用户
+功能打地基. 本版用户无感: 登录、界面、数据展示均不变. 升级前建议备份数据,
+详见 [MIGRATION.md](docs/MIGRATION.md).
+
+详见 [CHANGELOG](CHANGELOG.md#0228---2026-05-22)  
+[Release](https://github.com/bevanho777-max/moon-panel/releases/tag/v0.2.28)
+
+</details>
+
+<details>
 <summary><b>v0.2.27</b> — 星空忽隐忽现微调 (2026-05-22)</summary>
 
 星空呼吸节奏微调: 周期从 15 秒缩到 8 秒, 星星明暗对比拉大, 部分星会完整经历
