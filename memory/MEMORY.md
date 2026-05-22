@@ -37,6 +37,7 @@
 - [Chore commit 路径策略](feedback_chore_commit_path_strategy.md) — chore 不 amend, 单独 commit 紧跟 feat; tag 指向 HEAD 含 chore; paths-ignore 决定是否触发 CI (v0.2.13/14/15 累积)
 - [审美 release 真机门铁律](feedback_aesthetic_realdevice_gate.md) — 审美/动效 release 的"成功"不能只看 CI 绿, 真机+用户眼睛才能定稿 (v0.2.25→26→27 三轮迭代实证, mockup 骗了我们)
 - [Canvas + RAF cleanup pattern](feedback_canvas_raf_cleanup.md) — 工程首引 RAF+canvas, 7 项 cleanup pattern (RAF cancel/visibility/限帧/DPR/reduced-motion/主题色/isolation, v0.2.26 实证)
+- [Bevan 报告输出格式约定 (点击复制块)](feedback_report_format.md) — 每个 Phase/门/Task 报告末尾追加 ``` 代码围栏包精简版, 给 Bevan 点复制按钮整块拷给 Opus
 
 ## Backlog
 
