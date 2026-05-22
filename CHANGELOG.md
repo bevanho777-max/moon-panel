@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.26] - 2026-05-22
+
+### Changed
+
+- frontend: 动态背景从整屏呼吸+光晕 (v0.2.25) 改为星空粒子 — 起因 v0.2.25
+  真机观感"圈圈放大不自然 + 大范围呼吸不适"
+- frontend: 星仅 opacity 呼吸 (15s 周期, phase offset 错开), 不再 scale
+  放大
+
+### Added
+
+- frontend: `StarfieldBackground.vue` (canvas 独立组件) — 26 颗星稀疏呼吸
+  + 偶发流星 (右上→左下, 20-40s)
+- frontend: 双主题星色 `--mp-star-*` (Moon 冷白 / Risen 暖金)
+
+### Removed
+
+- frontend: v0.2.25 aurora/glow 整屏动画 (App.vue + main.css ~104 行,
+  含 `mpAuroraFlow` / `mpGlowBreathe` keyframe + `--mp-bg-*` token)
+
+### Internal
+
+- 工程首引 `requestAnimationFrame` + 首个 `<canvas>` 渲染组件, 建立
+  cleanup pattern (RAF id ref + `onBeforeUnmount` cancel +
+  `visibilitychange` 暂停)
+- 性能: 限帧 30fps (时间戳 delta) / `document.hidden` 暂停 / DPR cap 2
+- reduced-motion JS `matchMedia` 静态星空 (OS 运行时切换支持)
+- canvas `isolation: isolate` 保留 (Login card acrylic 不采样, 双保险)
+- canvas +3KB minified (vs v0.2.25 整屏 gradient, 体积/性能更轻)
+- admin `v-if` 禁星空 (复用 v0.2.25 `isAdminRoute`)
+- 视觉门: 本地 dev 缺 backend, 真机当视觉门 (同 v0.2.25)
+
 ## [0.2.25] - 2026-05-21
 
 ### Added

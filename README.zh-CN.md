@@ -329,6 +329,19 @@ Moon Panel 从初始脚手架到 v0.1 release 全程使用
 > 仅列出 用户可见 的功能更新。完整变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 <details open>
+<summary><b>v0.2.26</b> — 星空背景 (替换整屏呼吸) (2026-05-22)</summary>
+
+动态背景从 v0.2.25 整屏呼吸+光晕改为星空粒子: 26 颗小星按 15 秒节奏缓慢呼吸
+(仅明暗不放大), 偶尔一颗流星右上→左下划过. 起因是 v0.2.25 整屏大范围呼吸 +
+光晕放大视觉不自然. 单 canvas 实现 (限帧/后台暂停/reduced-motion), 双主题
+Moon 冷白星 / Risen 暖金星. admin 页禁, Login isolation 保留.
+
+详见 [CHANGELOG](CHANGELOG.md#0226---2026-05-22)  
+[Release](https://github.com/bevanho777-max/moon-panel/releases/tag/v0.2.26)
+
+</details>
+
+<details>
 <summary><b>v0.2.25</b> — Home + Login 动态背景 (CSS-only 双主题) (2026-05-21)</summary>
 
 Home + Login 页加入 CSS-only 动态背景, 两层缓慢动画 (渐变流动 + 光晕呼吸),
