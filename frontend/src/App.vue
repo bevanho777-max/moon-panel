@@ -2,6 +2,7 @@
 import { NConfigProvider, NMessageProvider, darkTheme } from 'naive-ui'
 import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import StarfieldBackground from './components/StarfieldBackground.vue'
 import { useAuthStore } from './stores/auth'
 import { useUIStore } from './stores/ui'
 
@@ -122,17 +123,11 @@ onMounted(() => {
       :style="{ backgroundImage: `url(${ui.wallpaperUrl})` }"
       aria-hidden="true"
     />
-    <!-- v0.2.25: ambient animated background. Sits between the wallpaper
-         layer (z-index:-1) and content (default z-index). `isolation:
-         isolate` is the core constraint — it confines the aurora/glow
-         compositing to this subtree so the heavier acrylic surfaces on
-         Login/modals don't have their backdrop-filter recomputed every
-         animation frame. Hidden on /admin/* to keep Cards drag INP
-         clean. -->
-    <div v-if="!isAdminRoute" class="mp-dynamic-bg" aria-hidden="true">
-      <div class="mp-dynamic-bg__aurora"></div>
-      <div class="mp-dynamic-bg__glow"></div>
-    </div>
+    <!-- v0.2.26: starfield replaces v0.2.25 aurora/glow. Canvas-driven
+         (RAF + DPR + visibility pause + reduced-motion) lives inside the
+         component; this layer just gates rendering on non-admin routes
+         to keep the Cards drag UX paint-cost-free on /admin/*. -->
+    <StarfieldBackground v-if="!isAdminRoute" />
     <NMessageProvider>
       <router-view />
     </NMessageProvider>
