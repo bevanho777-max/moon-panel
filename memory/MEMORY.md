@@ -35,6 +35,8 @@
 - [Unverified prod work](feedback_unverified_prod_work.md) — 不假设, 实际 grep / 跑 / 看 (v0.2.24 #28 #29 #32 #35)
 - [Spec 决策 default 保守倾向教训](feedback_decision_default_bias.md) — Task 1 候选不 default 推保守, 让 Bevan 从 daily UX 视角拍板; v0.2.15 P0 a B.1a→B.1b 修正实例
 - [Chore commit 路径策略](feedback_chore_commit_path_strategy.md) — chore 不 amend, 单独 commit 紧跟 feat; tag 指向 HEAD 含 chore; paths-ignore 决定是否触发 CI (v0.2.13/14/15 累积)
+- [审美 release 真机门铁律](feedback_aesthetic_realdevice_gate.md) — 审美/动效 release 的"成功"不能只看 CI 绿, 真机+用户眼睛才能定稿 (v0.2.25→26→27 三轮迭代实证, mockup 骗了我们)
+- [Canvas + RAF cleanup pattern](feedback_canvas_raf_cleanup.md) — 工程首引 RAF+canvas, 7 项 cleanup pattern (RAF cancel/visibility/限帧/DPR/reduced-motion/主题色/isolation, v0.2.26 实证)
 
 ## Backlog
 
@@ -44,3 +46,6 @@
 - #45 MSYS bash gh api 前导 / 被改写为 filesystem path — v0.2.24 1 次重犯 (CLAUDE.md line 148+173 已警告, 执行失误非 spec 假设错误; 累积 2+ 开 feedback_msys_gh_api_slash.md)
 - v0.2.24 文档 streak 计数笔误 — CHANGELOG/README 写 "7 连", 实际 8 连 (v0.2.17-v0.2.24, 已 tag 不改; 下个 release backfill 时修正)
 - CLAUDE.md 易变计数硬编码 = stale 根因 (#46a 同类) — entries/flag/.md count 每 release 手动 +N 必漏 (625cebc 就漏 3 处); 下次评估改成免维护表述或删除
+- CLAUDE.md 被 PS Invoke-WebRequest 响应对象污染 (+89 行 UTF-16 垃圾, StatusCode/Headers/RawContent 字段, v0.2.25 门1 发现) — revert 已止血, 复发查 Get-History / ps_history 定位是哪条命令 >> CLAUDE.md
+- release.yml 不支持四段 patch 号 (v0.2.26.1) — metadata-action type=semver 只认三段 MAJOR.MINOR.PATCH; 想用 patch 号需加 type=raw 兜底 + 测试, 留版本号规范专项治本 (v0.2.27 因此用 minor bump 代替 26.1)
+- release.yml arm64 QEMU npm install 偶发死锁 (v0.2.25 初次撞 6h GHA 超时) — transient, 前台轮询 + >15min cancel rerun, 不等第二个 6h (v0.2.25 rerun 8m37s / v0.2.26 9m02s / v0.2.27 8m02s 均一次过, 仅初次中招)
