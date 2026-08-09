@@ -3,6 +3,7 @@ import { computed, h, ref, type VNode } from 'vue'
 import { NButton, NDropdown, NInput, type DropdownOption } from 'naive-ui'
 import { buildSearchURL, type SearchEngine } from '@/api/searchEngine'
 import { useSearchEngineStore } from '@/stores/searchEngines'
+import LucideIcon from '@/components/LucideIcon.vue'
 
 const props = defineProps<{
   engines: SearchEngine[]
@@ -72,6 +73,17 @@ function renderEngineIcon(icon: string, size: number): VNode {
         img.style.display = 'none'
       },
     })
+  }
+  // v0.2.29: engines can carry lucide: icons like cards do. Mirrors
+  // SiteSettings.renderEngineIcon (same tint) so admin preview and home page
+  // agree. LucideIcon renders its own "?" for unresolvable names, matching the
+  // placeholder below.
+  if (icon.startsWith('lucide:')) {
+    return h(
+      'div',
+      { style: `${baseStyle};color:#5b8def;background:rgba(91,141,239,0.15)`, title: icon },
+      h(LucideIcon, { name: icon.slice('lucide:'.length), size }),
+    )
   }
   return h('div', { style: `${baseStyle};color:rgba(255,193,77,0.7);font-size:10px` }, '?')
 }

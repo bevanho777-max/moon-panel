@@ -20,9 +20,108 @@ func (h *SearchEngineHandler) Register(rg *gin.RouterGroup, requireAuth gin.Hand
 	g := rg.Group("/admin/search-engines", requireAuth)
 	g.GET("", h.list)
 	g.POST("", h.create)
-	g.PUT("/reorder", h.reorder) // before /:id to avoid id binding conflict
+	g.POST("/restore-builtins", h.restoreBuiltins) // before /:id (see reorder note)
+	g.PUT("/reorder", h.reorder)                   // before /:id to avoid id binding conflict
 	g.PUT("/:id", h.update)
 	g.DELETE("/:id", h.delete)
+}
+
+// builtinIconPrefix hosts the search engine icons. Direct upstream favicons
+// (google.com / bing.com / …) aren't reliably reachable from mainland China,
+// so we pin walkxcode/dashboard-icons on jsdelivr instead.
+const builtinIconPrefix = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/"
+
+// BuiltinSearchEngines is the single source of truth for the engines the panel
+// ships with. Used both by first-start seeding (cmd/server bootstrap) and by
+// the restore-builtins endpoint, so the two can never drift apart.
+//
+// Sort values are the canonical display order; restoreBuiltins re-bases them
+// onto max(sort) so re-added engines land at the bottom instead of colliding
+// with whatever the user has already arranged.
+func BuiltinSearchEngines() []model.SearchEngine {
+	return []model.SearchEngine{
+		{Name: "Google", URLTemplate: "https://www.google.com/search?q={query}", Icon: builtinIconPrefix + "google.png", IsDefault: true, Sort: 10},
+		{Name: "Bing", URLTemplate: "https://www.bing.com/search?q={query}", Icon: builtinIconPrefix + "bing.png", IsDefault: false, Sort: 20},
+		{Name: "DuckDuckGo", URLTemplate: "https://duckduckgo.com/?q={query}", Icon: builtinIconPrefix + "duckduckgo.png", IsDefault: false, Sort: 30},
+		{Name: "Brave", URLTemplate: "https://search.brave.com/search?q={query}", Icon: builtinIconPrefix + "brave.png", IsDefault: false, Sort: 40},
+		{Name: "Startpage", URLTemplate: "https://www.startpage.com/sp/search?query={query}", Icon: builtinIconPrefix + "startpage.png", IsDefault: false, Sort: 50},
+		{Name: "Yandex", URLTemplate: "https://yandex.com/search/?text={query}", Icon: builtinIconPrefix + "yandex.png", IsDefault: false, Sort: 60},
+		{Name: "百度", URLTemplate: "https://www.baidu.com/s?wd={query}", Icon: builtinIconPrefix + "baidu.png", IsDefault: false, Sort: 70},
+	}
+}
+
+// restoreBuiltins is additive and non-destructive: it inserts only the builtin
+// engines whose Name is missing from the table, and never touches rows that
+// already exist (a user who retitled or re-pointed "Google" keeps their edit —
+// name match is the identity here, matching what the admin UI shows).
+//
+// Inserted rows are always IsDefault=false so restoring can't produce two
+// defaults. Only if the whole table ends up with no default at all (e.g. the
+// user deleted their default earlier) do we promote the lowest-sort row.
+func (h *SearchEngineHandler) restoreBuiltins(c *gin.Context) {
+	added := []string{}
+	err := h.DB.Transaction(func(tx *gorm.DB) error {
+		var existing []model.SearchEngine
+		if err := tx.Find(&existing).Error; err != nil {
+			return err
+		}
+		byName := make(map[string]struct{}, len(existing))
+		maxSort := 0
+		for _, e := range existing {
+			byName[e.Name] = struct{}{}
+			if e.Sort > maxSort {
+				maxSort = e.Sort
+			}
+		}
+
+		step := 0
+		for _, b := range BuiltinSearchEngines() {
+			if _, ok := byName[b.Name]; ok {
+				continue
+			}
+			step += 10
+			engine := model.SearchEngine{
+				Name:        b.Name,
+				URLTemplate: b.URLTemplate,
+				Icon:        b.Icon,
+				IsDefault:   false,
+				Sort:        maxSort + step,
+			}
+			if err := tx.Create(&engine).Error; err != nil {
+				return err
+			}
+			added = append(added, engine.Name)
+		}
+
+		var defaultCount int64
+		if err := tx.Model(&model.SearchEngine{}).Where("is_default = ?", true).Count(&defaultCount).Error; err != nil {
+			return err
+		}
+		if defaultCount == 0 {
+			var first model.SearchEngine
+			if err := tx.Order("sort ASC, id ASC").First(&first).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return nil // empty table: nothing to promote
+				}
+				return err
+			}
+			if err := tx.Model(&model.SearchEngine{}).Where("id = ?", first.ID).Update("is_default", true).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		Fail(c, http.StatusInternalServerError, 500, "restore failed: "+err.Error())
+		return
+	}
+
+	var engines []model.SearchEngine
+	if err := h.DB.Order("sort ASC, id ASC").Find(&engines).Error; err != nil {
+		Fail(c, http.StatusInternalServerError, 500, "db error")
+		return
+	}
+	OK(c, gin.H{"added": added, "engines": engines})
 }
 
 // v0.2.16 P0 b: search engines batch reorder for inline drag UX.

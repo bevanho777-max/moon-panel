@@ -48,6 +48,25 @@ export async function reorderSearchEngines(items: SearchEngineReorderItem[]): Pr
   await http.put('/admin/search-engines/reorder', { items })
 }
 
+export interface RestoreBuiltinsResult {
+  /** Names of the engines that were actually inserted (empty = nothing missing). */
+  added: string[]
+  /** Full engine list after the restore, already sorted. */
+  engines: SearchEngine[]
+}
+
+/**
+ * v0.2.29: re-add builtin engines the user has deleted. Additive only — engines
+ * that still exist (matched by name) are left untouched, so this never clobbers
+ * a customized entry.
+ */
+export async function restoreBuiltins(): Promise<RestoreBuiltinsResult> {
+  const { data } = await http.post<ApiResponse<RestoreBuiltinsResult>>(
+    '/admin/search-engines/restore-builtins',
+  )
+  return data.data ?? { added: [], engines: [] }
+}
+
 /**
  * Substitute the query into a URL template. Supports both `{q}` and `{query}`
  * placeholders (admins can use either; same string is replaced for both).

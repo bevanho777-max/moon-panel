@@ -27,6 +27,7 @@ import {
   deleteSearchEngine,
   listSearchEngines,
   reorderSearchEngines,
+  restoreBuiltins,
   updateSearchEngine,
 } from '@/api/searchEngine'
 import { getSettings, updateSettings } from '@/api/setting'
@@ -94,6 +95,28 @@ async function refresh() {
     message.error(e instanceof ApiError ? e.message : '加载失败')
   } finally {
     loading.value = false
+  }
+}
+
+// v0.2.29: bootstrapDefaultEngines only seeds an empty table, so a user who
+// deleted an engine had no way back. Restore is additive — existing engines
+// (matched by name server-side) are never touched.
+const restoring = ref(false)
+
+async function handleRestoreBuiltins() {
+  restoring.value = true
+  try {
+    const res = await restoreBuiltins()
+    engines.value = res.engines
+    if (res.added.length > 0) {
+      message.success(`已补充 ${res.added.length} 个内置引擎`)
+    } else {
+      message.info('内置引擎已齐全')
+    }
+  } catch (e) {
+    message.error(e instanceof ApiError ? e.message : '恢复失败')
+  } finally {
+    restoring.value = false
   }
 }
 
@@ -454,7 +477,16 @@ onMounted(() => {
       <template #header>
         <NSpace align="center" justify="space-between" style="width:100%">
           <span>搜索引擎</span>
-          <NButton type="primary" @click="openCreate">新建引擎</NButton>
+          <NSpace align="center" :size="8">
+            <NButton
+              tertiary
+              size="small"
+              :loading="restoring"
+              title="补回已删除的内置引擎，不会覆盖现有条目"
+              @click="handleRestoreBuiltins"
+            >恢复内置引擎</NButton>
+            <NButton type="primary" @click="openCreate">新建引擎</NButton>
+          </NSpace>
         </NSpace>
       </template>
       <NSpin :show="loading">

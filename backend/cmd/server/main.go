@@ -288,15 +288,19 @@ func staticUploadsHandler(uploadsDir string) gin.HandlerFunc {
 	}
 }
 
-// bootstrapDefaultEngines seeds 4 search engines on first start (when the
-// search_engines table is empty). Idempotent — once seeded, subsequent starts
-// are no-op even if the user has deleted some/all engines (we only check
-// "is the table empty?", not "are these specific entries present?").
+// bootstrapDefaultEngines seeds the builtin search engines on first start (when
+// the search_engines table is empty). Idempotent — once seeded, subsequent
+// starts are no-op even if the user has deleted some/all engines (we only check
+// "is the table empty?", not "are these specific entries present?"). The
+// admin-triggered POST /admin/search-engines/restore-builtins covers re-adding
+// individually deleted ones.
 //
-// Icons use jsdelivr CDN (walkxcode/dashboard-icons) — direct upstream
-// favicons (google.com / bing.com / etc) aren't reliably reachable from
-// mainland China. See migrateBootstrapIconURLs for the one-time migration
-// that updates existing 3b-1-era deployments.
+// v0.2.29: the list itself lives in api.BuiltinSearchEngines() so seeding and
+// restore share one source of truth. Icons use jsdelivr CDN
+// (walkxcode/dashboard-icons) — direct upstream favicons (google.com /
+// bing.com / etc) aren't reliably reachable from mainland China. See
+// migrateBootstrapIconURLs for the one-time migration that updates existing
+// 3b-1-era deployments.
 func bootstrapDefaultEngines(db *gorm.DB) error {
 	var count int64
 	if err := db.Model(&model.SearchEngine{}).Count(&count).Error; err != nil {
@@ -305,13 +309,7 @@ func bootstrapDefaultEngines(db *gorm.DB) error {
 	if count > 0 {
 		return nil
 	}
-	const cdnPrefix = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/"
-	engines := []model.SearchEngine{
-		{Name: "Google", URLTemplate: "https://www.google.com/search?q={query}", Icon: cdnPrefix + "google.png", IsDefault: true, Sort: 10},
-		{Name: "Bing", URLTemplate: "https://www.bing.com/search?q={query}", Icon: cdnPrefix + "bing.png", IsDefault: false, Sort: 20},
-		{Name: "DuckDuckGo", URLTemplate: "https://duckduckgo.com/?q={query}", Icon: cdnPrefix + "duckduckgo.png", IsDefault: false, Sort: 30},
-		{Name: "百度", URLTemplate: "https://www.baidu.com/s?wd={query}", Icon: cdnPrefix + "baidu.png", IsDefault: false, Sort: 40},
-	}
+	engines := api.BuiltinSearchEngines()
 	if err := db.Create(&engines).Error; err != nil {
 		return err
 	}

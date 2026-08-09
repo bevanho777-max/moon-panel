@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.29] - 2026-08-09
+
+### Added
+
+- 内置搜索引擎扩充到 7 个 — 新增 Brave / Startpage / Yandex (隐私向补位),
+  原有 Google / Bing / DuckDuckGo / 百度 不变
+- 后端 `POST /api/admin/search-engines/restore-builtins` — 补回被删除的内置
+  引擎。增量语义: 按 name 比对, 已存在的一律跳过 (用户改过的条目不被覆盖),
+  新插入的 `is_default=false` + `sort` 落到列表底部, 整体单事务
+- 管理端「站点设置 → 搜索引擎」加「恢复内置引擎」次要按钮 — 补了 N 个提示
+  「已补充 N 个内置引擎」, N=0 提示「内置引擎已齐全」
+
+### Fixed
+
+- `HeaderSearchBox`: 首页搜索框不认 `lucide:` 图标, 会渲染成 `?` — 现与
+  卡片 / 管理端预览一致支持 `http(s)://` + `upload:` + `lucide:` 三种编码
+
+### Internal
+
+- 内置引擎列表抽成单一真源 `api.BuiltinSearchEngines()` — 开服 seed
+  (`bootstrapDefaultEngines`) 与 restore 端点共用, 不再各写一份
+- 测试: 新增 `backend/internal/api/search_engine_test.go` (builtin 列表纯函数
+  断言: 数量 / 唯一默认 / name 唯一 / https + 占位符) 与
+  `frontend/src/api/searchEngine.spec.ts` (`buildSearchURL` 占位符替换与
+  encode 行为)
+- `bootstrapDefaultEngines` 空表判断逻辑不变 — 已 seed 过的部署升级后不会
+  被重新塞引擎
+
 ## [0.2.28] - 2026-05-22
 
 ### Internal
@@ -1362,7 +1390,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.29...HEAD
+[0.2.29]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.28...v0.2.29
 [0.2.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.2...v0.2.3
