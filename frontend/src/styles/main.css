@@ -59,6 +59,10 @@
   --mp-search-bg: rgba(255, 255, 255, 0.06);
   --mp-search-border: rgba(255, 255, 255, 0.1);
   --mp-search-text: rgba(255, 255, 255, 0.96);
+  /* v0.2.30: <mark> behind search hits on card title/description. Moon keeps
+     the amber that shipped as HighlightText.vue's inline fallback — making it
+     explicit here so the token, not the fallback, is what renders. */
+  --mp-search-mark-bg: rgba(255, 214, 102, 0.32);
 
   /* Group container (.home-group) */
   --mp-group-bg: rgba(255, 255, 255, 0.025);
@@ -128,6 +132,10 @@
   --mp-search-bg: rgba(40, 30, 18, 0.5);
   --mp-search-border: rgba(212, 175, 122, 0.22);
   --mp-search-text: rgba(245, 235, 215, 0.95);
+  /* v0.2.30: the theme's own gold (--mp-brand-primary #d4af7a = 212,175,122,
+     same rgb as --mp-card-hover-ring / --mp-weather-temp) at 0.3 — a moon
+     amber highlight would read as a foreign accent against risen's brown. */
+  --mp-search-mark-bg: rgba(212, 175, 122, 0.3);
 
   /* Group container */
   --mp-group-bg: rgba(40, 30, 18, 0.3);

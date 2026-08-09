@@ -1423,8 +1423,31 @@ Pi or Synology with the same image.
   production `./data` and port 3000 untouched
 
 [Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.30...HEAD
-[0.2.30]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.29...v0.2.30
-[0.2.29]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.28...v0.2.29
+[0.2.30]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.28...v0.2.30
+[0.2.29]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.28...2e0b5f6
+[0.2.28]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.27...v0.2.28
+[0.2.27]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.26...v0.2.27
+[0.2.26]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.25...v0.2.26
+[0.2.25]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.24...v0.2.25
+[0.2.24]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.23...v0.2.24
+[0.2.23]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.22...v0.2.23
+[0.2.22]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.21...v0.2.22
+[0.2.21]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.20...v0.2.21
+[0.2.20]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.19...v0.2.20
+[0.2.19]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.18...v0.2.19
+[0.2.18]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.17...v0.2.18
+[0.2.17]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.16...v0.2.17
+[0.2.16]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.15...v0.2.16
+[0.2.15]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.14...v0.2.15
+[0.2.14]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.13...v0.2.14
+[0.2.13]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.12...v0.2.13
+[0.2.12]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.11...v0.2.12
+[0.2.11]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.10...v0.2.11
+[0.2.10]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.9...v0.2.10
+[0.2.9]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.8...v0.2.9
+[0.2.8]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.7...v0.2.8
+[0.2.7]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.6...v0.2.7
+[0.2.6]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.2...v0.2.3
