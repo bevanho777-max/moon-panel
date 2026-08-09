@@ -56,6 +56,9 @@ func main() {
 	if err := migrateBootstrapIconURLs(db); err != nil {
 		log.Fatalf("migrate icons: %v", err)
 	}
+	if err := migrateEngineCategories(db); err != nil {
+		log.Fatalf("migrate engine categories: %v", err)
+	}
 	// v0.2.28 (A.5 R1): backfill owner_id on existing Group/Card rows. Runs
 	// after bootstrapAdmin so the admin user is guaranteed to exist when we
 	// look it up by username. Idempotent — re-runs on every boot are no-ops
@@ -395,6 +398,27 @@ func migrateBootstrapIconURLs(db *gorm.DB) error {
 	}
 	if total > 0 {
 		log.Printf("migrated %d bootstrap search engine icon URLs to jsdelivr CDN (one-time)", total)
+	}
+	return nil
+}
+
+// migrateEngineCategories backfills the v0.2.31 category column. AutoMigrate
+// adds it to existing rows as '' (the column default only applies to inserts),
+// which would land those engines in the frontend's "其它" catch-all group.
+// Everything that existed before v0.2.31 was a general web engine, so '' → web.
+//
+// Idempotent by construction: the WHERE only ever matches unstamped rows, so
+// subsequent boots update 0 rows and log nothing. Engines the user later moves
+// to another category are never touched (their category isn't '').
+func migrateEngineCategories(db *gorm.DB) error {
+	res := db.Model(&model.SearchEngine{}).
+		Where("category IS NULL OR category = ?", "").
+		Update("category", api.CategoryWeb)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected > 0 {
+		log.Printf("backfilled category=web on %d search engines (one-time)", res.RowsAffected)
 	}
 	return nil
 }

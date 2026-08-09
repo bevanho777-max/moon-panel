@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.31] - 2026-08-09
+
+### Added
+
+- 10 个全球垂直搜索引擎内置 —— 图片: Google 图片 / Bing 图片 / Unsplash /
+  Pinterest; 音乐: YouTube Music / Spotify / SoundCloud; 影视: YouTube /
+  IMDb / TMDB
+- `SearchEngine` 新增 `category` 字段 (`web` | `image` | `music` | `video`),
+  随 `/api/public/panel` 与备份导出一并下发
+- 首页搜索框下拉按分类分组 (网页 / 图片 / 音乐 / 影视), 组标题不可选中;
+  只有一个分类时不显示组标题, 保持原样
+- 管理端「搜索引擎」表格加分类列 (移动端也保留), 新建/编辑弹窗加分类下拉
+  (四选一, 默认「网页」)
+
+### Changed
+
+- `BuiltinSearchEngines()` 从 7 条扩到 17 条并全部带 category; 分类 sort 段
+  分开 (web 10-70 / image 110+ / music 210+ / video 310+), 以后插入新条目
+  不必重排
+- 启动迁移 `migrateEngineCategories`: 把 `category` 为空的既有行回填成
+  `web`。幂等 (WHERE 只匹配未标记行), 用户后来改过分类的引擎不受影响
+- 搜索引擎 create/update 接受并校验 `category` —— 传了必须 ∈ 四个合法值,
+  create 不传默认 `web`, update 不传保持原值 (老 API 客户端不受影响)
+
+### Internal
+
+- `unsplash.png` / `imdb.png` / `themoviedb.png` 在 walkxcode CDN 上是 404,
+  这三条改用分类 lucide 兜底 (`lucide:image` / `lucide:clapperboard`), 不发
+  破图。其余 7 个新图标探测均为 200 `image/png`
+- 分类的顺序与标签是**两处耦合**: 前端
+  `frontend/src/utils/searchCategories.ts` 的 `CATEGORY_ORDER` /
+  `CATEGORY_LABELS`, 后端 `api.SearchEngineCategories()` 的合法集。增删分类
+  必须同步改这两处
+- 测试: 后端 builtin 断言扩到 17 条 + 分类计数 (web 7 / image 4 / music 3 /
+  video 3) + `IsValidSearchEngineCategory` 与写入校验; 前端新增
+  `searchCategories.spec.ts` (分组顺序 / 组内排序 / 空组跳过 / 未知分类归
+  「其它」)
+
 ## [0.2.30] - 2026-08-09
 
 ### Added
@@ -1422,7 +1460,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.30...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.31...HEAD
+[0.2.31]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.30...v0.2.31
 [0.2.30]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.28...v0.2.30
 [0.2.29]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.28...2e0b5f6
 [0.2.28]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.27...v0.2.28

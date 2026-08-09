@@ -31,22 +31,69 @@ func (h *SearchEngineHandler) Register(rg *gin.RouterGroup, requireAuth gin.Hand
 // so we pin walkxcode/dashboard-icons on jsdelivr instead.
 const builtinIconPrefix = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/"
 
+// Search engine categories. The frontend mirrors this set (and its display
+// order / labels) in frontend/src/utils/searchCategories.ts — adding a category
+// means touching both sides.
+const (
+	CategoryWeb   = "web"
+	CategoryImage = "image"
+	CategoryMusic = "music"
+	CategoryVideo = "video"
+)
+
+// SearchEngineCategories returns the valid category values in canonical order.
+func SearchEngineCategories() []string {
+	return []string{CategoryWeb, CategoryImage, CategoryMusic, CategoryVideo}
+}
+
+// IsValidSearchEngineCategory reports whether c is one of the four known
+// categories. Empty is NOT valid here — callers decide whether to default it.
+func IsValidSearchEngineCategory(c string) bool {
+	switch c {
+	case CategoryWeb, CategoryImage, CategoryMusic, CategoryVideo:
+		return true
+	}
+	return false
+}
+
 // BuiltinSearchEngines is the single source of truth for the engines the panel
 // ships with. Used both by first-start seeding (cmd/server bootstrap) and by
 // the restore-builtins endpoint, so the two can never drift apart.
 //
-// Sort values are the canonical display order; restoreBuiltins re-bases them
-// onto max(sort) so re-added engines land at the bottom instead of colliding
-// with whatever the user has already arranged.
+// Sort values are the canonical display order (web 10-70, image 110+, music
+// 210+, video 310+ — leaving room to slot entries in without renumbering);
+// restoreBuiltins re-bases them onto max(sort) so re-added engines land at the
+// bottom instead of colliding with whatever the user has already arranged.
+//
+// v0.2.31: unsplash.png / imdb.png / themoviedb.png are absent from the
+// walkxcode CDN (404), so those three fall back to their category's lucide
+// glyph rather than shipping a broken <img>.
 func BuiltinSearchEngines() []model.SearchEngine {
 	return []model.SearchEngine{
-		{Name: "Google", URLTemplate: "https://www.google.com/search?q={query}", Icon: builtinIconPrefix + "google.png", IsDefault: true, Sort: 10},
-		{Name: "Bing", URLTemplate: "https://www.bing.com/search?q={query}", Icon: builtinIconPrefix + "bing.png", IsDefault: false, Sort: 20},
-		{Name: "DuckDuckGo", URLTemplate: "https://duckduckgo.com/?q={query}", Icon: builtinIconPrefix + "duckduckgo.png", IsDefault: false, Sort: 30},
-		{Name: "Brave", URLTemplate: "https://search.brave.com/search?q={query}", Icon: builtinIconPrefix + "brave.png", IsDefault: false, Sort: 40},
-		{Name: "Startpage", URLTemplate: "https://www.startpage.com/sp/search?query={query}", Icon: builtinIconPrefix + "startpage.png", IsDefault: false, Sort: 50},
-		{Name: "Yandex", URLTemplate: "https://yandex.com/search/?text={query}", Icon: builtinIconPrefix + "yandex.png", IsDefault: false, Sort: 60},
-		{Name: "百度", URLTemplate: "https://www.baidu.com/s?wd={query}", Icon: builtinIconPrefix + "baidu.png", IsDefault: false, Sort: 70},
+		// web
+		{Name: "Google", URLTemplate: "https://www.google.com/search?q={query}", Icon: builtinIconPrefix + "google.png", Category: CategoryWeb, IsDefault: true, Sort: 10},
+		{Name: "Bing", URLTemplate: "https://www.bing.com/search?q={query}", Icon: builtinIconPrefix + "bing.png", Category: CategoryWeb, IsDefault: false, Sort: 20},
+		{Name: "DuckDuckGo", URLTemplate: "https://duckduckgo.com/?q={query}", Icon: builtinIconPrefix + "duckduckgo.png", Category: CategoryWeb, IsDefault: false, Sort: 30},
+		{Name: "Brave", URLTemplate: "https://search.brave.com/search?q={query}", Icon: builtinIconPrefix + "brave.png", Category: CategoryWeb, IsDefault: false, Sort: 40},
+		{Name: "Startpage", URLTemplate: "https://www.startpage.com/sp/search?query={query}", Icon: builtinIconPrefix + "startpage.png", Category: CategoryWeb, IsDefault: false, Sort: 50},
+		{Name: "Yandex", URLTemplate: "https://yandex.com/search/?text={query}", Icon: builtinIconPrefix + "yandex.png", Category: CategoryWeb, IsDefault: false, Sort: 60},
+		{Name: "百度", URLTemplate: "https://www.baidu.com/s?wd={query}", Icon: builtinIconPrefix + "baidu.png", Category: CategoryWeb, IsDefault: false, Sort: 70},
+
+		// image
+		{Name: "Google 图片", URLTemplate: "https://www.google.com/search?tbm=isch&q={query}", Icon: builtinIconPrefix + "google.png", Category: CategoryImage, IsDefault: false, Sort: 110},
+		{Name: "Bing 图片", URLTemplate: "https://www.bing.com/images/search?q={query}", Icon: builtinIconPrefix + "bing.png", Category: CategoryImage, IsDefault: false, Sort: 120},
+		{Name: "Unsplash", URLTemplate: "https://unsplash.com/s/photos/{query}", Icon: "lucide:image", Category: CategoryImage, IsDefault: false, Sort: 130},
+		{Name: "Pinterest", URLTemplate: "https://www.pinterest.com/search/pins/?q={query}", Icon: builtinIconPrefix + "pinterest.png", Category: CategoryImage, IsDefault: false, Sort: 140},
+
+		// music
+		{Name: "YouTube Music", URLTemplate: "https://music.youtube.com/search?q={query}", Icon: builtinIconPrefix + "youtube-music.png", Category: CategoryMusic, IsDefault: false, Sort: 210},
+		{Name: "Spotify", URLTemplate: "https://open.spotify.com/search/{query}", Icon: builtinIconPrefix + "spotify.png", Category: CategoryMusic, IsDefault: false, Sort: 220},
+		{Name: "SoundCloud", URLTemplate: "https://soundcloud.com/search?q={query}", Icon: builtinIconPrefix + "soundcloud.png", Category: CategoryMusic, IsDefault: false, Sort: 230},
+
+		// video
+		{Name: "YouTube", URLTemplate: "https://www.youtube.com/results?search_query={query}", Icon: builtinIconPrefix + "youtube.png", Category: CategoryVideo, IsDefault: false, Sort: 310},
+		{Name: "IMDb", URLTemplate: "https://www.imdb.com/find/?q={query}", Icon: "lucide:clapperboard", Category: CategoryVideo, IsDefault: false, Sort: 320},
+		{Name: "TMDB", URLTemplate: "https://www.themoviedb.org/search?query={query}", Icon: "lucide:clapperboard", Category: CategoryVideo, IsDefault: false, Sort: 330},
 	}
 }
 
@@ -84,6 +131,7 @@ func (h *SearchEngineHandler) restoreBuiltins(c *gin.Context) {
 				Name:        b.Name,
 				URLTemplate: b.URLTemplate,
 				Icon:        b.Icon,
+				Category:    b.Category,
 				IsDefault:   false,
 				Sort:        maxSort + step,
 			}
@@ -193,6 +241,7 @@ type searchEngineWriteRequest struct {
 	Name        string `json:"name"`
 	URLTemplate string `json:"url_template"`
 	Icon        string `json:"icon"`
+	Category    string `json:"category"` // "" = leave alone (update) / default web (create)
 	IsDefault   *bool  `json:"is_default"` // pointer: false vs missing
 	Sort        *int   `json:"sort"`
 }
@@ -227,6 +276,12 @@ func validateSearchEngineWrite(req *searchEngineWriteRequest, isCreate bool) str
 	if len(req.Icon) > 512 {
 		return "icon too long (max 512)"
 	}
+	// v0.2.31: category is optional on the wire so pre-0.2.31 API clients keep
+	// working — create defaults it to "web", update leaves it untouched. A
+	// value that IS supplied must be one of the known four.
+	if c := strings.TrimSpace(req.Category); c != "" && !IsValidSearchEngineCategory(c) {
+		return "category must be one of: " + strings.Join(SearchEngineCategories(), ", ")
+	}
 	return ""
 }
 
@@ -240,10 +295,15 @@ func (h *SearchEngineHandler) create(c *gin.Context) {
 		Fail(c, http.StatusBadRequest, 400, msg)
 		return
 	}
+	category := strings.TrimSpace(req.Category)
+	if category == "" {
+		category = CategoryWeb
+	}
 	engine := model.SearchEngine{
 		Name:        strings.TrimSpace(req.Name),
 		URLTemplate: strings.TrimSpace(req.URLTemplate),
 		Icon:        req.Icon,
+		Category:    category,
 	}
 	if req.IsDefault != nil {
 		engine.IsDefault = *req.IsDefault
@@ -319,6 +379,12 @@ func (h *SearchEngineHandler) update(c *gin.Context) {
 	}
 	// Icon allows empty string to clear. Always update on PUT.
 	updates["icon"] = req.Icon
+
+	// Category has no "clear" semantics — an engine always belongs somewhere —
+	// so an omitted/blank value means "leave as is".
+	if c := strings.TrimSpace(req.Category); c != "" {
+		updates["category"] = c
+	}
 
 	if req.Sort != nil {
 		updates["sort"] = *req.Sort

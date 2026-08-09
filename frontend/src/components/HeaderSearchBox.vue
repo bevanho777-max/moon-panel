@@ -4,6 +4,7 @@ import { NButton, NDropdown, NInput, type DropdownOption } from 'naive-ui'
 import { buildSearchURL, type SearchEngine } from '@/api/searchEngine'
 import { useSearchEngineStore } from '@/stores/searchEngines'
 import LucideIcon from '@/components/LucideIcon.vue'
+import { groupEnginesByCategory } from '@/utils/searchCategories'
 
 const props = defineProps<{
   engines: SearchEngine[]
@@ -88,11 +89,25 @@ function renderEngineIcon(icon: string, size: number): VNode {
   return h('div', { style: `${baseStyle};color:rgba(255,193,77,0.7);font-size:10px` }, '?')
 }
 
+// v0.2.31: grouped by category (网页 / 图片 / 音乐 / 影视). Group headers are
+// NaiveUI's type:'group' entries — not selectable, so handleEngineSelect still
+// only ever receives an engine id.
 const dropdownOptions = computed<DropdownOption[]>(() => {
-  return props.engines.map((e) => ({
+  const toOption = (e: SearchEngine): DropdownOption => ({
     key: e.id,
     label: e.name + (e.is_default ? ' · 默认' : '') + (activeEngine.value?.id === e.id ? ' ✓' : ''),
     icon: () => renderEngineIcon(e.icon, 16),
+  })
+
+  const groups = groupEnginesByCategory(props.engines)
+  // A single group would just add a redundant header above every entry.
+  if (groups.length <= 1) return (groups[0]?.engines ?? []).map(toOption)
+
+  return groups.map((g) => ({
+    type: 'group',
+    key: `cat:${g.key}`,
+    label: g.label,
+    children: g.engines.map(toOption),
   }))
 })
 

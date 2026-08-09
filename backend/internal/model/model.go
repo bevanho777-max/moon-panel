@@ -63,14 +63,18 @@ type Card struct {
 }
 
 type SearchEngine struct {
-	ID          uint      `gorm:"primaryKey" json:"id"`
-	Name        string    `gorm:"size:64;not null" json:"name"`
-	URLTemplate string    `gorm:"size:1024;not null" json:"url_template"`
-	Icon        string    `gorm:"size:512" json:"icon"`
-	IsDefault   bool      `gorm:"default:false" json:"is_default"`
-	Sort        int       `gorm:"index;default:0" json:"sort"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uint   `gorm:"primaryKey" json:"id"`
+	Name        string `gorm:"size:64;not null" json:"name"`
+	URLTemplate string `gorm:"size:1024;not null" json:"url_template"`
+	Icon        string `gorm:"size:512" json:"icon"`
+	// v0.2.31: one of web|image|music|video (api.SearchEngineCategories).
+	// AutoMigrate adds the column empty on existing rows — migrateEngineCategories
+	// in cmd/server backfills those to "web" on boot.
+	Category  string    `gorm:"size:32;index;default:'web'" json:"category"`
+	IsDefault bool      `gorm:"default:false" json:"is_default"`
+	Sort      int       `gorm:"index;default:0" json:"sort"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Setting struct {

@@ -5,6 +5,8 @@ export interface SearchEngine {
   name: string
   url_template: string
   icon: string
+  /** v0.2.31: web | image | music | video. See @/utils/searchCategories. */
+  category: string
   is_default: boolean
   sort: number
   created_at: string
@@ -15,6 +17,7 @@ export interface SearchEngineWritePayload {
   name?: string
   url_template?: string
   icon?: string
+  category?: string
   is_default?: boolean
   sort?: number
 }

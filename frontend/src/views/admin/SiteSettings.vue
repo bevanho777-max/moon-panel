@@ -11,6 +11,7 @@ import {
   NInputNumber,
   NModal,
   NPopconfirm,
+  NSelect,
   NSpace,
   NSpin,
   NSwitch,
@@ -42,6 +43,7 @@ import ThemeColorPicker from '@/components/admin/ThemeColorPicker.vue'
 import StatefulInput from '@/components/StatefulInput.vue'
 import { exportBackupJSON, exportBackupZip } from '@/api/backup'
 import { showStatefulInputHintOnce } from '@/utils/statefulInputHint'
+import { CATEGORY_LABELS, CATEGORY_ORDER, categoryLabel } from '@/utils/searchCategories'
 import { getMe } from '@/api/auth'
 import { listTrustedIPs, deleteTrustedIP, type TrustedIPEntry } from '@/api/security'
 import type { City } from '@/utils/citySearch'
@@ -77,11 +79,15 @@ const submitting = ref(false)
 
 const editorTitle = computed(() => (editorMode.value === 'create' ? '新建搜索引擎' : '编辑搜索引擎'))
 
+// v0.2.31: four fixed categories, order and labels from the shared constant.
+const categoryOptions = CATEGORY_ORDER.map((key) => ({ label: CATEGORY_LABELS[key], value: key }))
+
 function emptyForm(): Required<SearchEngineWritePayload> {
   return {
     name: '',
     url_template: '',
     icon: '',
+    category: 'web',
     is_default: false,
     sort: 0,
   }
@@ -136,6 +142,7 @@ function openEdit(engine: SearchEngine) {
     name: engine.name,
     url_template: engine.url_template,
     icon: engine.icon,
+    category: CATEGORY_LABELS[engine.category] ? engine.category : 'web',
     is_default: engine.is_default,
     sort: engine.sort,
   }
@@ -503,6 +510,7 @@ onMounted(() => {
           <template #item="{ item: engine }">
             <component :is="renderEngineIcon(engine.icon, 22)" />
             <span class="engines-cell__title">{{ engine.name }}</span>
+            <span class="engines-cell__category">{{ categoryLabel(engine.category) }}</span>
             <span class="engines-cell__url">{{ engine.url_template }}</span>
             <button
               type="button"
@@ -785,6 +793,13 @@ onMounted(() => {
       >
         必须包含 <code>{q}</code> 或 <code>{query}</code> 占位符。两者等价，前端搜索时会替换成 URL 编码后的关键词。
       </NAlert>
+      <NFormItem label="分类">
+        <NSelect
+          v-model:value="editorForm.category"
+          :options="categoryOptions"
+          :disabled="submitting"
+        />
+      </NFormItem>
       <NFormItem label="图标 URL">
         <StatefulInput
           v-model="editorForm.icon"
@@ -937,6 +952,18 @@ onMounted(() => {
   text-overflow: ellipsis;
   flex: 1 1 auto;
   min-width: 0;
+}
+/* v0.2.31: category chip between name and URL template. Stays visible on
+   mobile (unlike the URL column) — it's short and it's the only place the
+   grouping is legible without opening the editor. */
+.engines-cell__category {
+  font-size: 0.75rem;
+  color: var(--mp-text-secondary);
+  background: var(--mp-badge-bg);
+  border-radius: 4px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .engines-cell__url {
   font-size: 0.85rem;
