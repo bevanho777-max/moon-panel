@@ -301,6 +301,15 @@ func (h *BackupHandler) restore(c *gin.Context) {
 		log.Printf("backup restore: owner_id backfill failed (rows are restored but unowned): %v", err)
 	}
 
+	// v0.2.31: same story for search engine categories. Backups produced before
+	// v0.2.31 carry no category, so the rows re-inserted above land with '' and
+	// would show up under the frontend's "其它" group until the next restart.
+	// Runs after the transaction committed (so the new rows are visible) and
+	// after MigrateOwnerID, matching that call's non-fatal handling.
+	if _, err := store.MigrateEngineCategories(h.DB); err != nil {
+		log.Printf("backup restore: engine category backfill failed (engines are restored but uncategorized): %v", err)
+	}
+
 	// Restore uploads/ if the zip path provided one. Done OUTSIDE the DB
 	// transaction since file operations aren't transactional anyway.
 	uploadsRestored := 0

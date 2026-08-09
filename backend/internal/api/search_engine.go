@@ -65,9 +65,9 @@ func IsValidSearchEngineCategory(c string) bool {
 // restoreBuiltins re-bases them onto max(sort) so re-added engines land at the
 // bottom instead of colliding with whatever the user has already arranged.
 //
-// v0.2.31: unsplash.png / imdb.png / themoviedb.png are absent from the
-// walkxcode CDN (404), so those three fall back to their category's lucide
-// glyph rather than shipping a broken <img>.
+// v0.2.31: unsplash.png / imdb.png are absent from the walkxcode CDN (404), so
+// those two fall back to their category's lucide glyph rather than shipping a
+// broken <img>. TMDB is on the CDN as tmdb.png (not themoviedb.png).
 func BuiltinSearchEngines() []model.SearchEngine {
 	return []model.SearchEngine{
 		// web
@@ -93,7 +93,7 @@ func BuiltinSearchEngines() []model.SearchEngine {
 		// video
 		{Name: "YouTube", URLTemplate: "https://www.youtube.com/results?search_query={query}", Icon: builtinIconPrefix + "youtube.png", Category: CategoryVideo, IsDefault: false, Sort: 310},
 		{Name: "IMDb", URLTemplate: "https://www.imdb.com/find/?q={query}", Icon: "lucide:clapperboard", Category: CategoryVideo, IsDefault: false, Sort: 320},
-		{Name: "TMDB", URLTemplate: "https://www.themoviedb.org/search?query={query}", Icon: "lucide:clapperboard", Category: CategoryVideo, IsDefault: false, Sort: 330},
+		{Name: "TMDB", URLTemplate: "https://www.themoviedb.org/search?query={query}", Icon: builtinIconPrefix + "tmdb.png", Category: CategoryVideo, IsDefault: false, Sort: 330},
 	}
 }
 

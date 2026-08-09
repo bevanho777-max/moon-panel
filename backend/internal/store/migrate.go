@@ -61,3 +61,33 @@ func MigrateOwnerID(db *gorm.DB) error {
 		return nil
 	})
 }
+
+// engineCategoryDefault mirrors api.CategoryWeb. Duplicated as a literal
+// because api imports store (backup.go), so store must not import api.
+const engineCategoryDefault = "web"
+
+// MigrateEngineCategories backfills SearchEngine.Category for rows created
+// before v0.2.31. AutoMigrate adds the column to existing rows as '' (a column
+// default only applies to inserts), which would otherwise land those engines in
+// the frontend's "其它" catch-all group. Everything predating v0.2.31 was a
+// general web engine, so '' → "web".
+//
+// Idempotent: the WHERE only ever matches unstamped rows, so a second call
+// updates nothing. Engines the user later moves to another category are never
+// touched — their category isn't ''.
+//
+// Returns the number of rows stamped. Safe to call from both the boot
+// bootstrap chain and after backup.go's restore (a restored backup may predate
+// v0.2.31 and arrive with empty category fields).
+func MigrateEngineCategories(db *gorm.DB) (int64, error) {
+	res := db.Model(&model.SearchEngine{}).
+		Where("category IS NULL OR category = ?", "").
+		Update("category", engineCategoryDefault)
+	if res.Error != nil {
+		return 0, res.Error
+	}
+	if res.RowsAffected > 0 {
+		log.Printf("v0.2.31 migration: stamped category=%s on %d existing search engines", engineCategoryDefault, res.RowsAffected)
+	}
+	return res.RowsAffected, nil
+}

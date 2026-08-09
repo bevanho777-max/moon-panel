@@ -68,8 +68,9 @@ type SearchEngine struct {
 	URLTemplate string `gorm:"size:1024;not null" json:"url_template"`
 	Icon        string `gorm:"size:512" json:"icon"`
 	// v0.2.31: one of web|image|music|video (api.SearchEngineCategories).
-	// AutoMigrate adds the column empty on existing rows — migrateEngineCategories
-	// in cmd/server backfills those to "web" on boot.
+	// AutoMigrate adds the column empty on existing rows —
+	// store.MigrateEngineCategories backfills those to "web" on boot and after
+	// a backup restore.
 	Category  string    `gorm:"size:32;index;default:'web'" json:"category"`
 	IsDefault bool      `gorm:"default:false" json:"is_default"`
 	Sort      int       `gorm:"index;default:0" json:"sort"`

@@ -106,6 +106,88 @@ func TestMigrateOwnerID_DoesNotOverwriteNonZero(t *testing.T) {
 	}
 }
 
+// MigrateEngineCategories (v0.2.31) backfills the category column added to
+// SearchEngine. Same backfill shape as MigrateOwnerID, but it also has to run
+// after a backup restore — an old backup carries no category at all.
+
+func TestMigrateEngineCategories_BackfillsEmptyOnly(t *testing.T) {
+	db := openTestDB(t)
+
+	// Pre-v0.2.31 row: category is '' after AutoMigrate adds the column.
+	// Create() would apply the model's default, so write the empty value
+	// explicitly the way a restored backup does.
+	legacy := model.SearchEngine{Name: "Google", URLTemplate: "https://g/?q={query}", Sort: 10}
+	if err := db.Create(&legacy).Error; err != nil {
+		t.Fatalf("seed legacy engine: %v", err)
+	}
+	if err := db.Model(&model.SearchEngine{}).Where("id = ?", legacy.ID).
+		Update("category", "").Error; err != nil {
+		t.Fatalf("blank legacy category: %v", err)
+	}
+
+	categorized := model.SearchEngine{Name: "Spotify", URLTemplate: "https://s/{query}", Category: "music", Sort: 20}
+	if err := db.Create(&categorized).Error; err != nil {
+		t.Fatalf("seed categorized engine: %v", err)
+	}
+
+	n, err := MigrateEngineCategories(db)
+	if err != nil {
+		t.Fatalf("MigrateEngineCategories: %v", err)
+	}
+	if n != 1 {
+		t.Errorf("RowsAffected: want 1, got %d", n)
+	}
+
+	var got model.SearchEngine
+	db.First(&got, legacy.ID)
+	if got.Category != "web" {
+		t.Errorf("legacy engine category: want web, got %q", got.Category)
+	}
+
+	var untouched model.SearchEngine
+	db.First(&untouched, categorized.ID)
+	if untouched.Category != "music" {
+		t.Errorf("categorized engine rewritten: want music (preserved), got %q", untouched.Category)
+	}
+}
+
+func TestMigrateEngineCategories_Idempotent(t *testing.T) {
+	db := openTestDB(t)
+
+	e := model.SearchEngine{Name: "Google", URLTemplate: "https://g/?q={query}"}
+	db.Create(&e)
+	db.Model(&model.SearchEngine{}).Where("id = ?", e.ID).Update("category", "")
+
+	if _, err := MigrateEngineCategories(db); err != nil {
+		t.Fatalf("first run: %v", err)
+	}
+	n, err := MigrateEngineCategories(db)
+	if err != nil {
+		t.Fatalf("second run: %v", err)
+	}
+	if n != 0 {
+		t.Errorf("second run should touch 0 rows, got %d", n)
+	}
+
+	var got model.SearchEngine
+	db.First(&got, e.ID)
+	if got.Category != "web" {
+		t.Errorf("after second run: want web, got %q", got.Category)
+	}
+}
+
+func TestMigrateEngineCategories_EmptyTable(t *testing.T) {
+	db := openTestDB(t)
+
+	n, err := MigrateEngineCategories(db)
+	if err != nil {
+		t.Fatalf("expected nil on empty table, got: %v", err)
+	}
+	if n != 0 {
+		t.Errorf("empty table should touch 0 rows, got %d", n)
+	}
+}
+
 // openTestDB returns a fresh GORM connection backed by a per-test SQLite
 // database under t.TempDir(). Registers an explicit Close so Windows can
 // release the WAL-mode file lock before t.TempDir's auto-cleanup tries to
