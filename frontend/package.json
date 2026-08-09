@@ -21,6 +21,7 @@
     "lucide-vue-next": "^0.460.0",
     "naive-ui": "^2.38.2",
     "pinia": "^2.1.7",
+    "pinyin-pro": "^3.28.2",
     "qrcode": "^1.5.3",
     "vue": "^3.4.27",
     "vue-router": "^4.3.2",

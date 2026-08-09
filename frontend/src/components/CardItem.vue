@@ -7,8 +7,15 @@ import { useNetworkStore } from '@/stores/network'
 import { effectiveURL } from '@/utils/cardUrl'
 import { useLongPress } from '@/composables/useLongPress'
 import LucideIcon from '@/components/LucideIcon.vue'
+import HighlightText from '@/components/HighlightText.vue'
+import { highlightSegments } from '@/utils/cardSearch'
 
-const props = defineProps<{ card: Card }>()
+// v0.2.30: highlightTokens defaults to [] so every existing call site keeps
+// rendering plain text unchanged.
+const props = withDefaults(
+  defineProps<{ card: Card; highlightTokens?: string[] }>(),
+  { highlightTokens: () => [] },
+)
 const network = useNetworkStore()
 
 const url = computed(() =>
@@ -161,6 +168,13 @@ const uploadUrl = computed(() =>
 // lucide:wrench → "wrench" (just the name, LucideIcon expects unprefixed)
 const lucideName = computed(() =>
   isLucideIcon.value ? props.card.icon.slice('lucide:'.length) : '',
+)
+
+// Split once per card, reused by both template branches (linked <a> vs
+// disabled <div>) and by the marquee's duplicated title copy.
+const titleSegments = computed(() => highlightSegments(props.card.title, props.highlightTokens))
+const descSegments = computed(() =>
+  highlightSegments(props.card.description, props.highlightTokens),
 )
 
 const cardClasses = computed(() => ({
@@ -333,7 +347,7 @@ onBeforeUnmount(() => {
           :title="card.title"
         >
           <span class="card-item__title__inner">
-            <span class="card-item__title__inner__text">{{ card.title }}</span>
+            <span class="card-item__title__inner__text"><HighlightText :segments="titleSegments" /></span>
             <span
               v-if="cardTitleOverflow"
               class="card-item__title__inner__sep"
@@ -343,7 +357,7 @@ onBeforeUnmount(() => {
               v-if="cardTitleOverflow"
               class="card-item__title__inner__text"
               aria-hidden="true"
-            >{{ card.title }}</span>
+            ><HighlightText :segments="titleSegments" /></span>
           </span>
         </span>
         <span
@@ -374,7 +388,7 @@ onBeforeUnmount(() => {
           <span>双网</span>
         </span>
       </div>
-      <div v-if="card.description" class="card-item__desc">{{ card.description }}</div>
+      <div v-if="card.description" class="card-item__desc"><HighlightText :segments="descSegments" /></div>
     </div>
     <span v-if="url.fallback" class="card-item__fallback" title="主选 URL 为空，已 fallback 到另一边">↩</span>
   </a>
@@ -440,7 +454,7 @@ onBeforeUnmount(() => {
           :title="card.title"
         >
           <span class="card-item__title__inner">
-            <span class="card-item__title__inner__text">{{ card.title }}</span>
+            <span class="card-item__title__inner__text"><HighlightText :segments="titleSegments" /></span>
             <span
               v-if="cardTitleOverflow"
               class="card-item__title__inner__sep"
@@ -450,7 +464,7 @@ onBeforeUnmount(() => {
               v-if="cardTitleOverflow"
               class="card-item__title__inner__text"
               aria-hidden="true"
-            >{{ card.title }}</span>
+            ><HighlightText :segments="titleSegments" /></span>
           </span>
         </span>
       </div>

@@ -38,6 +38,7 @@ import SortableTable from '@/components/SortableTable.vue'
 import StatefulInput from '@/components/StatefulInput.vue'
 import IconAutoComplete from '@/components/admin/IconAutoComplete.vue'
 import { showStatefulInputHintOnce } from '@/utils/statefulInputHint'
+import { cardHaystack, matchesTokens, tokenize } from '@/utils/cardSearch'
 
 const message = useMessage()
 const groupsStore = useGroupsStore()
@@ -87,16 +88,23 @@ const groupOptions = computed<SelectOption[]>(() =>
 // itemFilter prop), draggable disabled while searching. search 清空后恢复.
 const isSearching = computed(() => searchQuery.value.trim() !== '')
 
+// v0.2.30: same primitives as the home page (multi-term AND + pinyin), but the
+// haystacks are built here because this table is flat — the group name comes
+// from the store by group_id rather than from a nesting parent. Rebuilt only
+// when cards or group names change, so pinyin stays off the keystroke path.
+const searchHaystacks = computed(() => {
+  const map = new Map<number, string>()
+  for (const card of cards.value) {
+    map.set(card.id, cardHaystack(card, groupsStore.nameOf(card.group_id)))
+  }
+  return map
+})
+
+const searchTokens = computed(() => tokenize(searchQuery.value))
+
 function cardMatchesSearch(card: Card): boolean {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return true
-  return (
-    card.title.toLowerCase().includes(q) ||
-    card.description.toLowerCase().includes(q) ||
-    card.url_internal.toLowerCase().includes(q) ||
-    card.url_external.toLowerCase().includes(q) ||
-    groupsStore.nameOf(card.group_id).toLowerCase().includes(q)
-  )
+  if (searchTokens.value.length === 0) return true
+  return matchesTokens(searchHaystacks.value.get(card.id) ?? '', searchTokens.value)
 }
 
 const totalMatchedCount = computed(() =>

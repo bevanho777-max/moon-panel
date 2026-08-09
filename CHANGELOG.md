@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.30] - 2026-08-09
+
+### Added
+
+- 首页搜索升级为多词 AND 全文搜索 — 「jelly media」两词都命中才显示, 空格
+  分词, 逐词收窄而不是放宽
+- 拼音搜索 (pinyin-pro): 中文字段额外索引【全拼】+【首字母】, 分组「影音」
+  可用 `yingyin` 或 `yy` 搜到。只对含 CJK 的字符串跑转换
+- 命中高亮: 卡片标题 / 描述里的命中片段用 `<mark>` 标出。分段渲染成文本
+  节点, 全程不用 `v-html`
+- 搜索内核抽成 `frontend/src/utils/cardSearch.ts` (`tokenize` /
+  `matchesTokens` / `cardHaystack` / `buildIndex` / `filterIndex` /
+  `highlightSegments`), 23 条单测覆盖
+
+### Changed
+
+- 首页与「管理后台 → 卡片」共用 `cardSearch` 底层原语 (`tokenize` +
+  `matchesTokens` + `cardHaystack`) — 两处原本各写一份 `includes()` 链, 现在
+  分词 / AND / 拼音行为一致。后台仍在本地建 haystack (扁平卡片表, 分组名要
+  按 `group_id` 从 store 取), 搜索字段不变
+- `CardItem` 新增可选 prop `highlightTokens` (默认 `[]`) — 其它调用点行为不变
+
+### Internal
+
+- 索引与查询分离: `buildIndex` 只随 panel 数据变化重建 (拼音转换在这一步),
+  按键只跑 `filterIndex` 的子串比对, 拼音开销不上按键路径
+- `filterIndex` 空查询返回原分组对象本身 (保持引用), 避免 keyed transition
+  无谓抖动
+- `highlightSegments` 对正则元字符做转义, 查 `.` 不会匹配任意字符
+- 依赖: 新增 `pinyin-pro ^3.28.2` (dependencies)。它被打进独立的
+  `cardSearch` chunk (~139 kB gzip), 首页与后台卡片页按需加载
+
 ## [0.2.29] - 2026-08-09
 
 ### Added
@@ -1390,7 +1422,8 @@ Pi or Synology with the same image.
 - Dev / prod data isolation: dev uses `./data-dev` and port 3001, leaves
   production `./data` and port 3000 untouched
 
-[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.29...HEAD
+[Unreleased]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.30...HEAD
+[0.2.30]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.29...v0.2.30
 [0.2.29]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.28...v0.2.29
 [0.2.5]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/bevanho777-max/moon-panel/compare/v0.2.3...v0.2.4

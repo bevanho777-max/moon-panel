@@ -22,6 +22,7 @@ import VersionBadge from '@/components/VersionBadge.vue'
 import StatusBar from '@/components/StatusBar.vue'
 import { useUIStore } from '@/stores/ui'
 import { useNetworkStore } from '@/stores/network'
+import { buildIndex, filterIndex, tokenize } from '@/utils/cardSearch'
 
 const ui = useUIStore()
 const networkStore = useNetworkStore()
@@ -33,26 +34,15 @@ const panel = ref<PanelData | null>(null)
 const loading = ref(true)
 const searchQuery = ref('')
 
-// Live filter applied to groups + cards. Empty query → return original list.
-// When filtering, hide groups whose cards array becomes empty.
-const filteredGroups = computed(() => {
-  if (!panel.value) return []
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return panel.value.groups ?? []
-  return (panel.value.groups ?? [])
-    .map((group) => {
-      const groupNameMatch = group.name.toLowerCase().includes(q)
-      const cards = (group.cards ?? []).filter((card) =>
-        groupNameMatch ||
-        card.title.toLowerCase().includes(q) ||
-        card.description.toLowerCase().includes(q) ||
-        card.url_internal.toLowerCase().includes(q) ||
-        card.url_external.toLowerCase().includes(q),
-      )
-      return { ...group, cards }
-    })
-    .filter((g) => (g.cards?.length ?? 0) > 0)
-})
+// v0.2.30: filtering moved to utils/cardSearch (multi-term AND + pinyin, unit
+// tested). The index — including the expensive pinyin expansion — is rebuilt
+// only when the panel payload changes; each keystroke just re-runs substring
+// tests over the prebuilt haystacks.
+const searchIndex = computed(() => buildIndex(panel.value?.groups ?? []))
+
+const filteredGroups = computed(() => filterIndex(searchIndex.value, searchQuery.value))
+
+const highlightTokens = computed(() => tokenize(searchQuery.value))
 
 const showFilterEmpty = computed(() => {
   if (!panel.value) return false
@@ -237,6 +227,7 @@ onUnmounted(() => {
                   v-for="card in group.cards"
                   :key="card.id"
                   :card="card"
+                  :highlight-tokens="highlightTokens"
                 />
               </TransitionGroup>
             </section>
